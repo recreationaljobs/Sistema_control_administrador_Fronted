@@ -20,7 +20,26 @@ export const loginRequest = async ({ username, password }) => {
 export const saveSession = (data) => {
   const token = data?.token;
   const user = data?.user;
-  const rol = data?.rol || user?.rol_codigo || "";
+
+  let rol =
+    data?.rol ||
+    user?.rol_codigo ||
+    user?.rol?.codigo ||
+    user?.rol ||
+    "";
+
+  if (rol === "admin") {
+    rol = "admin_sucursal";
+  }
+
+  if (rol === "Administrador") {
+    rol = "admin_sucursal";
+  }
+
+  if (rol === "Administrador de Sucursal") {
+    rol = "admin_sucursal";
+  }
+
   const sucursal = data?.sucursal || user?.sucursal || "";
   const sucursalNombre = data?.sucursal_nombre || user?.sucursal_nombre || "";
 

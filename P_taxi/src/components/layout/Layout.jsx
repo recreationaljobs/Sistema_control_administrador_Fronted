@@ -5,41 +5,21 @@ import Navbar from "./Navbar";
 import MobileMenu from "./MobileMenu";
 
 const Layout = () => {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const toggleSidebar = () => {
-    setSidebarCollapsed((prev) => !prev);
-  };
-
-  const openMobileMenu = () => {
-    setMobileMenuOpen(true);
-  };
-
-  const closeMobileMenu = () => {
-    setMobileMenuOpen(false);
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50">
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        onToggle={toggleSidebar}
-      />
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <Sidebar />
 
       <MobileMenu
         open={mobileMenuOpen}
-        onClose={closeMobileMenu}
+        onClose={() => setMobileMenuOpen(false)}
       />
 
-      <div
-        className={`min-h-screen transition-all duration-300 ${
-          sidebarCollapsed ? "lg:pl-24" : "lg:pl-72"
-        }`}
-      >
-        <Navbar onOpenMobileMenu={openMobileMenu} />
+      <div className="min-h-screen lg:pl-[310px]">
+        <Navbar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
 
-        <main className="p-4 md:p-6">
+        <main className="px-4 py-5 md:px-6 lg:px-7">
           <Outlet />
         </main>
       </div>

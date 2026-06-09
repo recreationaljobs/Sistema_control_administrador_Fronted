@@ -1,17 +1,15 @@
-import { UserPlus, X } from "lucide-react";
-import UsuarioForm from "./UsuarioForm";
+import { Route, X } from "lucide-react";
+import AsignacionForm from "./AsignacionForm";
 
-const UsuarioModal = ({
+const AsignacionModal = ({
   open,
   onClose,
   onSave,
   saving,
   loadingCatalogos,
-  usuarioEditando,
-  roles = [],
-  sucursales = [],
-  conductoresDisponibles = [],
-  cargarConductoresDisponibles = () => {},
+  asignacionEditando,
+  conductores = [],
+  vehiculos = [],
   esSuperAdmin = false,
   esAdminSucursal = false,
 }) => {
@@ -32,16 +30,16 @@ const UsuarioModal = ({
         <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFF4CF] text-[#E7A900]">
-              <UserPlus size={26} />
+              <Route size={26} />
             </div>
 
             <div>
               <h2 className="text-xl font-black text-slate-950">
-                {usuarioEditando ? "Editar usuario" : "Nuevo usuario"}
+                {asignacionEditando ? "Editar asignación" : "Nueva asignación"}
               </h2>
 
               <p className="text-sm font-medium text-slate-500">
-                Crea cuentas de acceso según el rol correspondiente.
+                Asigna un vehículo a un conductor para habilitar sus jornadas.
               </p>
             </div>
           </div>
@@ -56,12 +54,10 @@ const UsuarioModal = ({
         </div>
 
         <div className="max-h-[calc(92vh-90px)] overflow-y-auto">
-          <UsuarioForm
-            usuarioEditando={usuarioEditando}
-            roles={roles}
-            sucursales={sucursales}
-            conductoresDisponibles={conductoresDisponibles}
-            cargarConductoresDisponibles={cargarConductoresDisponibles}
+          <AsignacionForm
+            asignacionEditando={asignacionEditando}
+            conductores={conductores}
+            vehiculos={vehiculos}
             onSave={onSave}
             onCancel={onClose}
             saving={saving}
@@ -75,4 +71,4 @@ const UsuarioModal = ({
   );
 };
 
-export default UsuarioModal;
+export default AsignacionModal;
