@@ -88,6 +88,15 @@ const AppRouter = () => {
           />
 
           <Route
+            path="vehiculos"
+            element={
+              <RoleRoute allowedRoles={["superadmin", "admin_sucursal", "taxista"]}>
+                <VehiculosPage />
+              </RoleRoute>
+            }
+          />
+
+          <Route
             path="asignaciones"
             element={
               <RoleRoute allowedRoles={["superadmin", "admin_sucursal"]}>
@@ -104,6 +113,15 @@ const AppRouter = () => {
               </RoleRoute>
             }
           />
+
+          {/* <Route
+            path="ingresos"
+            element={
+              <RoleRoute allowedRoles={["superadmin", "admin_sucursal", "taxista"]}>
+                <IngresosPage />
+              </RoleRoute>
+            }
+          /> */}
 
           <Route
             path="gastos"

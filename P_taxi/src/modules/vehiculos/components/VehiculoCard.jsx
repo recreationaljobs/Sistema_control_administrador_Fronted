@@ -1,4 +1,4 @@
-const ConductorCard = ({ title, value, icon: Icon, color }) => {
+const VehiculoCard = ({ title, value, icon: Icon, color }) => {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center gap-4">
@@ -15,4 +15,4 @@ const ConductorCard = ({ title, value, icon: Icon, color }) => {
   );
 };
 
-export default ConductorCard;
+export default VehiculoCard;

@@ -1,20 +1,20 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  Building2,
-  Users,
-  UserRound,
-  CarTaxiFront,
-  Route,
   CalendarDays,
   Wallet,
+  BriefcaseBusiness,
   HandCoins,
+  UserRound,
+  CarTaxiFront,
   Wrench,
   FileBarChart,
+  Users,
   Settings,
+  ChevronDown,
+  Building2,
+  Route,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 
@@ -32,10 +32,28 @@ const menuItems = [
     roles: ["superadmin"],
   },
   {
-    label: "Usuarios",
-    path: "/usuarios",
-    icon: Users,
+    label: "Jornadas",
+    path: "/jornadas",
+    icon: CalendarDays,
+    roles: ["superadmin", "admin_sucursal", "taxista"],
+  },
+  {
+    label: "Ingresos",
+    path: "/ingresos",
+    icon: Wallet,
     roles: ["superadmin", "admin_sucursal"],
+  },
+  {
+    label: "Gastos",
+    path: "/gastos",
+    icon: BriefcaseBusiness,
+    roles: ["superadmin", "admin_sucursal", "taxista"],
+  },
+  {
+    label: "Adelantos",
+    path: "/adelantos",
+    icon: HandCoins,
+    roles: ["superadmin", "admin_sucursal", "taxista"],
   },
   {
     label: "Conductores",
@@ -56,24 +74,6 @@ const menuItems = [
     roles: ["superadmin", "admin_sucursal"],
   },
   {
-    label: "Jornadas",
-    path: "/jornadas",
-    icon: CalendarDays,
-    roles: ["superadmin", "admin_sucursal", "taxista"],
-  },
-  {
-    label: "Gastos",
-    path: "/gastos",
-    icon: Wallet,
-    roles: ["superadmin", "admin_sucursal", "taxista"],
-  },
-  {
-    label: "Adelantos",
-    path: "/adelantos",
-    icon: HandCoins,
-    roles: ["superadmin", "admin_sucursal", "taxista"],
-  },
-  {
     label: "Mantenimiento",
     path: "/mantenimiento",
     icon: Wrench,
@@ -86,6 +86,12 @@ const menuItems = [
     roles: ["superadmin", "admin_sucursal"],
   },
   {
+    label: "Usuarios",
+    path: "/usuarios",
+    icon: Users,
+    roles: ["superadmin", "admin_sucursal"],
+  },
+  {
     label: "Configuración",
     path: "/configuracion",
     icon: Settings,
@@ -93,88 +99,53 @@ const menuItems = [
   },
 ];
 
-const Sidebar = ({ collapsed, onToggle }) => {
-  const navigate = useNavigate();
+const Sidebar = () => {
   const { rol, user, sucursalNombre, logout } = useAuth();
 
-  const visibleItems = menuItems.filter((item) => item.roles.includes(rol));
+let rolNormalizado =
+  rol ||
+  user?.rol_codigo ||
+  user?.rol?.codigo ||
+  user?.rol ||
+  "";
 
-  const handleLogout = () => {
-    logout();
-  };
+if (rolNormalizado === "admin") {
+  rolNormalizado = "admin_sucursal";
+}
 
-  return (
-    <aside
-      className={`hidden lg:flex fixed left-0 top-0 z-40 h-screen flex-col border-r border-slate-200 bg-white shadow-sm transition-all duration-300 ${
-        collapsed ? "w-24" : "w-72"
-      }`}
-    >
-      <div className="flex h-20 items-center justify-between border-b border-slate-100 px-4">
-        <button
-          type="button"
-          onClick={() => navigate("/dashboard")}
-          className={`flex items-center gap-3 min-w-0 ${
-            collapsed ? "justify-center w-full" : ""
-          }`}
-        >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-yellow-400 text-slate-950 shadow-md shadow-yellow-100">
-            <CarTaxiFront size={27} strokeWidth={2.5} />
+if (rolNormalizado === "Administrador") {
+  rolNormalizado = "admin_sucursal";
+}
+
+if (rolNormalizado === "Administrador de Sucursal") {
+  rolNormalizado = "admin_sucursal";
+}
+
+const visibleItems = menuItems.filter((item) =>
+  item.roles.includes(rolNormalizado)
+);
+
+ return (
+  <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[310px] flex-col border-r border-slate-200 bg-white lg:flex">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="shrink-0 border-b border-slate-100 px-6 py-6">
+        <div className="flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F5B800] text-white shadow-md shadow-yellow-100">
+            <CarTaxiFront size={34} strokeWidth={2.8} />
           </div>
 
-          {!collapsed && (
-            <div className="text-left">
-              <h1 className="text-lg font-black leading-tight text-slate-950">
-                TaxiAdmin
-              </h1>
-              <p className="text-xs font-semibold text-slate-400">
-                Panel operativo
-              </p>
-            </div>
-          )}
-        </button>
-      </div>
-
-      <div className="px-4 py-4">
-        <div
-          className={`flex items-center rounded-2xl bg-slate-50 p-3 ${
-            collapsed ? "justify-center" : "justify-between"
-          }`}
-        >
-          {!collapsed && (
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-                Sidebar
-              </p>
-              <p className="text-sm font-bold text-slate-700">
-                Expandido
-              </p>
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={onToggle}
-            className={`relative flex h-8 w-14 items-center rounded-full transition ${
-              collapsed ? "bg-slate-300" : "bg-yellow-400"
-            }`}
-            title={collapsed ? "Expandir menú" : "Contraer menú"}
-          >
-            <span
-              className={`absolute flex h-6 w-6 items-center justify-center rounded-full bg-white shadow transition-all ${
-                collapsed ? "left-1" : "left-7"
-              }`}
-            >
-              {collapsed ? (
-                <ChevronRight size={15} className="text-slate-600" />
-              ) : (
-                <ChevronLeft size={15} className="text-slate-800" />
-              )}
-            </span>
-          </button>
+          <div>
+            <h1 className="text-2xl font-black tracking-tight text-slate-950">
+              TaxiAdmin
+            </h1>
+            <p className="text-sm font-medium text-slate-500">
+              Sistema de Administración
+            </p>
+          </div>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-4 pb-4">
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-4 py-5 [scrollbar-width:thin] [scrollbar-color:#CBD5E1_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 hover:[&::-webkit-scrollbar-thumb]:bg-slate-400">
         {visibleItems.map((item) => {
           const Icon = item.icon;
 
@@ -182,64 +153,51 @@ const Sidebar = ({ collapsed, onToggle }) => {
             <NavLink
               key={item.path}
               to={item.path}
-              title={collapsed ? item.label : undefined}
               className={({ isActive }) =>
-                `group flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition ${
+                `flex items-center gap-4 rounded-xl px-4 py-3.5 text-[15px] font-semibold transition ${
                   isActive
-                    ? "bg-yellow-400 text-slate-950 shadow-md shadow-yellow-100"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                } ${collapsed ? "justify-center px-0" : ""}`
+                    ? "bg-[#FFF4CF] text-[#E7A900]"
+                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                }`
               }
             >
-              <Icon size={21} strokeWidth={2.2} />
-
-              {!collapsed && (
-                <span className="truncate">
-                  {item.label}
-                </span>
-              )}
+              <Icon size={22} strokeWidth={2.1} />
+              <span>{item.label}</span>
             </NavLink>
           );
         })}
       </nav>
 
-      <div className="border-t border-slate-100 p-4">
-        <div
-          className={`mb-4 rounded-2xl bg-slate-50 p-3 ${
-            collapsed ? "text-center" : ""
-          }`}
-        >
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-sm font-black text-white">
-            {user?.username?.charAt(0)?.toUpperCase() || "U"}
-          </div>
+      <div className="shrink-0 border-t border-slate-100 bg-white p-4">
+        <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FFE7A3] text-sm font-black text-slate-900">
+              {user?.username?.charAt(0)?.toUpperCase() || "A"}
+            </div>
 
-          {!collapsed && (
-            <div className="mt-3 text-center">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-black text-slate-900">
-                {user?.username || "Usuario"}
+                {user?.username || "Administrador"}
               </p>
-              <p className="truncate text-xs font-semibold text-slate-400">
-                {sucursalNombre || rol || "Sistema"}
+              <p className="truncate text-xs font-medium text-slate-500">
+                {sucursalNombre || rolNormalizado || "Sistema"}
               </p>
             </div>
-          )}
+          </div>
+
+          <button
+            type="button"
+            onClick={logout}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+          >
+            <LogOut size={15} />
+            Cerrar sesión
+          </button>
         </div>
-
-        <button
-          type="button"
-          onClick={handleLogout}
-          title={collapsed ? "Cerrar sesión" : undefined}
-          className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-50 ${
-            collapsed ? "justify-center px-0" : ""
-          }`}
-        >
-          <LogOut size={20} />
-
-          {!collapsed && <span>Cerrar sesión</span>}
-        </button>
       </div>
-    </aside>
-  );
+    </div>
+  </aside>
+);
 };
 
 export default Sidebar;
