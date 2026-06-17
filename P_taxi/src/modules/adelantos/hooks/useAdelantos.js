@@ -4,8 +4,10 @@ import {
   createAdelanto,
   deleteAdelanto,
   getAdelantos,
+  getConductores,
   getEstadosAdelanto,
-  getJornadas,
+  getRecibo,
+  getSucursales,
   updateAdelanto,
 } from "../services/adelantosService";
 
@@ -13,15 +15,6 @@ const normalizarLista = (data) => {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.results)) return data.results;
   return [];
-};
-
-const obtenerFechaLocal = () => {
-  const fecha = new Date();
-  const year = fecha.getFullYear();
-  const month = String(fecha.getMonth() + 1).padStart(2, "0");
-  const day = String(fecha.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
 };
 
 const obtenerCodigoRol = (auth) => {
@@ -68,7 +61,8 @@ export const useAdelantos = () => {
   const rol = obtenerCodigoRol(auth);
 
   const [adelantos, setAdelantos] = useState([]);
-  const [jornadas, setJornadas] = useState([]);
+  const [conductores, setConductores] = useState([]);
+  const [sucursales, setSucursales] = useState([]);
   const [estadosAdelanto, setEstadosAdelanto] = useState([]);
 
   const [loading, setLoading] = useState(false);
@@ -77,13 +71,11 @@ export const useAdelantos = () => {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [adelantoEditando, setAdelantoEditando] = useState(null);
+  const [tipoInicial, setTipoInicial] = useState("ADELANTO");
 
-  const [search, setSearch] = useState("");
-  const [fechaInicio, setFechaInicio] = useState("");
-  const [fechaFin, setFechaFin] = useState("");
+  const [filtroTipo, setFiltroTipo] = useState("TODOS");
+  const [filtroConductor, setFiltroConductor] = useState("");
   const [error, setError] = useState("");
-
-  const hoy = obtenerFechaLocal();
 
   const esSuperAdmin = rol === "superadmin" || rol === "super_admin";
   const esAdminSucursal = rol === "admin_sucursal";
@@ -110,12 +102,14 @@ export const useAdelantos = () => {
       setLoadingCatalogos(true);
       setError("");
 
-      const [jornadasData, estadosData] = await Promise.all([
-        getJornadas(),
+      const [conductoresData, sucursalesData, estadosData] = await Promise.all([
+        getConductores(),
+        getSucursales(),
         getEstadosAdelanto(),
       ]);
 
-      setJornadas(normalizarLista(jornadasData));
+      setConductores(normalizarLista(conductoresData));
+      setSucursales(normalizarLista(sucursalesData));
       setEstadosAdelanto(normalizarLista(estadosData));
     } catch (err) {
       setError(
@@ -129,15 +123,17 @@ export const useAdelantos = () => {
     }
   };
 
-  const abrirModalCrear = () => {
+  const abrirModalCrear = (tipo = "ADELANTO") => {
     setError("");
     setAdelantoEditando(null);
+    setTipoInicial(tipo);
     setModalOpen(true);
   };
 
   const abrirModalEditar = (adelanto) => {
     setError("");
     setAdelantoEditando(adelanto);
+    setTipoInicial(adelanto?.tipo || "ADELANTO");
     setModalOpen(true);
   };
 
@@ -152,12 +148,17 @@ export const useAdelantos = () => {
       setError("");
 
       const payload = {
+        tipo: form.tipo || "ADELANTO",
         monto: form.monto ? Number(form.monto) : 0,
         observacion: form.observacion || "",
       };
 
-      if (form.jornada) {
-        payload.jornada = Number(form.jornada);
+      if (form.conductor) {
+        payload.conductor = Number(form.conductor);
+      }
+
+      if (form.sucursal) {
+        payload.sucursal = Number(form.sucursal);
       }
 
       if (form.estado) {
@@ -166,13 +167,18 @@ export const useAdelantos = () => {
         payload.estado = null;
       }
 
-      if (!payload.jornada) {
-        setError("Debes seleccionar la jornada.");
+      if (!payload.conductor) {
+        setError("Debes seleccionar el conductor.");
+        return;
+      }
+
+      if (!payload.sucursal) {
+        setError("Debes seleccionar la sucursal.");
         return;
       }
 
       if (payload.monto <= 0) {
-        setError("El monto del adelanto debe ser mayor que cero.");
+        setError("El monto debe ser mayor que cero.");
         return;
       }
 
@@ -183,10 +189,9 @@ export const useAdelantos = () => {
       }
 
       await cargarAdelantos();
-      await cargarCatalogos();
       cerrarModal();
     } catch (err) {
-      setError(obtenerMensajeError(err, "No se pudo guardar el adelanto."));
+      setError(obtenerMensajeError(err, "No se pudo guardar el registro."));
     } finally {
       setSaving(false);
     }
@@ -194,12 +199,14 @@ export const useAdelantos = () => {
 
   const eliminarAdelanto = async (adelanto) => {
     if (esTaxista) {
-      setError("No tienes permiso para eliminar adelantos.");
+      setError("No tienes permiso para eliminar registros.");
       return;
     }
 
+    const etiqueta = adelanto.tipo === "ABONO" ? "abono" : "adelanto";
+
     const confirmar = window.confirm(
-      `¿Seguro que deseas eliminar este adelanto de C$ ${Number(
+      `¿Seguro que deseas eliminar este ${etiqueta} de C$ ${Number(
         adelanto.monto || 0
       ).toFixed(2)}?`
     );
@@ -212,70 +219,51 @@ export const useAdelantos = () => {
 
       await deleteAdelanto(adelanto.id);
       await cargarAdelantos();
-      await cargarCatalogos();
     } catch (err) {
-      setError(obtenerMensajeError(err, "No se pudo eliminar el adelanto."));
+      setError(obtenerMensajeError(err, "No se pudo eliminar el registro."));
     } finally {
       setSaving(false);
     }
   };
 
-  const aplicarFiltros = async () => {
-    await cargarAdelantos();
-  };
-
-  const limpiarFiltros = async () => {
-    setFechaInicio("");
-    setFechaFin("");
-
-    await cargarAdelantos();
+  const verRecibo = async (adelanto) => {
+    try {
+      setError("");
+      await getRecibo(adelanto.id);
+    } catch (err) {
+      setError(obtenerMensajeError(err, "No se pudo abrir el recibo."));
+    }
   };
 
   const adelantosFiltrados = useMemo(() => {
-    const value = search.trim().toLowerCase();
-
     return adelantos.filter((adelanto) => {
-      if (fechaInicio && (adelanto.fecha || "") < fechaInicio) {
+      if (filtroTipo !== "TODOS" && adelanto.tipo !== filtroTipo) {
         return false;
       }
 
-      if (fechaFin && (adelanto.fecha || "") > fechaFin) {
+      if (
+        filtroConductor &&
+        String(adelanto.conductor) !== String(filtroConductor)
+      ) {
         return false;
       }
 
-      if (!value) return true;
-
-      const conductor = adelanto.conductor_nombre?.toLowerCase() || "";
-      const estado = adelanto.estado_nombre?.toLowerCase() || "";
-      const sucursal = adelanto.sucursal_nombre?.toLowerCase() || "";
-      const observacion = adelanto.observacion?.toLowerCase() || "";
-      const fecha = adelanto.fecha?.toLowerCase() || "";
-
-      return (
-        conductor.includes(value) ||
-        estado.includes(value) ||
-        sucursal.includes(value) ||
-        observacion.includes(value) ||
-        fecha.includes(value)
-      );
+      return true;
     });
-  }, [adelantos, search, fechaInicio, fechaFin]);
+  }, [adelantos, filtroTipo, filtroConductor]);
 
-  const jornadasDisponibles = useMemo(() => {
-    return jornadas.filter((jornada) => Boolean(jornada.id));
-  }, [jornadas]);
+  const totalAdelantos = adelantos.filter((a) => a.tipo === "ADELANTO").length;
+  const totalAbonos = adelantos.filter((a) => a.tipo === "ABONO").length;
 
-  const totalAdelantos = adelantos.length;
+  const montoAdelantos = adelantos
+    .filter((a) => a.tipo === "ADELANTO")
+    .reduce((total, a) => total + Number(a.monto || 0), 0);
 
-  const montoTotal = adelantos.reduce((total, adelanto) => {
-    return total + Number(adelanto.monto || 0);
-  }, 0);
+  const montoAbonos = adelantos
+    .filter((a) => a.tipo === "ABONO")
+    .reduce((total, a) => total + Number(a.monto || 0), 0);
 
-  const adelantosHoy = adelantos.filter((adelanto) => adelanto.fecha === hoy);
-
-  const montoHoy = adelantosHoy.reduce((total, adelanto) => {
-    return total + Number(adelanto.monto || 0);
-  }, 0);
+  const saldo = montoAdelantos - montoAbonos;
 
   useEffect(() => {
     cargarAdelantos();
@@ -286,8 +274,8 @@ export const useAdelantos = () => {
     adelantos,
     adelantosFiltrados,
 
-    jornadas,
-    jornadasDisponibles,
+    conductores,
+    sucursales,
     estadosAdelanto,
 
     loading,
@@ -297,21 +285,20 @@ export const useAdelantos = () => {
     error,
     setError,
 
-    search,
-    setSearch,
-
-    fechaInicio,
-    setFechaInicio,
-    fechaFin,
-    setFechaFin,
+    filtroTipo,
+    setFiltroTipo,
+    filtroConductor,
+    setFiltroConductor,
 
     modalOpen,
     adelantoEditando,
+    tipoInicial,
 
     totalAdelantos,
-    montoTotal,
-    adelantosHoy,
-    montoHoy,
+    totalAbonos,
+    montoAdelantos,
+    montoAbonos,
+    saldo,
 
     rol,
     esSuperAdmin,
@@ -327,8 +314,6 @@ export const useAdelantos = () => {
 
     guardarAdelanto,
     eliminarAdelanto,
-
-    aplicarFiltros,
-    limpiarFiltros,
+    verRecibo,
   };
 };

@@ -6,16 +6,22 @@ const EMPTY_FORM = {
   cedula: "",
   licencia: "",
   vencimiento_licencia: "",
+  numero_licencia: "",
+  fecha_inicio_licencia: "",
+  fecha_vencimiento_licencia: "",
   porcentaje_pago: 30,
 };
 
 const FIELDS = [
-  { name: "nombre",               label: "Nombre",                    type: "text",   placeholder: "Ej. Carlos",      required: true  },
-  { name: "apellido",             label: "Apellido",                  type: "text",   placeholder: "Ej. Ramírez",     required: true  },
-  { name: "cedula",               label: "Cédula",                    type: "text",   placeholder: "Ej. 1234567890",  required: true  },
-  { name: "licencia",             label: "N° de licencia",            type: "text",   placeholder: "Ej. A-12345",     required: true  },
-  { name: "vencimiento_licencia", label: "Vencimiento de licencia",   type: "date",   placeholder: "",                required: false },
-  { name: "porcentaje_pago",      label: "Porcentaje de pago (%)",    type: "number", placeholder: "30",              required: false },
+  { name: "nombre",                     label: "Nombre",                          type: "text",   placeholder: "Ej. Carlos",      required: true  },
+  { name: "apellido",                   label: "Apellido",                        type: "text",   placeholder: "Ej. Ramírez",     required: true  },
+  { name: "cedula",                     label: "Cédula",                          type: "text",   placeholder: "Ej. 1234567890",  required: true  },
+  { name: "licencia",                   label: "N° de licencia",                  type: "text",   placeholder: "Ej. A-12345",     required: true  },
+  { name: "vencimiento_licencia",       label: "Vencimiento de licencia",         type: "date",   placeholder: "",                required: false },
+  { name: "numero_licencia",            label: "Número de licencia",              type: "text",   placeholder: "Ej. L-987654",    required: false },
+  { name: "fecha_inicio_licencia",      label: "Fecha de emisión de licencia",    type: "date",   placeholder: "",                required: false },
+  { name: "fecha_vencimiento_licencia", label: "Fecha de vencimiento de licencia", type: "date",  placeholder: "",                required: false },
+  { name: "porcentaje_pago",            label: "Porcentaje de pago (%)",          type: "number", placeholder: "30",              required: false },
 ];
 
 const validate = (form) => {
@@ -38,12 +44,15 @@ const ConductorForm = ({ initialData, onSubmit, submitting, submitError }) => {
   useEffect(() => {
     if (initialData) {
       setForm({
-        nombre:               initialData.nombre               || "",
-        apellido:             initialData.apellido             || "",
-        cedula:               initialData.cedula               || "",
-        licencia:             initialData.licencia             || "",
-        vencimiento_licencia: initialData.vencimiento_licencia || "",
-        porcentaje_pago:      initialData.porcentaje_pago      ?? 30,
+        nombre:                     initialData.nombre                     || "",
+        apellido:                   initialData.apellido                   || "",
+        cedula:                     initialData.cedula                     || "",
+        licencia:                   initialData.licencia                   || "",
+        vencimiento_licencia:       initialData.vencimiento_licencia       || "",
+        numero_licencia:            initialData.numero_licencia            || "",
+        fecha_inicio_licencia:      initialData.fecha_inicio_licencia      || "",
+        fecha_vencimiento_licencia: initialData.fecha_vencimiento_licencia || "",
+        porcentaje_pago:            initialData.porcentaje_pago            ?? 30,
       });
     } else {
       setForm(EMPTY_FORM);
@@ -66,8 +75,11 @@ const ConductorForm = ({ initialData, onSubmit, submitting, submitError }) => {
     }
     onSubmit({
       ...form,
-      porcentaje_pago:      Number(form.porcentaje_pago),
-      vencimiento_licencia: form.vencimiento_licencia || null,
+      porcentaje_pago:            Number(form.porcentaje_pago),
+      vencimiento_licencia:       form.vencimiento_licencia       || null,
+      numero_licencia:            form.numero_licencia            || null,
+      fecha_inicio_licencia:      form.fecha_inicio_licencia      || null,
+      fecha_vencimiento_licencia: form.fecha_vencimiento_licencia || null,
     });
   };
 

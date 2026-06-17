@@ -3,7 +3,7 @@ import {
   CalendarDays,
   Edit3,
   HandCoins,
-  MessageSquareText,
+  Printer,
   Trash2,
   UserRound,
   Wallet,
@@ -16,36 +16,34 @@ const formatoDinero = (valor) => {
   })}`;
 };
 
-const obtenerEstiloEstado = (codigo) => {
-  const valor = (codigo || "").toLowerCase();
+const TipoBadge = ({ adelanto }) => {
+  const esAbono = adelanto.tipo === "ABONO";
+  const texto = adelanto.tipo_display || (esAbono ? "Abono" : "Adelanto");
 
-  if (valor.includes("aprob")) return "bg-green-100 text-green-700";
-  if (valor.includes("pag")) return "bg-emerald-100 text-emerald-700";
-  if (valor.includes("descont")) return "bg-blue-100 text-blue-700";
-  if (valor.includes("pend")) return "bg-yellow-100 text-yellow-700";
-  if (valor.includes("rechaz") || valor.includes("cancel")) {
-    return "bg-red-100 text-red-700";
-  }
-
-  return "bg-slate-100 text-slate-700";
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-black ${
+        esAbono ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+      }`}
+    >
+      {esAbono ? "✅" : "💸"} {texto}
+    </span>
+  );
 };
 
-const EstadoBadge = ({ adelanto }) => (
-  <span
-    className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${obtenerEstiloEstado(
-      adelanto.estado_codigo
-    )}`}
-  >
-    {adelanto.estado_nombre || "Sin estado"}
-  </span>
-);
-
-const AdelantoTable = ({ adelantos, loading, onEdit, onDelete, esTaxista }) => {
+const AdelantoTable = ({
+  adelantos,
+  loading,
+  onEdit,
+  onDelete,
+  onRecibo,
+  esTaxista,
+}) => {
   if (loading) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
         <p className="text-sm font-bold text-slate-500">
-          Cargando adelantos...
+          Cargando registros...
         </p>
       </div>
     );
@@ -59,12 +57,11 @@ const AdelantoTable = ({ adelantos, loading, onEdit, onDelete, esTaxista }) => {
         </div>
 
         <h3 className="mt-4 text-lg font-black text-slate-900">
-          No hay adelantos registrados
+          No hay registros
         </h3>
 
         <p className="mt-2 text-sm text-slate-500">
-          Registra adelantos para llevar el control de los anticipos por
-          jornada.
+          Registra adelantos y abonos para llevar el control por conductor.
         </p>
       </div>
     );
@@ -88,52 +85,71 @@ const AdelantoTable = ({ adelantos, loading, onEdit, onDelete, esTaxista }) => {
                 <p className="mt-2 flex items-center gap-2 text-xs font-bold text-slate-500">
                   <CalendarDays size={15} className="text-slate-400" />
                   {adelanto.fecha || "Sin fecha"}
-                  {adelanto.jornada ? ` · Jornada #${adelanto.jornada}` : ""}
                 </p>
               </div>
 
-              <EstadoBadge adelanto={adelanto} />
+              <TipoBadge adelanto={adelanto} />
             </div>
 
             <div className="mt-4 rounded-2xl bg-slate-50 p-3">
               <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
                 <Building2 size={17} className="text-[#E7A900]" />
-                {adelanto.sucursal_nombre || "Panel superadmin"}
+                {adelanto.sucursal_nombre || "Sin sucursal"}
               </p>
 
-              <p className="mt-2 flex items-start gap-2 text-sm font-medium text-slate-600">
-                <MessageSquareText size={17} className="mt-0.5 text-slate-400" />
+              <p className="mt-2 text-sm font-medium text-slate-600">
                 {adelanto.observacion || "Sin observación"}
               </p>
+
+              {adelanto.estado_nombre && (
+                <p className="mt-2 text-xs font-black text-slate-500">
+                  Estado: {adelanto.estado_nombre}
+                </p>
+              )}
             </div>
 
             <div className="mt-4 flex items-center justify-between gap-3">
-              <p className="flex items-center gap-2 text-base font-black text-[#C98A00]">
+              <p
+                className={`flex items-center gap-2 text-base font-black ${
+                  adelanto.tipo === "ABONO" ? "text-green-600" : "text-red-600"
+                }`}
+              >
                 <Wallet size={18} />
                 {formatoDinero(adelanto.monto)}
               </p>
 
-              {!esTaxista && (
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onEdit(adelanto)}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
-                    title="Editar"
-                  >
-                    <Edit3 size={18} />
-                  </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => onRecibo(adelanto)}
+                  className="flex h-10 items-center justify-center gap-1 rounded-xl bg-amber-50 px-3 text-xs font-black text-[#C98A00] transition hover:bg-amber-100"
+                  title="Recibo"
+                >
+                  <Printer size={16} /> Recibo
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => onDelete(adelanto)}
-                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
-                    title="Eliminar"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              )}
+                {!esTaxista && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => onEdit(adelanto)}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+                      title="Editar"
+                    >
+                      <Edit3 size={18} />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onDelete(adelanto)}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
+                      title="Eliminar"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -147,32 +163,27 @@ const AdelantoTable = ({ adelantos, loading, onEdit, onDelete, esTaxista }) => {
                 <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
                   Conductor
                 </th>
-
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
-                  Jornada
-                </th>
-
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
-                  Monto
-                </th>
-
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
-                  Estado
-                </th>
-
                 <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
                   Sucursal
                 </th>
-
+                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                  Tipo
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                  Monto
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                  Fecha
+                </th>
+                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                  Estado
+                </th>
                 <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
                   Observación
                 </th>
-
-                {!esTaxista && (
-                  <th className="px-5 py-4 text-right text-xs font-black uppercase tracking-wide text-slate-500">
-                    Acciones
-                  </th>
-                )}
+                <th className="px-5 py-4 text-right text-xs font-black uppercase tracking-wide text-slate-500">
+                  Acciones
+                </th>
               </tr>
             </thead>
 
@@ -188,78 +199,89 @@ const AdelantoTable = ({ adelantos, loading, onEdit, onDelete, esTaxista }) => {
                         <UserRound size={20} />
                       </div>
 
-                      <div>
-                        <p className="text-sm font-black text-slate-900">
-                          {adelanto.conductor_nombre || "Sin conductor"}
-                        </p>
-
-                        <p className="mt-1 text-xs font-medium text-slate-500">
-                          ID: {adelanto.conductor || "N/A"}
-                        </p>
-                      </div>
+                      <p className="text-sm font-black text-slate-900">
+                        {adelanto.conductor_nombre || "Sin conductor"}
+                      </p>
                     </div>
                   </td>
 
                   <td className="px-5 py-4">
-                    <p className="flex items-center gap-2 text-sm font-black text-slate-900">
-                      <CalendarDays size={16} className="text-slate-400" />
-                      {adelanto.fecha || "Sin fecha"}
+                    <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                      <Building2 size={16} className="text-[#E7A900]" />
+                      {adelanto.sucursal_nombre || "Sin sucursal"}
                     </p>
-
-                    {adelanto.jornada && (
-                      <p className="mt-1 text-xs font-bold text-blue-600">
-                        Jornada #{adelanto.jornada}
-                      </p>
-                    )}
                   </td>
 
                   <td className="px-5 py-4">
-                    <p className="flex items-center gap-2 text-sm font-black text-[#C98A00]">
+                    <TipoBadge adelanto={adelanto} />
+                  </td>
+
+                  <td className="px-5 py-4">
+                    <p
+                      className={`flex items-center gap-2 text-sm font-black ${
+                        adelanto.tipo === "ABONO"
+                          ? "text-green-600"
+                          : "text-red-600"
+                      }`}
+                    >
                       <Wallet size={16} />
                       {formatoDinero(adelanto.monto)}
                     </p>
                   </td>
 
                   <td className="px-5 py-4">
-                    <EstadoBadge adelanto={adelanto} />
-                  </td>
-
-                  <td className="px-5 py-4">
                     <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                      <Building2 size={16} className="text-[#E7A900]" />
-                      {adelanto.sucursal_nombre || "Panel superadmin"}
+                      <CalendarDays size={16} className="text-slate-400" />
+                      {adelanto.fecha || "Sin fecha"}
                     </p>
                   </td>
 
                   <td className="px-5 py-4">
-                    <p className="max-w-[240px] truncate text-sm font-medium text-slate-500">
+                    <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+                      {adelanto.estado_nombre || "Sin estado"}
+                    </span>
+                  </td>
+
+                  <td className="px-5 py-4">
+                    <p className="max-w-[220px] truncate text-sm font-medium text-slate-500">
                       {adelanto.observacion || "Sin observación"}
                     </p>
                   </td>
 
-                  {!esTaxista && (
-                    <td className="px-5 py-4">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => onEdit(adelanto)}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
-                          title="Editar"
-                        >
-                          <Edit3 size={18} />
-                        </button>
+                  <td className="px-5 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onRecibo(adelanto)}
+                        className="flex h-10 items-center justify-center gap-1 rounded-xl bg-amber-50 px-3 text-xs font-black text-[#C98A00] transition hover:bg-amber-100"
+                        title="Recibo"
+                      >
+                        <Printer size={16} /> Recibo
+                      </button>
 
-                        <button
-                          type="button"
-                          onClick={() => onDelete(adelanto)}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
-                          title="Eliminar"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    </td>
-                  )}
+                      {!esTaxista && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => onEdit(adelanto)}
+                            className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+                            title="Editar"
+                          >
+                            <Edit3 size={18} />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => onDelete(adelanto)}
+                            className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
+                            title="Eliminar"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -20,12 +20,34 @@ export const deleteAdelanto = async (id) => {
   return response.data;
 };
 
-export const getJornadas = async () => {
-  const response = await api.get("jornadas/");
+export const getConductores = async () => {
+  const response = await api.get("conductores/");
+  return response.data;
+};
+
+export const getSucursales = async () => {
+  const response = await api.get("sucursales/");
   return response.data;
 };
 
 export const getEstadosAdelanto = async () => {
   const response = await api.get("estados-adelanto/");
   return response.data;
+};
+
+// Abre el recibo imprimible en una pestaña nueva.
+// Se descarga con axios para que viaje el token de autenticación
+// (un window.open directo no enviaría el header Authorization).
+export const getRecibo = async (id) => {
+  const response = await api.get(`adelantos/${id}/recibo/`, {
+    responseType: "blob",
+  });
+
+  const url = URL.createObjectURL(response.data);
+  const ventana = window.open(url, "_blank");
+
+  // Libera el objeto URL cuando la pestaña termine de cargar.
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+
+  return ventana;
 };

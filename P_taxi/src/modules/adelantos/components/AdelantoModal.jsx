@@ -8,23 +8,26 @@ const AdelantoModal = ({
   saving,
   loadingCatalogos,
   adelantoEditando,
-  jornadas = [],
+  tipoInicial = "ADELANTO",
+  conductores = [],
+  sucursales = [],
   estadosAdelanto = [],
-  esSuperAdmin = false,
-  esAdminSucursal = false,
-  esTaxista = false,
 }) => {
   if (!open) return null;
 
-  const titulo = adelantoEditando
-    ? "Editar adelanto"
-    : esTaxista
-    ? "Registrar mi adelanto"
-    : "Nuevo adelanto";
+  const esAbono = tipoInicial === "ABONO";
 
-  const descripcion = esTaxista
-    ? "Registra adelantos asociados a tu jornada."
-    : "Registra adelantos asociados a una jornada.";
+  const titulo = adelantoEditando
+    ? esAbono
+      ? "Editar abono"
+      : "Editar adelanto"
+    : esAbono
+    ? "Registrar abono ✅"
+    : "Nuevo adelanto 💸";
+
+  const descripcion = esAbono
+    ? "Registra un abono (dinero que entra / pago del conductor)."
+    : "Registra un adelanto (dinero que sale hacia el conductor).";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-4 sm:px-4 sm:py-6">
@@ -67,15 +70,14 @@ const AdelantoModal = ({
         <div className="max-h-[calc(94vh-92px)] overflow-y-auto">
           <AdelantoForm
             adelantoEditando={adelantoEditando}
-            jornadas={jornadas}
+            tipoInicial={tipoInicial}
+            conductores={conductores}
+            sucursales={sucursales}
             estadosAdelanto={estadosAdelanto}
             onSave={onSave}
             onCancel={onClose}
             saving={saving}
             loadingCatalogos={loadingCatalogos}
-            esSuperAdmin={esSuperAdmin}
-            esAdminSucursal={esAdminSucursal}
-            esTaxista={esTaxista}
           />
         </div>
       </div>
