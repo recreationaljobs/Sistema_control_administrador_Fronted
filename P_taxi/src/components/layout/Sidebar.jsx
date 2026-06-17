@@ -23,7 +23,7 @@ const menuItems = [
     label: "Dashboard",
     path: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["superadmin", "admin_sucursal", "taxista"],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Sucursales",
@@ -37,17 +37,17 @@ const menuItems = [
     icon: CalendarDays,
     roles: ["superadmin", "admin_sucursal", "taxista"],
   },
-  {
-    label: "Ingresos",
-    path: "/ingresos",
-    icon: Wallet,
-    roles: ["superadmin", "admin_sucursal"],
-  },
+  // {
+  //   label: "Ingresos",
+  //   path: "/ingresos",
+  //   icon: Wallet,
+  //   roles: ["superadmin", "admin_sucursal"],
+  // },
   {
     label: "Gastos",
     path: "/gastos",
     icon: BriefcaseBusiness,
-    roles: ["superadmin", "admin_sucursal", "taxista"],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Adelantos",
@@ -77,14 +77,14 @@ const menuItems = [
     label: "Mantenimiento",
     path: "/mantenimiento",
     icon: Wrench,
-    roles: ["superadmin", "admin_sucursal", "taxista"],
-  },
-  {
-    label: "Reportes",
-    path: "/reportes",
-    icon: FileBarChart,
     roles: ["superadmin", "admin_sucursal"],
   },
+  // {
+  //   label: "Reportes",
+  //   path: "/reportes",
+  //   icon: FileBarChart,
+  //   roles: ["superadmin", "admin_sucursal"],
+  // },
   {
     label: "Usuarios",
     path: "/usuarios",

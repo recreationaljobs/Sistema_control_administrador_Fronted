@@ -39,11 +39,17 @@ const JornadaModal = ({
 
             <div>
               <h2 className="text-xl font-black text-slate-950">
-                {jornadaEditando ? "Editar jornada" : "Nueva jornada"}
+                {jornadaEditando?.modoFormulario === "cerrar"
+                  ? "Cerrar jornada"
+                  : jornadaEditando
+                  ? "Editar jornada"
+                  : "Nueva jornada"}
               </h2>
 
-              <p className="text-sm font-medium text-slate-500">
-                Registra kilometraje, ingreso diario y observaciones del trabajo.
+             <p className="text-sm font-medium text-slate-500">
+                {jornadaEditando?.modoFormulario === "cerrar"
+                  ? "Ingresa el kilometraje final al terminar la jornada diaria."
+                  : "Registra el kilometraje inicial y los datos operativos del día."}
               </p>
             </div>
           </div>

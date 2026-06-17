@@ -15,6 +15,16 @@ export const updateJornada = async (id, data) => {
   return response.data;
 };
 
+export const cerrarJornada = async (id, data) => {
+  const response = await api.patch(`jornadas/${id}/cerrar/`, data);
+  return response.data;
+};
+
+export const registrarIngresoJornada = async (id, data) => {
+  const response = await api.patch(`jornadas/${id}/registrar-ingreso/`, data);
+  return response.data;
+};
+
 export const deleteJornada = async (id) => {
   const response = await api.delete(`jornadas/${id}/`);
   return response.data;
