@@ -10,6 +10,7 @@ import AsignacionesPage from "../modules/asignaciones/pages/AsignacionesPage";
 import JornadasPage from "../modules/jornadas/pages/JornadasPage";
 import GastosPage from "../modules/gastos/pages/GastosPage";
 import AdelantosPage from "../modules/adelantos/pages/AdelantosPage";
+import LiquidacionesPage from "../modules/liquidaciones/pages/LiquidacionesPage";
 import MantenimientoPage from "../modules/mantenimiento/pages/MantenimientoPage";
 import ReportesPage from "../modules/reportes/pages/ReportesPage";
 import ConfiguracionPage from "../modules/configuracion/pages/ConfiguracionPage";
@@ -137,6 +138,15 @@ const AppRouter = () => {
             element={
               <RoleRoute allowedRoles={["superadmin", "admin_sucursal", "taxista"]}>
                 <AdelantosPage />
+              </RoleRoute>
+            }
+          />
+
+          <Route
+            path="liquidaciones"
+            element={
+              <RoleRoute allowedRoles={["superadmin", "admin_sucursal"]}>
+                <LiquidacionesPage />
               </RoleRoute>
             }
           />

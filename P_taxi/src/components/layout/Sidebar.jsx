@@ -56,6 +56,12 @@ const menuItems = [
     roles: ["superadmin", "admin_sucursal", "taxista"],
   },
   {
+    label: "Liquidaciones",
+    path: "/liquidaciones",
+    icon: Wallet,
+    roles: ["superadmin", "admin_sucursal"],
+  },
+  {
     label: "Conductores",
     path: "/conductores",
     icon: UserRound,

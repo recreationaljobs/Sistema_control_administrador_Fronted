@@ -3,7 +3,7 @@ import {
   X,
   LayoutDashboard,
   CalendarDays,
-  // Wallet,
+  Wallet,
   BriefcaseBusiness,
   HandCoins,
   UserRound,
@@ -54,6 +54,12 @@ const menuItems = [
     path: "/adelantos",
     icon: HandCoins,
     roles: ["superadmin", "admin_sucursal", "taxista"],
+  },
+  {
+    label: "Liquidaciones",
+    path: "/liquidaciones",
+    icon: Wallet,
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Conductores",
