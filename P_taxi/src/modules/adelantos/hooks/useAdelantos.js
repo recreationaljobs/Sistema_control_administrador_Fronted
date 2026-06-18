@@ -18,13 +18,34 @@ const normalizarLista = (data) => {
 };
 
 const obtenerCodigoRol = (auth) => {
-  return (
-    auth?.rol ||
-    auth?.user?.rol ||
-    auth?.user?.rol_codigo ||
-    auth?.user?.rol?.codigo ||
-    ""
-  );
+  const rolDirecto = auth?.rol;
+  const user = auth?.user;
+
+  if (typeof rolDirecto === "string") return rolDirecto;
+
+  if (typeof user?.rol_codigo === "string") return user.rol_codigo;
+
+  if (typeof user?.rol?.codigo === "string") return user.rol.codigo;
+
+  if (typeof user?.rol === "string") return user.rol;
+
+  return "";
+};
+
+const esRolSuperAdmin = (rol) => {
+  return rol === "superadmin" || rol === "super_admin";
+};
+
+const esRolAdminSucursal = (rol) => {
+  return rol === "admin_sucursal";
+};
+
+const esRolTaxista = (rol) => {
+  return rol === "taxista";
+};
+
+const puedeGestionar = (rol) => {
+  return esRolSuperAdmin(rol) || esRolAdminSucursal(rol);
 };
 
 const obtenerMensajeError = (err, mensajeDefault) => {
@@ -60,6 +81,11 @@ export const useAdelantos = () => {
   const auth = useAuth();
   const rol = obtenerCodigoRol(auth);
 
+  const esSuperAdmin = esRolSuperAdmin(rol);
+  const esAdminSucursal = esRolAdminSucursal(rol);
+  const esTaxista = esRolTaxista(rol);
+  const esAdminOSuperAdmin = puedeGestionar(rol);
+
   const [adelantos, setAdelantos] = useState([]);
   const [conductores, setConductores] = useState([]);
   const [sucursales, setSucursales] = useState([]);
@@ -76,10 +102,6 @@ export const useAdelantos = () => {
   const [filtroTipo, setFiltroTipo] = useState("TODOS");
   const [filtroConductor, setFiltroConductor] = useState("");
   const [error, setError] = useState("");
-
-  const esSuperAdmin = rol === "superadmin" || rol === "super_admin";
-  const esAdminSucursal = rol === "admin_sucursal";
-  const esTaxista = rol === "taxista";
 
   const cargarAdelantos = async () => {
     try {
@@ -102,15 +124,28 @@ export const useAdelantos = () => {
       setLoadingCatalogos(true);
       setError("");
 
-      const [conductoresData, sucursalesData, estadosData] = await Promise.all([
+      const [conductoresData, estadosData] = await Promise.all([
         getConductores(),
-        getSucursales(),
         getEstadosAdelanto(),
       ]);
 
       setConductores(normalizarLista(conductoresData));
-      setSucursales(normalizarLista(sucursalesData));
       setEstadosAdelanto(normalizarLista(estadosData));
+
+      if (esAdminOSuperAdmin) {
+        try {
+          const sucursalesData = await getSucursales();
+          setSucursales(normalizarLista(sucursalesData));
+        } catch (err) {
+          console.warn(
+            "No se pudieron cargar sucursales. El módulo continuará sin sucursales.",
+            err?.response?.data || err
+          );
+          setSucursales([]);
+        }
+      } else {
+        setSucursales([]);
+      }
     } catch (err) {
       setError(
         obtenerMensajeError(
@@ -124,6 +159,11 @@ export const useAdelantos = () => {
   };
 
   const abrirModalCrear = (tipo = "ADELANTO") => {
+    if (!esAdminOSuperAdmin) {
+      setError("No tienes permiso para registrar adelantos o abonos.");
+      return;
+    }
+
     setError("");
     setAdelantoEditando(null);
     setTipoInicial(tipo);
@@ -131,6 +171,11 @@ export const useAdelantos = () => {
   };
 
   const abrirModalEditar = (adelanto) => {
+    if (!esAdminOSuperAdmin) {
+      setError("No tienes permiso para modificar registros.");
+      return;
+    }
+
     setError("");
     setAdelantoEditando(adelanto);
     setTipoInicial(adelanto?.tipo || "ADELANTO");
@@ -143,62 +188,58 @@ export const useAdelantos = () => {
   };
 
   const guardarAdelanto = async (form) => {
-    try {
-      setSaving(true);
-      setError("");
+  if (!esAdminOSuperAdmin) {
+    setError("No tienes permiso para guardar adelantos o abonos.");
+    return;
+  }
 
-      const payload = {
-        tipo: form.tipo || "ADELANTO",
-        monto: form.monto ? Number(form.monto) : 0,
-        observacion: form.observacion || "",
-      };
+  try {
+    setSaving(true);
+    setError("");
 
-      if (form.conductor) {
-        payload.conductor = Number(form.conductor);
-      }
+    const payload = {
+      tipo: form.tipo || "ADELANTO",
+      monto: form.monto ? Number(form.monto) : 0,
+      observacion: form.observacion || "",
+    };
 
-      if (form.sucursal) {
-        payload.sucursal = Number(form.sucursal);
-      }
-
-      if (form.estado) {
-        payload.estado = Number(form.estado);
-      } else {
-        payload.estado = null;
-      }
-
-      if (!payload.conductor) {
-        setError("Debes seleccionar el conductor.");
-        return;
-      }
-
-      if (!payload.sucursal) {
-        setError("Debes seleccionar la sucursal.");
-        return;
-      }
-
-      if (payload.monto <= 0) {
-        setError("El monto debe ser mayor que cero.");
-        return;
-      }
-
-      if (adelantoEditando) {
-        await updateAdelanto(adelantoEditando.id, payload);
-      } else {
-        await createAdelanto(payload);
-      }
-
-      await cargarAdelantos();
-      cerrarModal();
-    } catch (err) {
-      setError(obtenerMensajeError(err, "No se pudo guardar el registro."));
-    } finally {
-      setSaving(false);
+    if (form.conductor) {
+      payload.conductor = Number(form.conductor);
     }
-  };
+
+    if (form.estado) {
+      payload.estado = Number(form.estado);
+    } else {
+      payload.estado = null;
+    }
+
+    if (!payload.conductor) {
+      setError("Debes seleccionar el conductor.");
+      return;
+    }
+
+    if (payload.monto <= 0) {
+      setError("El monto debe ser mayor que cero.");
+      return;
+    }
+
+    if (adelantoEditando) {
+      await updateAdelanto(adelantoEditando.id, payload);
+    } else {
+      await createAdelanto(payload);
+    }
+
+    await cargarAdelantos();
+    cerrarModal();
+  } catch (err) {
+    setError(obtenerMensajeError(err, "No se pudo guardar el registro."));
+  } finally {
+    setSaving(false);
+  }
+};
 
   const eliminarAdelanto = async (adelanto) => {
-    if (esTaxista) {
+    if (!esAdminOSuperAdmin) {
       setError("No tienes permiso para eliminar registros.");
       return;
     }
@@ -229,9 +270,13 @@ export const useAdelantos = () => {
   const verRecibo = async (adelanto) => {
     try {
       setError("");
-      await getRecibo(adelanto.id);
+
+      const data = await getRecibo(adelanto.id);
+
+      return data;
     } catch (err) {
       setError(obtenerMensajeError(err, "No se pudo abrir el recibo."));
+      return null;
     }
   };
 
@@ -268,7 +313,8 @@ export const useAdelantos = () => {
   useEffect(() => {
     cargarAdelantos();
     cargarCatalogos();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rol]);
 
   return {
     adelantos,
@@ -304,6 +350,7 @@ export const useAdelantos = () => {
     esSuperAdmin,
     esAdminSucursal,
     esTaxista,
+    esAdminOSuperAdmin,
 
     cargarAdelantos,
     cargarCatalogos,
