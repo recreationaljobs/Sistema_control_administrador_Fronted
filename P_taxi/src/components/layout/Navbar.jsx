@@ -1,8 +1,49 @@
+import { useEffect, useState } from "react";
 import { Bell, CalendarDays, Menu } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
+import api from "../../api/axios";
 
 const Navbar = ({ onOpenMobileMenu }) => {
   const { user } = useAuth();
+  const [notifCount, setNotifCount] = useState(0);
+
+  useEffect(() => {
+    let activo = true;
+
+    const cargarAlertas = async () => {
+      try {
+        const { data } = await api.get("mantenimiento/alertas/");
+        if (!activo) return;
+
+        const alertas = Array.isArray(data) ? data : data?.results ?? [];
+        // El endpoint ya devuelve solo alertas, pero filtramos por seguridad
+        // los mantenimientos vencidos / con km cumplido.
+        const vencidas = alertas.filter((alerta) => {
+          if (alerta?.estado === "vencido" || alerta?.nivel === "danger") {
+            return true;
+          }
+          if (
+            alerta?.km_actual != null &&
+            alerta?.km_proximo_mantenimiento != null
+          ) {
+            return alerta.km_actual >= alerta.km_proximo_mantenimiento;
+          }
+          // Si no hay datos para filtrar, contamos la alerta tal cual.
+          return true;
+        });
+
+        setNotifCount(vencidas.length);
+      } catch {
+        if (activo) setNotifCount(0);
+      }
+    };
+
+    cargarAlertas();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
 
   return (
     <header className="sticky top-0 z-30 flex h-[92px] items-center justify-between bg-[#F8FAFC] px-4 md:px-6 lg:px-7">
@@ -40,9 +81,11 @@ const Navbar = ({ onOpenMobileMenu }) => {
         >
           <Bell size={21} />
 
-          <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-black text-white">
-            3
-          </span>
+          {notifCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-black text-white">
+              {notifCount > 9 ? "9+" : notifCount}
+            </span>
+          )}
         </button>
       </div>
     </header>
