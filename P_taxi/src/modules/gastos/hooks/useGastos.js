@@ -172,6 +172,7 @@ export const useGastos = () => {
       setError("");
 
     const payload = {
+      jornada: form.jornada? Number(form.jornada): null,
       vehiculo: form.vehiculo ? Number(form.vehiculo) : null,
       tipo_gasto: form.tipo_gasto ? Number(form.tipo_gasto) : null,
       estado: form.estado ? Number(form.estado) : null,

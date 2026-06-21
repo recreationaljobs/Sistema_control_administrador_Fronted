@@ -10,6 +10,7 @@ import {
   updateMantenimiento,
 } from "../services/mantenimientoService";
 
+
 const normalizarLista = (data) => {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.results)) return data.results;
@@ -217,14 +218,28 @@ export const useMantenimiento = () => {
         return;
       }
 
-      if (mantenimientoEditando) {
-        await updateMantenimiento(mantenimientoEditando.id, payload);
+      const estabaEditando =
+        Boolean(mantenimientoEditando);
+
+      if (estabaEditando) {
+        await updateMantenimiento(
+          mantenimientoEditando.id,
+          payload
+        );
       } else {
         await createMantenimiento(payload);
       }
 
       await cargarMantenimientos();
       await cargarCatalogos();
+
+      cerrarModal();
+
+      toastExito({
+        titulo: estabaEditando
+          ? "Mantenimiento actualizado correctamente"
+          : "Mantenimiento registrado correctamente",
+      });
       cerrarModal();
     } catch (err) {
       setError(obtenerMensajeError(err, "No se pudo guardar el mantenimiento."));
@@ -233,35 +248,68 @@ export const useMantenimiento = () => {
     }
   };
 
-  const eliminarMantenimiento = async (mantenimiento) => {
-    if (esTaxista) {
-      setError("No tienes permiso para eliminar mantenimiento.");
-      return;
-    }
+ const eliminarMantenimiento = async (mantenimiento) => {
+  if (esTaxista) {
+    await mostrarError({
+      titulo: "Acceso denegado",
+      mensaje:
+        "No tienes permiso para eliminar mantenimientos.",
+    });
 
-    const confirmar = window.confirm(
-      `¿Seguro que deseas eliminar este mantenimiento de C$ ${Number(
-        mantenimiento.costo || 0
-      ).toFixed(2)}?`
+    return;
+  }
+
+  const confirmado = await confirmarEliminacion({
+    titulo: "¿Eliminar mantenimiento?",
+    mensaje: `Se eliminará el mantenimiento del vehículo ${
+      mantenimiento.vehiculo_placa || "seleccionado"
+    }, con un costo de C$ ${Number(
+      mantenimiento.costo || 0
+    ).toLocaleString("es-NI", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}.`,
+
+    textoConfirmar: "Sí, eliminar",
+    textoCancelar: "Conservar",
+  });
+
+  if (!confirmado) {
+    return;
+  }
+
+  try {
+    setSaving(true);
+    setError("");
+
+    await deleteMantenimiento(
+      mantenimiento.id
     );
 
-    if (!confirmar) return;
+    await cargarMantenimientos();
+    await cargarCatalogos();
 
-    try {
-      setSaving(true);
-      setError("");
+    toastExito({
+      titulo:
+        "Mantenimiento eliminado correctamente",
+    });
+  } catch (err) {
+    const mensaje = obtenerMensajeError(
+      err,
+      "No se pudo eliminar el mantenimiento."
+    );
 
-      await deleteMantenimiento(mantenimiento.id);
-      await cargarMantenimientos();
-      await cargarCatalogos();
-    } catch (err) {
-      setError(
-        obtenerMensajeError(err, "No se pudo eliminar el mantenimiento.")
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+    setError(mensaje);
+
+    await mostrarError({
+      titulo:
+        "No se pudo eliminar el mantenimiento",
+      mensaje,
+    });
+  } finally {
+    setSaving(false);
+  }
+};
 
   const elegirFecha = async () => {
     const fecha = window.prompt(

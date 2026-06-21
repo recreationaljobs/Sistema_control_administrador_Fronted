@@ -5,6 +5,11 @@ export const getConductores = async () => {
   return response.data;
 };
 
+export const getConductorById = async (id) => {
+  const response = await api.get(`conductores/${id}/`);
+  return response.data;
+};
+
 export const createConductor = async (data) => {
   const response = await api.post("conductores/", data);
   return response.data;
@@ -16,11 +21,5 @@ export const updateConductor = async (id, data) => {
 };
 
 export const deleteConductor = async (id) => {
-  const response = await api.delete(`conductores/${id}/`);
-  return response.data;
-};
-
-export const getSucursales = async () => {
-  const response = await api.get("sucursales/");
-  return response.data;
+  await api.delete(`conductores/${id}/`);
 };

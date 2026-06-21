@@ -25,12 +25,14 @@ const obtenerBadge = (estadoCodigo = "", estadoNombre = "") => {
   return "bg-slate-100 text-slate-600";
 };
 
-const RecentJornadas = ({ jornadas = [] }) => {
+const RecentJornadas = ({
+  jornadas = [],
+  titulo = "Jornadas de hoy",}) => {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-5 flex items-center justify-between">
         <h3 className="text-lg font-black text-slate-950">
-          Jornadas de hoy
+          {titulo}
         </h3>
 
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">

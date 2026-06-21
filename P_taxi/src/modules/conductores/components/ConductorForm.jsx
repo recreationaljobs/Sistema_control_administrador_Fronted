@@ -1,265 +1,634 @@
-import { useEffect, useState } from "react";
 
-const initialForm = {
+import { useEffect, useState } from "react";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
+
+const EMPTY_FORM = {
   nombre: "",
   apellido: "",
-  telefono: "",
   cedula: "",
+  telefono: "",
   direccion: "",
-  licencia: "",
-  vencimiento_licencia: "",
-  activo: true,
+  numero_licencia: "",
+  fecha_inicio_licencia: "",
+  fecha_vencimiento_licencia: "",
+};
+
+const obtenerFechaActual = () => {
+  const fecha = new Date();
+
+  const year = fecha.getFullYear();
+  const month = String(
+    fecha.getMonth() + 1
+  ).padStart(2, "0");
+
+  const day = String(
+    fecha.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const obtenerFormularioInicial = (
+  initialData
+) => {
+  if (!initialData) {
+    return {
+      ...EMPTY_FORM,
+    };
+  }
+
+  return {
+    nombre:
+      initialData.nombre || "",
+
+    apellido:
+      initialData.apellido || "",
+
+    cedula:
+      initialData.cedula || "",
+
+    telefono:
+      initialData.telefono || "",
+
+    direccion:
+      initialData.direccion || "",
+
+    numero_licencia:
+      initialData.numero_licencia || "",
+
+    fecha_inicio_licencia:
+      initialData.fecha_inicio_licencia || "",
+
+    fecha_vencimiento_licencia:
+      initialData.fecha_vencimiento_licencia || "",
+  };
+};
+
+const validarFormulario = (form) => {
+  const errors = {};
+
+  if (!form.nombre.trim()) {
+    errors.nombre =
+      "El nombre es obligatorio.";
+  }
+
+  if (!form.apellido.trim()) {
+    errors.apellido =
+      "El apellido es obligatorio.";
+  }
+
+  if (!form.cedula.trim()) {
+    errors.cedula =
+      "La cédula es obligatoria.";
+  }
+
+  if (!form.numero_licencia.trim()) {
+    errors.numero_licencia =
+      "El número de licencia es obligatorio.";
+  }
+
+  if (!form.fecha_inicio_licencia) {
+    errors.fecha_inicio_licencia =
+      "La fecha de emisión es obligatoria.";
+  }
+
+  if (!form.fecha_vencimiento_licencia) {
+    errors.fecha_vencimiento_licencia =
+      "La fecha de vencimiento es obligatoria.";
+  }
+
+  if (
+    form.fecha_inicio_licencia &&
+    form.fecha_vencimiento_licencia &&
+    form.fecha_vencimiento_licencia <=
+      form.fecha_inicio_licencia
+  ) {
+    errors.fecha_vencimiento_licencia =
+      "La fecha de vencimiento debe ser posterior a la fecha de emisión.";
+  }
+
+  return errors;
+};
+
+const ErrorCampo = ({ mensaje }) => {
+  if (!mensaje) {
+    return null;
+  }
+
+  return (
+    <p className="mt-1.5 text-xs font-semibold text-red-600">
+      {mensaje}
+    </p>
+  );
 };
 
 const ConductorForm = ({
-  conductorEditando,
-  onSave,
-  onCancel,
-  saving,
-  esSuperAdmin,
-  esAdminSucursal,
+  initialData,
+  onSubmit,
+  submitting = false,
+  submitError = "",
 }) => {
-  const [form, setForm] = useState(initialForm);
-  const [formError, setFormError] = useState("");
+  const [form, setForm] = useState({
+    ...EMPTY_FORM,
+  });
+
+  const [errors, setErrors] =
+    useState({});
+
+  const hoy = obtenerFechaActual();
 
   useEffect(() => {
-    if (conductorEditando) {
-      setForm({
-        nombre: conductorEditando.nombre || "",
-        apellido: conductorEditando.apellido || "",
-        telefono: conductorEditando.telefono || "",
-        cedula: conductorEditando.cedula || "",
-        direccion: conductorEditando.direccion || "",
-        licencia: conductorEditando.licencia || "",
-        vencimiento_licencia: conductorEditando.vencimiento_licencia || "",
-        activo:
-          typeof conductorEditando.activo === "boolean"
-            ? conductorEditando.activo
-            : true,
-      });
-    } else {
-      setForm(initialForm);
+    setForm(
+      obtenerFormularioInicial(
+        initialData
+      )
+    );
+
+    setErrors({});
+  }, [initialData]);
+
+  useEffect(() => {
+    if (!submitError) {
+      return;
     }
 
-    setFormError("");
-  }, [conductorEditando]);
+    Swal.fire({
+      title: "No se pudo guardar",
+      text: submitError,
+      icon: "error",
+      confirmButtonColor: "#3085d6",
+      confirmButtonText: "Entendido",
+    });
+  }, [submitError]);
 
   const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
+    const {
+      name,
+      value,
+    } = event.target;
 
     setForm((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
 
-    if (formError) {
-      setFormError("");
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (
+    event
+  ) => {
     event.preventDefault();
 
-    if (!form.nombre.trim()) {
-      setFormError("El nombre del conductor es obligatorio.");
+    if (submitting) {
       return;
     }
 
-    if (!form.apellido.trim()) {
-      setFormError("El apellido del conductor es obligatorio.");
+    const nuevosErrores =
+      validarFormulario(form);
+
+    if (
+      Object.keys(
+        nuevosErrores
+      ).length > 0
+    ) {
+      setErrors(
+        nuevosErrores
+      );
+
+      const primerError =
+        Object.values(
+          nuevosErrores
+        )[0];
+
+      await Swal.fire({
+        title: "Revisa los datos",
+        text: primerError,
+        icon: "warning",
+        confirmButtonColor:
+          "#3085d6",
+        confirmButtonText:
+          "Entendido",
+      });
+
       return;
     }
 
-    if (!form.cedula.trim()) {
-      setFormError("La cédula del conductor es obligatoria.");
+    const resultado =
+      await Swal.fire({
+        title: initialData
+          ? "¿Actualizar conductor?"
+          : "¿Registrar conductor?",
+
+        text: initialData
+          ? "Se guardarán los cambios realizados."
+          : "El nuevo conductor será registrado en el sistema.",
+
+        icon: "warning",
+
+        showCancelButton: true,
+
+        confirmButtonColor:
+          "#3085d6",
+
+        cancelButtonColor:
+          "#d33",
+
+        confirmButtonText:
+          initialData
+            ? "Sí, actualizar"
+            : "Sí, registrar",
+
+        cancelButtonText:
+          "Cancelar",
+      });
+
+    if (!resultado.isConfirmed) {
       return;
     }
 
-    if (!form.licencia.trim()) {
-      setFormError("La licencia del conductor es obligatoria.");
-      return;
-    }
+    await onSubmit({
+      nombre:
+        form.nombre.trim(),
 
-    onSave({
-      ...form,
-      nombre: form.nombre.trim(),
-      apellido: form.apellido.trim(),
-      telefono: form.telefono.trim(),
-      cedula: form.cedula.trim(),
-      direccion: form.direccion.trim(),
-      licencia: form.licencia.trim(),
-      vencimiento_licencia: form.vencimiento_licencia || null,
+      apellido:
+        form.apellido.trim(),
+
+      cedula:
+        form.cedula.trim(),
+
+      telefono:
+        form.telefono.trim() ||
+        null,
+
+      direccion:
+        form.direccion.trim() ||
+        null,
+
+      numero_licencia:
+        form.numero_licencia.trim(),
+
+      fecha_inicio_licencia:
+        form.fecha_inicio_licencia,
+
+      fecha_vencimiento_licencia:
+        form.fecha_vencimiento_licencia,
+
+      /*
+       * No enviamos porcentaje_pago.
+       * Se obtiene desde ConfiguracionSistema.
+       */
+
+      /*
+       * Conserva el estado actual al editar.
+       * Los conductores nuevos se crean activos.
+       */
+      activo:
+        initialData?.activo ??
+        true,
     });
   };
 
+  const inputClass = (campo) => {
+    return `
+      w-full
+      rounded-xl
+      border
+      bg-white
+      px-4
+      py-3
+      text-sm
+      font-semibold
+      text-slate-800
+      outline-none
+      transition
+      placeholder:text-slate-400
+      disabled:cursor-not-allowed
+      disabled:bg-slate-100
+      disabled:text-slate-500
+      ${
+        errors[campo]
+          ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100"
+          : "border-slate-300 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
+      }
+    `;
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="px-6 py-6">
-      {formError && (
-        <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-          {formError}
-        </div>
-      )}
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6"
+      noValidate
+    >
+      <section className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:p-6">
+        <div className="mb-5">
+          <h3 className="text-lg font-black text-slate-900">
+            Datos personales
+          </h3>
 
-      {esSuperAdmin && (
-        <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
-          Este conductor será registrado en el panel general del superadministrador y no requiere sucursal.
-        </div>
-      )}
-
-      {esAdminSucursal && (
-        <div className="mb-5 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-700">
-          Este conductor será registrado automáticamente en tu sucursal.
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <div>
-          <label className="mb-2 block text-sm font-bold text-slate-700">
-            Nombre
-          </label>
-
-          <input
-            type="text"
-            name="nombre"
-            value={form.nombre}
-            onChange={handleChange}
-            placeholder="Nombre del conductor"
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
-          />
+          <p className="mt-1 text-sm font-medium text-slate-500">
+            Información general del conductor.
+          </p>
         </div>
 
-        <div>
-          <label className="mb-2 block text-sm font-bold text-slate-700">
-            Apellido
-          </label>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-bold text-slate-700">
+              Nombre
 
-          <input
-            type="text"
-            name="apellido"
-            value={form.apellido}
-            onChange={handleChange}
-            placeholder="Apellido del conductor"
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
-          />
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-bold text-slate-700">
-            Cédula
-          </label>
-
-          <input
-            type="text"
-            name="cedula"
-            value={form.cedula}
-            onChange={handleChange}
-            placeholder="Número de cédula"
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
-          />
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-bold text-slate-700">
-            Teléfono
-          </label>
-
-          <input
-            type="text"
-            name="telefono"
-            value={form.telefono}
-            onChange={handleChange}
-            placeholder="Ejemplo: 8888 8888"
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
-          />
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-bold text-slate-700">
-            Licencia
-          </label>
-
-          <input
-            type="text"
-            name="licencia"
-            value={form.licencia}
-            onChange={handleChange}
-            placeholder="Número de licencia"
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
-          />
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-bold text-slate-700">
-            Vencimiento de licencia
-          </label>
-
-          <input
-            type="date"
-            name="vencimiento_licencia"
-            value={form.vencimiento_licencia}
-            onChange={handleChange}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="mb-2 block text-sm font-bold text-slate-700">
-            Dirección
-          </label>
-
-          <textarea
-            name="direccion"
-            value={form.direccion}
-            onChange={handleChange}
-            placeholder="Dirección del conductor"
-            rows="3"
-            className="w-full resize-none rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="flex cursor-pointer items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-            <div>
-              <p className="text-sm font-black text-slate-900">
-                Conductor activo
-              </p>
-
-              <p className="mt-1 text-xs font-medium text-slate-500">
-                Si está activo, puede ser asignado a un vehículo.
-              </p>
-            </div>
+              <span className="ml-1 text-red-500">
+                *
+              </span>
+            </label>
 
             <input
-              type="checkbox"
-              name="activo"
-              checked={form.activo}
-              onChange={handleChange}
-              className="h-5 w-5 rounded border-slate-300 text-[#F5B800] focus:ring-[#F5B800]"
+              type="text"
+              name="nombre"
+              value={form.nombre}
+              onChange={
+                handleChange
+              }
+              placeholder="Ej. Carlos"
+              disabled={
+                submitting
+              }
+              autoComplete="given-name"
+              className={inputClass(
+                "nombre"
+              )}
             />
-          </label>
+
+            <ErrorCampo
+              mensaje={
+                errors.nombre
+              }
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-bold text-slate-700">
+              Apellido
+
+              <span className="ml-1 text-red-500">
+                *
+              </span>
+            </label>
+
+            <input
+              type="text"
+              name="apellido"
+              value={form.apellido}
+              onChange={
+                handleChange
+              }
+              placeholder="Ej. Ramírez"
+              disabled={
+                submitting
+              }
+              autoComplete="family-name"
+              className={inputClass(
+                "apellido"
+              )}
+            />
+
+            <ErrorCampo
+              mensaje={
+                errors.apellido
+              }
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-bold text-slate-700">
+              Cédula
+
+              <span className="ml-1 text-red-500">
+                *
+              </span>
+            </label>
+
+            <input
+              type="text"
+              name="cedula"
+              value={form.cedula}
+              onChange={
+                handleChange
+              }
+              placeholder="Ej. 001-010190-0000A"
+              disabled={
+                submitting
+              }
+              className={inputClass(
+                "cedula"
+              )}
+            />
+
+            <ErrorCampo
+              mensaje={
+                errors.cedula
+              }
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-bold text-slate-700">
+              Teléfono
+            </label>
+
+            <input
+              type="tel"
+              name="telefono"
+              value={
+                form.telefono
+              }
+              onChange={
+                handleChange
+              }
+              placeholder="Ej. 8888-8888"
+              disabled={
+                submitting
+              }
+              autoComplete="tel"
+              className={inputClass(
+                "telefono"
+              )}
+            />
+
+            <ErrorCampo
+              mensaje={
+                errors.telefono
+              }
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="mb-2 block text-sm font-bold text-slate-700">
+              Dirección
+            </label>
+
+            <textarea
+              name="direccion"
+              value={
+                form.direccion
+              }
+              onChange={
+                handleChange
+              }
+              placeholder="Dirección del conductor"
+              disabled={
+                submitting
+              }
+              rows={3}
+              className={`${inputClass(
+                "direccion"
+              )} resize-none`}
+            />
+
+            <ErrorCampo
+              mensaje={
+                errors.direccion
+              }
+            />
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="mt-7 flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={saving}
-          className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
-        >
-          Cancelar
-        </button>
+      <section className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:p-6">
+        <div className="mb-5">
+          <h3 className="text-lg font-black text-slate-900">
+            Licencia de conducir
+          </h3>
 
+          <p className="mt-1 text-sm font-medium text-slate-500">
+            Número, fecha de emisión y fecha de vencimiento.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div>
+            <label className="mb-2 block text-sm font-bold text-slate-700">
+              Número de licencia
+
+              <span className="ml-1 text-red-500">
+                *
+              </span>
+            </label>
+
+            <input
+              type="text"
+              name="numero_licencia"
+              value={
+                form.numero_licencia
+              }
+              onChange={
+                handleChange
+              }
+              placeholder="Ej. L-987654"
+              disabled={
+                submitting
+              }
+              className={inputClass(
+                "numero_licencia"
+              )}
+            />
+
+            <ErrorCampo
+              mensaje={
+                errors.numero_licencia
+              }
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-bold text-slate-700">
+              Fecha de emisión
+
+              <span className="ml-1 text-red-500">
+                *
+              </span>
+            </label>
+
+            <input
+              type="date"
+              name="fecha_inicio_licencia"
+              value={
+                form.fecha_inicio_licencia
+              }
+              onChange={
+                handleChange
+              }
+              max={hoy}
+              disabled={
+                submitting
+              }
+              className={inputClass(
+                "fecha_inicio_licencia"
+              )}
+            />
+
+            <ErrorCampo
+              mensaje={
+                errors.fecha_inicio_licencia
+              }
+            />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-bold text-slate-700">
+              Fecha de vencimiento
+
+              <span className="ml-1 text-red-500">
+                *
+              </span>
+            </label>
+
+            <input
+              type="date"
+              name="fecha_vencimiento_licencia"
+              value={
+                form.fecha_vencimiento_licencia
+              }
+              onChange={
+                handleChange
+              }
+              min={
+                form.fecha_inicio_licencia ||
+                undefined
+              }
+              disabled={
+                submitting
+              }
+              className={inputClass(
+                "fecha_vencimiento_licencia"
+              )}
+            />
+
+            <ErrorCampo
+              mensaje={
+                errors.fecha_vencimiento_licencia
+              }
+            />
+          </div>
+        </div>
+      </section>
+
+      <div className="sticky bottom-0 z-10 flex flex-col-reverse gap-3 border-t border-slate-200 bg-white py-4 sm:flex-row sm:justify-end">
         <button
           type="submit"
-          disabled={saving}
-          className="rounded-2xl bg-[#F5B800] px-5 py-3 text-sm font-black text-white shadow-md shadow-yellow-100 transition hover:bg-[#DFA600] disabled:opacity-60"
+          disabled={submitting}
+          className="w-full rounded-xl bg-yellow-400 px-7 py-3 text-sm font-black text-slate-950 shadow-sm transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
-          {saving
+          {submitting
             ? "Guardando..."
-            : conductorEditando
-            ? "Guardar cambios"
-            : "Crear conductor"}
+            : initialData
+              ? "Actualizar conductor"
+              : "Crear conductor"}
         </button>
       </div>
     </form>
@@ -267,3 +636,4 @@ const ConductorForm = ({
 };
 
 export default ConductorForm;
+

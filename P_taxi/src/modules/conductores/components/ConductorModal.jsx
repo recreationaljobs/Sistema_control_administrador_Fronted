@@ -1,63 +1,86 @@
-import { UserRound, X } from "lucide-react";
+
+import { X } from "lucide-react";
 import ConductorForm from "./ConductorForm";
 
 const ConductorModal = ({
   open,
+  conductor,
   onClose,
-  onSave,
-  saving,
-  conductorEditando,
-  esSuperAdmin = false,
-  esAdminSucursal = false,
+  onSubmit,
+  submitting,
+  submitError,
 }) => {
-  if (!open) {
-    return null;
-  }
+  if (!open) return null;
+
+  const handleBackdropClick = () => {
+    if (!submitting) {
+      onClose();
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-5 lg:p-8">
+      {/* Fondo oscuro */}
       <button
         type="button"
-        onClick={onClose}
-        className="absolute inset-0 bg-slate-950/40"
         aria-label="Cerrar modal"
+        className="absolute inset-0 cursor-default bg-slate-950/50 backdrop-blur-sm"
+        onClick={handleBackdropClick}
       />
 
-      <div className="relative max-h-[92vh] w-full max-w-3xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFF4CF] text-[#E7A900]">
-              <UserRound size={26} />
-            </div>
+      {/* Contenedor del modal */}
+      <div
+        className="
+          relative
+          flex
+          max-h-[94vh]
+          w-full
+          max-w-md
+          flex-col
+          overflow-hidden
+          rounded-3xl
+          border
+          border-slate-200
+          bg-white
+          shadow-2xl
 
-            <div>
-              <h2 className="text-xl font-black text-slate-950">
-                {conductorEditando ? "Editar conductor" : "Nuevo conductor"}
-              </h2>
+          sm:max-w-2xl
+          lg:max-w-5xl
+          xl:max-w-6xl
+        "
+      >
+        {/* Encabezado fijo */}
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:px-8">
+          <div>
+            <h2 className="text-xl font-black text-slate-900 sm:text-2xl">
+              {conductor
+                ? "Editar conductor"
+                : "Nuevo conductor"}
+            </h2>
 
-              <p className="text-sm font-medium text-slate-500">
-                Registra primero los datos del taxista. Luego puedes crearle un usuario de acceso.
-              </p>
-            </div>
+            <p className="mt-1 text-sm font-medium text-slate-500">
+              Ingresa la información personal y los datos de la licencia.
+            </p>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+            disabled={submitting}
+            className="ml-4 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label="Cerrar modal"
           >
-            <X size={22} />
+            <X size={20} />
           </button>
         </div>
 
-        <div className="max-h-[calc(92vh-90px)] overflow-y-auto">
+        {/* Contenido desplazable */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
           <ConductorForm
-            conductorEditando={conductorEditando}
-            onSave={onSave}
-            onCancel={onClose}
-            saving={saving}
-            esSuperAdmin={esSuperAdmin}
-            esAdminSucursal={esAdminSucursal}
+            initialData={conductor}
+            onSubmit={onSubmit}
+            submitting={submitting}
+            submitError={submitError}
           />
         </div>
       </div>
@@ -66,3 +89,4 @@ const ConductorModal = ({
 };
 
 export default ConductorModal;
+

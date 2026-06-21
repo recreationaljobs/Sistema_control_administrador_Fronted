@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   CarTaxiFront,
@@ -9,7 +10,19 @@ import FinancialChart from "../components/FinancialChart";
 import MaintenanceAlerts from "../components/MaintenanceAlerts";
 import RecentJornadas from "../components/RecentJornadas";
 import SummaryCards from "../components/SummaryCards";
+import NotificacionesModal, {
+  yaSeVieronNotificaciones,
+} from "../../../components/layout/NotificacionesModal";
+import { getAlertasMantenimiento } from "../../mantenimiento/services/mantenimientoService";
 import { useDashboard } from "../hooks/useDashboard";
+
+
+const normalizarAlertas = (data) => {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.results)) return data.results;
+  if (Array.isArray(data?.alertas)) return data.alertas;
+  return [];
+};
 
 const formatoDinero = (valor) => {
   return `C$ ${Number(valor || 0).toLocaleString("es-NI", {
@@ -33,6 +46,37 @@ const DashboardPage = () => {
     cargarDashboard,
   } = useDashboard();
 
+
+
+  const tituloJornadas =
+  periodo === "dia"
+    ? "Jornadas de hoy"
+    : periodo === "semana"
+      ? "Jornadas de la semana"
+      : "Jornadas del mes";
+
+  const [alertasNotif, setAlertasNotif] = useState([]);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  useEffect(() => {
+    const cargarAlertas = async () => {
+      try {
+        const data = await getAlertasMantenimiento();
+        const lista = normalizarAlertas(data);
+
+        setAlertasNotif(lista);
+
+        if (lista.length > 0 && !yaSeVieronNotificaciones()) {
+          setNotifOpen(true);
+        }
+      } catch {
+        // Silenciar: el modal de notificaciones no es crítico.
+      }
+    };
+
+    cargarAlertas();
+  }, []);
+
   const totalVehiculos = vehiculosEstado.total || resumen?.vehiculos || 0;
 
   const porcentajeBuenEstado = totalVehiculos
@@ -49,6 +93,12 @@ const DashboardPage = () => {
 
   return (
     <div className="space-y-6">
+      <NotificacionesModal
+        open={notifOpen}
+        alertas={alertasNotif}
+        onClose={() => setNotifOpen(false)}
+      />
+
       <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -120,7 +170,10 @@ const DashboardPage = () => {
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <RecentJornadas jornadas={jornadasHoy} />
+        <RecentJornadas
+          jornadas={jornadasHoy}
+          titulo={tituloJornadas}
+        />
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between">
@@ -258,7 +311,7 @@ const DashboardPage = () => {
           )}
         </div>
       </section>
-
+{/* 
       <section className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
         <div className="flex items-start gap-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
@@ -276,7 +329,9 @@ const DashboardPage = () => {
             </p>
           </div>
         </div>
-      </section>
+      </section> */}
+
+
     </div>
   );
 };

@@ -34,3 +34,8 @@ export const getEstadosMantenimiento = async () => {
   const response = await api.get("estados-mantenimiento/");
   return response.data;
 };
+
+export const getAlertasMantenimiento = async () => {
+  const response = await api.get("mantenimiento/alertas/");
+  return response.data;
+};
