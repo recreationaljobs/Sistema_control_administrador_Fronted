@@ -16,6 +16,7 @@ import NotificacionesModal, {
 import { getAlertasMantenimiento } from "../../mantenimiento/services/mantenimientoService";
 import { useDashboard } from "../hooks/useDashboard";
 
+
 const normalizarAlertas = (data) => {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.results)) return data.results;
@@ -44,6 +45,15 @@ const DashboardPage = () => {
     error,
     cargarDashboard,
   } = useDashboard();
+
+
+
+  const tituloJornadas =
+  periodo === "dia"
+    ? "Jornadas de hoy"
+    : periodo === "semana"
+      ? "Jornadas de la semana"
+      : "Jornadas del mes";
 
   const [alertasNotif, setAlertasNotif] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -160,7 +170,10 @@ const DashboardPage = () => {
       </section>
 
       <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <RecentJornadas jornadas={jornadasHoy} />
+        <RecentJornadas
+          jornadas={jornadasHoy}
+          titulo={tituloJornadas}
+        />
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between">
@@ -298,7 +311,7 @@ const DashboardPage = () => {
           )}
         </div>
       </section>
-
+{/* 
       <section className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
         <div className="flex items-start gap-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
@@ -316,7 +329,9 @@ const DashboardPage = () => {
             </p>
           </div>
         </div>
-      </section>
+      </section> */}
+
+
     </div>
   );
 };

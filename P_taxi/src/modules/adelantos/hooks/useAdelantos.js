@@ -1,4 +1,6 @@
+
 import { useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 import { useAuth } from "../../../hooks/useAuth";
 import {
   createAdelanto,
@@ -17,35 +19,104 @@ const normalizarLista = (data) => {
   return [];
 };
 
-const obtenerCodigoRol = (auth) => {
-  const rolDirecto = auth?.rol;
-  const user = auth?.user;
+const normalizarRol = (auth) => {
+  let codigo =
+    auth?.rol ||
+    auth?.user?.rol_codigo ||
+    auth?.user?.rol?.codigo ||
+    auth?.user?.rol ||
+    "";
 
-  if (typeof rolDirecto === "string") return rolDirecto;
+  codigo = String(codigo).trim().toLowerCase();
 
-  if (typeof user?.rol_codigo === "string") return user.rol_codigo;
+  const equivalencias = {
+    super_admin: "superadmin",
+    admin: "admin_sucursal",
+    administrador: "admin_sucursal",
+    "administrador de sucursal": "admin_sucursal",
+  };
 
-  if (typeof user?.rol?.codigo === "string") return user.rol.codigo;
-
-  if (typeof user?.rol === "string") return user.rol;
-
-  return "";
+  return equivalencias[codigo] || codigo;
 };
 
-const esRolSuperAdmin = (rol) => {
-  return rol === "superadmin" || rol === "super_admin";
+const obtenerFechaMovimiento = (movimiento) => {
+  const fecha =
+    movimiento?.fecha ||
+    movimiento?.fecha_registro ||
+    movimiento?.created_at ||
+    "";
+
+  return String(fecha).slice(0, 10);
 };
 
-const esRolAdminSucursal = (rol) => {
-  return rol === "admin_sucursal";
+const obtenerTimestamp = (movimiento) => {
+  const fecha = obtenerFechaMovimiento(movimiento);
+
+  if (!fecha) return 0;
+
+  const timestamp = new Date(`${fecha}T00:00:00`).getTime();
+
+  return Number.isNaN(timestamp) ? 0 : timestamp;
 };
 
-const esRolTaxista = (rol) => {
-  return rol === "taxista";
+const obtenerConductorId = (movimiento) => {
+  const conductor = movimiento?.conductor;
+
+  if (conductor && typeof conductor === "object") {
+    return conductor.id || "";
+  }
+
+  return conductor || "";
 };
 
-const puedeGestionar = (rol) => {
-  return esRolSuperAdmin(rol) || esRolAdminSucursal(rol);
+const obtenerTipoMovimiento = (movimiento) => {
+  const tipoDirecto = String(movimiento?.tipo || "")
+    .trim()
+    .toUpperCase();
+
+  if (tipoDirecto === "ADELANTO" || tipoDirecto === "ABONO") {
+    return tipoDirecto;
+  }
+
+  const codigoEstado = String(
+    movimiento?.estado_codigo ||
+      movimiento?.estado?.codigo ||
+      ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    codigoEstado === "abono" ||
+    codigoEstado === "abonado"
+  ) {
+    return "ABONO";
+  }
+
+  if (
+    codigoEstado === "adelanto" ||
+    codigoEstado === "anticipo"
+  ) {
+    return "ADELANTO";
+  }
+
+  const nombreEstado = String(
+    movimiento?.estado_nombre ||
+      movimiento?.estado?.nombre ||
+      movimiento?.tipo_display ||
+      ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    nombreEstado.includes("abono") ||
+    nombreEstado.includes("abonado")
+  ) {
+    return "ABONO";
+  }
+
+  return "ADELANTO";
 };
 
 const obtenerMensajeError = (err, mensajeDefault) => {
@@ -53,13 +124,17 @@ const obtenerMensajeError = (err, mensajeDefault) => {
 
   console.error("Error de adelanto:", data || err);
 
-  if (data?.detail) return data.detail;
+  if (data?.detail) {
+    return data.detail;
+  }
 
   if (data?.non_field_errors?.length) {
     return data.non_field_errors[0];
   }
 
-  if (typeof data === "string") return data;
+  if (typeof data === "string") {
+    return data;
+  }
 
   if (typeof data === "object" && data !== null) {
     const firstKey = Object.keys(data)[0];
@@ -79,12 +154,14 @@ const obtenerMensajeError = (err, mensajeDefault) => {
 
 export const useAdelantos = () => {
   const auth = useAuth();
-  const rol = obtenerCodigoRol(auth);
+  const rol = normalizarRol(auth);
 
-  const esSuperAdmin = esRolSuperAdmin(rol);
-  const esAdminSucursal = esRolAdminSucursal(rol);
-  const esTaxista = esRolTaxista(rol);
-  const esAdminOSuperAdmin = puedeGestionar(rol);
+  const esSuperAdmin = rol === "superadmin";
+  const esAdminSucursal = rol === "admin_sucursal";
+  const esTaxista = rol === "taxista";
+
+  const esAdminOSuperAdmin =
+    esSuperAdmin || esAdminSucursal;
 
   const [adelantos, setAdelantos] = useState([]);
   const [conductores, setConductores] = useState([]);
@@ -101,6 +178,9 @@ export const useAdelantos = () => {
 
   const [filtroTipo, setFiltroTipo] = useState("TODOS");
   const [filtroConductor, setFiltroConductor] = useState("");
+  const [filtroFechaInicio, setFiltroFechaInicio] = useState("");
+  const [filtroFechaFin, setFiltroFechaFin] = useState("");
+
   const [error, setError] = useState("");
 
   const cargarAdelantos = async () => {
@@ -109,10 +189,16 @@ export const useAdelantos = () => {
       setError("");
 
       const data = await getAdelantos();
+
       setAdelantos(normalizarLista(data));
     } catch (err) {
+      setAdelantos([]);
+
       setError(
-        obtenerMensajeError(err, "No se pudieron cargar los adelantos.")
+        obtenerMensajeError(
+          err,
+          "No se pudieron cargar los adelantos y abonos."
+        )
       );
     } finally {
       setLoading(false);
@@ -120,6 +206,18 @@ export const useAdelantos = () => {
   };
 
   const cargarCatalogos = async () => {
+    /*
+     * El taxista solo consulta sus propios movimientos.
+     * No necesita cargar conductores, sucursales ni estados.
+     */
+    if (!esAdminOSuperAdmin) {
+      setConductores([]);
+      setSucursales([]);
+      setEstadosAdelanto([]);
+      setLoadingCatalogos(false);
+      return;
+    }
+
     try {
       setLoadingCatalogos(true);
       setError("");
@@ -132,21 +230,23 @@ export const useAdelantos = () => {
       setConductores(normalizarLista(conductoresData));
       setEstadosAdelanto(normalizarLista(estadosData));
 
-      if (esAdminOSuperAdmin) {
-        try {
-          const sucursalesData = await getSucursales();
-          setSucursales(normalizarLista(sucursalesData));
-        } catch (err) {
-          console.warn(
-            "No se pudieron cargar sucursales. El módulo continuará sin sucursales.",
-            err?.response?.data || err
-          );
-          setSucursales([]);
-        }
-      } else {
+      try {
+        const sucursalesData = await getSucursales();
+
+        setSucursales(normalizarLista(sucursalesData));
+      } catch (err) {
+        console.warn(
+          "No se pudieron cargar las sucursales:",
+          err?.response?.data || err
+        );
+
         setSucursales([]);
       }
     } catch (err) {
+      setConductores([]);
+      setSucursales([]);
+      setEstadosAdelanto([]);
+
       setError(
         obtenerMensajeError(
           err,
@@ -160,99 +260,196 @@ export const useAdelantos = () => {
 
   const abrirModalCrear = (tipo = "ADELANTO") => {
     if (!esAdminOSuperAdmin) {
-      setError("No tienes permiso para registrar adelantos o abonos.");
+      setError(
+        "Solo un administrador puede registrar adelantos o abonos."
+      );
       return;
     }
 
+    const tipoNormalizado =
+      String(tipo).trim().toUpperCase() === "ABONO"
+        ? "ABONO"
+        : "ADELANTO";
+
     setError("");
     setAdelantoEditando(null);
-    setTipoInicial(tipo);
+    setTipoInicial(tipoNormalizado);
     setModalOpen(true);
   };
 
   const abrirModalEditar = (adelanto) => {
     if (!esAdminOSuperAdmin) {
-      setError("No tienes permiso para modificar registros.");
+      setError(
+        "No tienes permiso para modificar este registro."
+      );
       return;
     }
 
+    const tipoMovimiento = obtenerTipoMovimiento(adelanto);
+
     setError("");
-    setAdelantoEditando(adelanto);
-    setTipoInicial(adelanto?.tipo || "ADELANTO");
+
+    setAdelantoEditando({
+      ...adelanto,
+      tipo: tipoMovimiento,
+    });
+
+    setTipoInicial(tipoMovimiento);
     setModalOpen(true);
   };
 
   const cerrarModal = () => {
+    if (saving) return;
+
     setModalOpen(false);
     setAdelantoEditando(null);
+    setTipoInicial("ADELANTO");
   };
 
   const guardarAdelanto = async (form) => {
-  if (!esAdminOSuperAdmin) {
-    setError("No tienes permiso para guardar adelantos o abonos.");
-    return;
-  }
+    if (!esAdminOSuperAdmin) {
+      setError(
+        "No tienes permiso para guardar adelantos o abonos."
+      );
+      return;
+    }
 
-  try {
-    setSaving(true);
-    setError("");
+    const estabaEditando = Boolean(adelantoEditando);
+
+    const tipoNormalizado =
+      String(
+        form.tipo ||
+          tipoInicial ||
+          "ADELANTO"
+      )
+        .trim()
+        .toUpperCase() === "ABONO"
+        ? "ABONO"
+        : "ADELANTO";
 
     const payload = {
-      tipo: form.tipo || "ADELANTO",
-      monto: form.monto ? Number(form.monto) : 0,
-      observacion: form.observacion || "",
+      conductor: form.conductor
+        ? Number(form.conductor)
+        : null,
+
+      tipo: tipoNormalizado,
+
+      monto: form.monto
+        ? Number(form.monto)
+        : 0,
+
+      observacion:
+        form.observacion?.trim() || "",
     };
-
-    if (form.conductor) {
-      payload.conductor = Number(form.conductor);
-    }
-
-    if (form.estado) {
-      payload.estado = Number(form.estado);
-    } else {
-      payload.estado = null;
-    }
 
     if (!payload.conductor) {
       setError("Debes seleccionar el conductor.");
       return;
     }
 
-    if (payload.monto <= 0) {
+    if (
+      Number.isNaN(payload.monto) ||
+      payload.monto <= 0
+    ) {
       setError("El monto debe ser mayor que cero.");
       return;
     }
 
-    if (adelantoEditando) {
-      await updateAdelanto(adelantoEditando.id, payload);
-    } else {
-      await createAdelanto(payload);
-    }
+    try {
+      setSaving(true);
+      setError("");
 
-    await cargarAdelantos();
-    cerrarModal();
-  } catch (err) {
-    setError(obtenerMensajeError(err, "No se pudo guardar el registro."));
-  } finally {
-    setSaving(false);
-  }
-};
+      /*
+       * No se envía el estado.
+       * Django debe asignarlo automáticamente según:
+       *
+       * ADELANTO → estado adelanto
+       * ABONO → estado abono
+       */
+      if (estabaEditando) {
+        await updateAdelanto(
+          adelantoEditando.id,
+          payload
+        );
+      } else {
+        await createAdelanto(payload);
+      }
+
+      await cargarAdelantos();
+
+      setModalOpen(false);
+      setAdelantoEditando(null);
+      setTipoInicial("ADELANTO");
+
+      await Swal.fire({
+        title: estabaEditando
+          ? "Registro actualizado"
+          : tipoNormalizado === "ABONO"
+            ? "Abono registrado"
+            : "Adelanto registrado",
+
+        text:
+          tipoNormalizado === "ABONO"
+            ? "El abono fue restado del saldo pendiente del conductor."
+            : "El adelanto fue registrado correctamente.",
+
+        icon: "success",
+        confirmButtonColor: "#F5B800",
+        confirmButtonText: "Aceptar",
+      });
+    } catch (err) {
+      const mensaje = obtenerMensajeError(
+        err,
+        "No se pudo guardar el registro."
+      );
+
+      setError(mensaje);
+
+      await Swal.fire({
+        title: "No se pudo guardar",
+        text: mensaje,
+        icon: "error",
+        confirmButtonText: "Entendido",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const eliminarAdelanto = async (adelanto) => {
     if (!esAdminOSuperAdmin) {
-      setError("No tienes permiso para eliminar registros.");
+      setError(
+        "No tienes permiso para eliminar registros."
+      );
       return;
     }
 
-    const etiqueta = adelanto.tipo === "ABONO" ? "abono" : "adelanto";
+    const tipoMovimiento =
+      obtenerTipoMovimiento(adelanto);
 
-    const confirmar = window.confirm(
-      `¿Seguro que deseas eliminar este ${etiqueta} de C$ ${Number(
+    const etiqueta =
+      tipoMovimiento === "ABONO"
+        ? "abono"
+        : "adelanto";
+
+    const resultado = await Swal.fire({
+      title: `¿Eliminar ${etiqueta}?`,
+
+      text: `Se eliminará el registro de C$ ${Number(
         adelanto.monto || 0
-      ).toFixed(2)}?`
-    );
+      ).toFixed(2)}.`,
 
-    if (!confirmar) return;
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!resultado.isConfirmed) {
+      return;
+    }
 
     try {
       setSaving(true);
@@ -260,8 +457,28 @@ export const useAdelantos = () => {
 
       await deleteAdelanto(adelanto.id);
       await cargarAdelantos();
+
+      await Swal.fire({
+        title: "Registro eliminado",
+        text: `El ${etiqueta} fue eliminado correctamente.`,
+        icon: "success",
+        confirmButtonColor: "#F5B800",
+        confirmButtonText: "Aceptar",
+      });
     } catch (err) {
-      setError(obtenerMensajeError(err, "No se pudo eliminar el registro."));
+      const mensaje = obtenerMensajeError(
+        err,
+        "No se pudo eliminar el registro."
+      );
+
+      setError(mensaje);
+
+      await Swal.fire({
+        title: "No se pudo eliminar",
+        text: mensaje,
+        icon: "error",
+        confirmButtonText: "Entendido",
+      });
     } finally {
       setSaving(false);
     }
@@ -271,48 +488,247 @@ export const useAdelantos = () => {
     try {
       setError("");
 
-      const data = await getRecibo(adelanto.id);
-
-      return data;
+      return await getRecibo(adelanto.id);
     } catch (err) {
-      setError(obtenerMensajeError(err, "No se pudo abrir el recibo."));
+      const mensaje = obtenerMensajeError(
+        err,
+        "No se pudo abrir el recibo."
+      );
+
+      setError(mensaje);
+
+      await Swal.fire({
+        title: "No se pudo abrir el recibo",
+        text: mensaje,
+        icon: "error",
+        confirmButtonText: "Entendido",
+      });
+
       return null;
     }
   };
 
+  /*
+   * Calcula el saldo histórico por conductor.
+   *
+   * ADELANTO suma.
+   * ABONO resta.
+   */
+  const adelantosConSaldo = useMemo(() => {
+    const movimientosOrdenados = [...adelantos].sort((a, b) => {
+      const diferenciaFecha =
+        obtenerTimestamp(a) - obtenerTimestamp(b);
+
+      if (diferenciaFecha !== 0) {
+        return diferenciaFecha;
+      }
+
+      return Number(a.id || 0) - Number(b.id || 0);
+    });
+
+    const saldosPorConductor = new Map();
+    const saldosPorMovimiento = new Map();
+
+    movimientosOrdenados.forEach((movimiento) => {
+      const conductorId =
+        obtenerConductorId(movimiento);
+
+      const claveConductor = String(
+        conductorId || "sin-conductor"
+      );
+
+      const saldoAnterior =
+        saldosPorConductor.get(claveConductor) || 0;
+
+      const monto = Number(movimiento.monto || 0);
+
+      const tipo =
+        obtenerTipoMovimiento(movimiento);
+
+      const nuevoSaldo =
+        tipo === "ABONO"
+          ? Math.max(saldoAnterior - monto, 0)
+          : saldoAnterior + monto;
+
+      saldosPorConductor.set(
+        claveConductor,
+        nuevoSaldo
+      );
+
+      saldosPorMovimiento.set(
+        String(movimiento.id),
+        nuevoSaldo
+      );
+    });
+
+    return adelantos.map((movimiento) => ({
+      ...movimiento,
+
+      tipo:
+        obtenerTipoMovimiento(movimiento),
+
+      fecha_movimiento:
+        obtenerFechaMovimiento(movimiento),
+
+      saldo_movimiento:
+        saldosPorMovimiento.get(
+          String(movimiento.id)
+        ) ?? 0,
+    }));
+  }, [adelantos]);
+
   const adelantosFiltrados = useMemo(() => {
-    return adelantos.filter((adelanto) => {
-      if (filtroTipo !== "TODOS" && adelanto.tipo !== filtroTipo) {
+    return adelantosConSaldo.filter((adelanto) => {
+      if (
+        filtroTipo !== "TODOS" &&
+        adelanto.tipo !== filtroTipo
+      ) {
         return false;
       }
 
       if (
+        esAdminOSuperAdmin &&
         filtroConductor &&
-        String(adelanto.conductor) !== String(filtroConductor)
+        String(obtenerConductorId(adelanto)) !==
+          String(filtroConductor)
+      ) {
+        return false;
+      }
+
+      const fecha = adelanto.fecha_movimiento;
+
+      if (
+        filtroFechaInicio &&
+        fecha &&
+        fecha < filtroFechaInicio
+      ) {
+        return false;
+      }
+
+      if (
+        filtroFechaFin &&
+        fecha &&
+        fecha > filtroFechaFin
       ) {
         return false;
       }
 
       return true;
     });
-  }, [adelantos, filtroTipo, filtroConductor]);
+  }, [
+    adelantosConSaldo,
+    filtroTipo,
+    filtroConductor,
+    filtroFechaInicio,
+    filtroFechaFin,
+    esAdminOSuperAdmin,
+  ]);
 
-  const totalAdelantos = adelantos.filter((a) => a.tipo === "ADELANTO").length;
-  const totalAbonos = adelantos.filter((a) => a.tipo === "ABONO").length;
+  const resumen = useMemo(() => {
+    let totalAdelantos = 0;
+    let totalAbonos = 0;
+    let montoAdelantos = 0;
+    let montoAbonos = 0;
 
-  const montoAdelantos = adelantos
-    .filter((a) => a.tipo === "ADELANTO")
-    .reduce((total, a) => total + Number(a.monto || 0), 0);
+    const saldosFinales = new Map();
 
-  const montoAbonos = adelantos
-    .filter((a) => a.tipo === "ABONO")
-    .reduce((total, a) => total + Number(a.monto || 0), 0);
+    const movimientosOrdenados =
+      [...adelantosConSaldo].sort((a, b) => {
+        const diferenciaFecha =
+          obtenerTimestamp(a) - obtenerTimestamp(b);
 
-  const saldo = montoAdelantos - montoAbonos;
+        if (diferenciaFecha !== 0) {
+          return diferenciaFecha;
+        }
+
+        return Number(a.id || 0) - Number(b.id || 0);
+      });
+
+    movimientosOrdenados.forEach((movimiento) => {
+      const monto = Number(movimiento.monto || 0);
+      const tipo = obtenerTipoMovimiento(movimiento);
+
+      const conductorId =
+        obtenerConductorId(movimiento);
+
+      const claveConductor = String(
+        conductorId || "sin-conductor"
+      );
+
+      const saldoAnterior =
+        saldosFinales.get(claveConductor) || 0;
+
+      if (tipo === "ABONO") {
+        totalAbonos += 1;
+        montoAbonos += monto;
+
+        saldosFinales.set(
+          claveConductor,
+          Math.max(saldoAnterior - monto, 0)
+        );
+      } else {
+        totalAdelantos += 1;
+        montoAdelantos += monto;
+
+        saldosFinales.set(
+          claveConductor,
+          saldoAnterior + monto
+        );
+      }
+    });
+
+    const saldo = Array.from(
+      saldosFinales.values()
+    ).reduce(
+      (total, valor) =>
+        total + Number(valor || 0),
+      0
+    );
+
+    return {
+      totalAdelantos,
+      totalAbonos,
+      montoAdelantos,
+      montoAbonos,
+      saldo,
+    };
+  }, [adelantosConSaldo]);
+
+  const ultimoMovimiento = useMemo(() => {
+    if (!adelantosConSaldo.length) {
+      return null;
+    }
+
+    return [...adelantosConSaldo].sort((a, b) => {
+      const diferenciaFecha =
+        obtenerTimestamp(b) - obtenerTimestamp(a);
+
+      if (diferenciaFecha !== 0) {
+        return diferenciaFecha;
+      }
+
+      return Number(b.id || 0) - Number(a.id || 0);
+    })[0];
+  }, [adelantosConSaldo]);
+
+  const limpiarFiltros = () => {
+    setFiltroTipo("TODOS");
+    setFiltroConductor("");
+    setFiltroFechaInicio("");
+    setFiltroFechaFin("");
+  };
 
   useEffect(() => {
     cargarAdelantos();
-    cargarCatalogos();
+
+    if (esAdminOSuperAdmin) {
+      cargarCatalogos();
+    } else {
+      setConductores([]);
+      setSucursales([]);
+      setEstadosAdelanto([]);
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rol]);
 
@@ -333,18 +749,38 @@ export const useAdelantos = () => {
 
     filtroTipo,
     setFiltroTipo,
+
     filtroConductor,
     setFiltroConductor,
+
+    filtroFechaInicio,
+    setFiltroFechaInicio,
+
+    filtroFechaFin,
+    setFiltroFechaFin,
+
+    limpiarFiltros,
 
     modalOpen,
     adelantoEditando,
     tipoInicial,
 
-    totalAdelantos,
-    totalAbonos,
-    montoAdelantos,
-    montoAbonos,
-    saldo,
+    totalAdelantos:
+      resumen.totalAdelantos,
+
+    totalAbonos:
+      resumen.totalAbonos,
+
+    montoAdelantos:
+      resumen.montoAdelantos,
+
+    montoAbonos:
+      resumen.montoAbonos,
+
+    saldo:
+      resumen.saldo,
+
+    ultimoMovimiento,
 
     rol,
     esSuperAdmin,
@@ -364,3 +800,4 @@ export const useAdelantos = () => {
     verRecibo,
   };
 };
+
