@@ -9,7 +9,17 @@ import {
 } from "lucide-react";
 import CalculoJornada from "./CalculoJornada";
 
-const hoy = new Date().toISOString().split("T")[0];
+const obtenerFechaLocal = () => {
+  const fecha = new Date();
+
+  const year = fecha.getFullYear();
+  const month = String(fecha.getMonth() + 1).padStart(2, "0");
+  const day = String(fecha.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const hoy = obtenerFechaLocal();
 
 const initialForm = {
   fecha: hoy,
@@ -175,10 +185,14 @@ const JornadaForm = ({
       });
 
       setBusquedaConductor(obtenerNombreConductor(conductor));
-    } else {
-      setForm(initialForm);
-      setBusquedaConductor("");
-    }
+   } else {
+    setForm({
+      ...initialForm,
+      fecha: obtenerFechaLocal(),
+    });
+
+    setBusquedaConductor("");
+  }
 
     setFormError("");
   }, [jornadaEditando, conductores]);
