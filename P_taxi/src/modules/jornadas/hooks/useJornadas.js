@@ -364,80 +364,64 @@ export const useJornadas = () => {
         jornadaEditando?.modoFormulario;
 
       if (modoFormulario === "cerrar") {
-        if (
-          form.kilometraje_final === "" ||
-          form.kilometraje_final === null ||
-          form.kilometraje_final === undefined
-        ) {
-          setError(
-            "Debes ingresar el kilometraje final."
-          );
-
-          return;
-        }
-
-        if (
-          form.ingreso_bruto === "" ||
-          form.ingreso_bruto === null ||
-          form.ingreso_bruto === undefined
-        ) {
-          setError(
-            "Debes ingresar el ingreso bruto generado durante la jornada."
-          );
-
-          return;
-        }
-
-        const kilometrajeFinal = Number(
-          form.kilometraje_final
+      if (
+        form.kilometraje_final === "" ||
+        form.kilometraje_final === null ||
+        form.kilometraje_final === undefined
+      ) {
+        setError(
+          "Debes ingresar el kilometraje final."
         );
 
-        const ingresoBruto = Number(
-          form.ingreso_bruto
-        );
-
-        if (
-          Number.isNaN(kilometrajeFinal) ||
-          kilometrajeFinal < 0
-        ) {
-          setError(
-            "El kilometraje final debe ser un número válido."
-          );
-
-          return;
-        }
-
-        if (
-          Number.isNaN(ingresoBruto) ||
-          ingresoBruto < 0
-        ) {
-          setError(
-            "El ingreso bruto debe ser un monto válido."
-          );
-
-          return;
-        }
-
-        await cerrarJornada(
-          jornadaEditando.id,
-          {
-            kilometraje_final:
-              kilometrajeFinal,
-
-            ingreso_bruto:
-              ingresoBruto,
-
-            observaciones:
-              form.observaciones || "",
-          }
-        );
-
-        await cargarJornadas();
-        await cargarCatalogos();
-
-        cerrarModal();
         return;
       }
+
+      const kilometrajeFinal = Number(
+        form.kilometraje_final
+      );
+
+      const ingresoBruto = Number(
+        form.ingreso_bruto || 0
+      );
+
+      if (
+        Number.isNaN(kilometrajeFinal) ||
+        kilometrajeFinal < 0
+      ) {
+        setError(
+          "El kilometraje final debe ser un número válido."
+        );
+
+        return;
+      }
+
+      if (
+        Number.isNaN(ingresoBruto) ||
+        ingresoBruto < 0
+      ) {
+        setError(
+          "El monto bruto no puede ser negativo."
+        );
+
+        return;
+      }
+
+      await cerrarJornada(
+        jornadaEditando.id,
+        {
+          kilometraje_final: kilometrajeFinal,
+          ingreso_bruto: ingresoBruto,
+          observaciones:
+            form.observaciones || "",
+        }
+      );
+
+      await cargarJornadas();
+      await cargarCatalogos();
+
+      cerrarModal();
+      return;
+    }
 
       if (jornadaEditando) {
         const tipoCobro =

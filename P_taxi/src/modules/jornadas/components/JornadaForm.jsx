@@ -546,36 +546,26 @@ const JornadaForm = ({
       }
 
       if (modoCierre) {
-        if (
-          tipoCobro === "porcentaje"
-        ) {
+        if (tipoCobro === "porcentaje") {
           if (
-            form.ingreso_bruto === "" ||
-            Number.isNaN(
-              ingresoBruto
-            ) ||
+            Number.isNaN(ingresoBruto) ||
             ingresoBruto < 0
           ) {
             setFormError(
-              "Debes ingresar un ingreso bruto válido para cerrar la jornada."
+              "El monto bruto no puede ser negativo."
             );
 
             return;
           }
         }
 
-        if (
-          tipoCobro === "alquiler"
-        ) {
+        if (tipoCobro === "alquiler") {
           if (
-            form.monto_alquiler === "" ||
-            Number.isNaN(
-              montoAlquiler
-            ) ||
+            Number.isNaN(montoAlquiler) ||
             montoAlquiler < 0
           ) {
             setFormError(
-              "Debes ingresar un monto de alquiler válido para cerrar la jornada."
+              "El monto de alquiler no puede ser negativo."
             );
 
             return;
