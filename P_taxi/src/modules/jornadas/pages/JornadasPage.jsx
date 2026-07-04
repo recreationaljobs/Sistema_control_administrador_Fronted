@@ -76,24 +76,47 @@ const JornadasPage = () => {
         </div>
 
         {esTaxista && (
-          <button
-            type="button"
-            onClick={handleBotonTaxista}
-            disabled={Boolean(jornadaCerradaHoy)}
-            className={`inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-black shadow-md transition ${
-              jornadaCerradaHoy
-                ? "cursor-not-allowed bg-slate-200 text-slate-500 shadow-none"
-                : "bg-[#F5B800] text-white shadow-yellow-100 hover:bg-[#DFA600]"
-            }`}
-          >
-            <Plus size={20} />
+          <div className="relative inline-flex">
+            {!jornadaCerradaHoy && (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -inset-1.5 rounded-[20px] border-2 border-dashed border-[#F5B800] opacity-80 motion-safe:animate-pulse"
+                />
 
-            {jornadaCerradaHoy
-              ? "Jornada cerrada hoy"
-              : jornadaAbiertaHoy
-              ? "Cerrar jornada"
-              : "Iniciar jornada"}
-          </button>
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -inset-1.5 rounded-[20px] border border-dashed border-[#F5B800]/50 motion-safe:animate-ping"
+                />
+              </>
+            )}
+
+            <button
+              type="button"
+              onClick={handleBotonTaxista}
+              disabled={Boolean(jornadaCerradaHoy)}
+              className={`relative z-10 inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-4 text-sm font-black shadow-md transition-all duration-300 w-full ${
+                jornadaCerradaHoy
+                  ? "cursor-not-allowed bg-slate-200 text-slate-500 shadow-none"
+                  : "bg-[#F5B800] text-white shadow-yellow-100 hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#DFA600] hover:shadow-lg active:translate-y-0 active:scale-95"
+              }`}
+            >
+              <Plus
+                size={20}
+                className={
+                  jornadaCerradaHoy
+                    ? ""
+                    : "transition-transform duration-300 group-hover:rotate-90"
+                }
+              />
+
+              {jornadaCerradaHoy
+                ? "Jornada cerrada hoy"
+                : jornadaAbiertaHoy
+                ? "Cerrar jornada"
+                : "Iniciar jornada"}
+            </button>
+          </div>
         )}
       </section>
 
