@@ -1,4 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 import LoginPage from "../modules/auth/pages/LoginPage";
 import DashboardPage from "../modules/dashboard/pages/DashboardPage";
@@ -19,6 +24,87 @@ import Layout from "../components/layout/Layout";
 import PrivateRoute from "../routes/PrivateRoute";
 import PublicRoute from "../routes/PublicRoute";
 import RoleRoute from "../routes/RoleRoute";
+import { useAuth } from "../hooks/useAuth";
+
+const obtenerRolNormalizado = (rol, user) => {
+  const valor = String(
+    rol ||
+      user?.rol_codigo ||
+      user?.rol?.codigo ||
+      user?.rol ||
+      ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    valor === "admin" ||
+    valor === "administrador" ||
+    valor === "administrador de sucursal"
+  ) {
+    return "admin_sucursal";
+  }
+
+  if (valor === "super_admin") {
+    return "superadmin";
+  }
+
+  return valor;
+};
+
+const RedireccionInicial = () => {
+  const { rol, user } = useAuth();
+
+  const rolNormalizado = obtenerRolNormalizado(
+    rol,
+    user
+  );
+
+  if (rolNormalizado === "taxista") {
+    return (
+      <Navigate
+        to="/jornadas"
+        replace
+      />
+    );
+  }
+
+  return (
+    <Navigate
+      to="/dashboard"
+      replace
+    />
+  );
+};
+
+const RutaDashboard = () => {
+  const { rol, user } = useAuth();
+
+  const rolNormalizado = obtenerRolNormalizado(
+    rol,
+    user
+  );
+
+  if (rolNormalizado === "taxista") {
+    return (
+      <Navigate
+        to="/jornadas"
+        replace
+      />
+    );
+  }
+
+  return (
+    <RoleRoute
+      allowedRoles={[
+        "superadmin",
+        "admin_sucursal",
+      ]}
+    >
+      <DashboardPage />
+    </RoleRoute>
+  );
+};
 
 const AppRouter = () => {
   return (
@@ -41,21 +127,22 @@ const AppRouter = () => {
             </PrivateRoute>
           }
         >
-          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route
+            index
+            element={<RedireccionInicial />}
+          />
 
           <Route
             path="dashboard"
-            element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal", "taxista"]}>
-                <DashboardPage />
-              </RoleRoute>
-            }
+            element={<RutaDashboard />}
           />
 
           <Route
             path="sucursales"
             element={
-              <RoleRoute allowedRoles={["superadmin"]}>
+              <RoleRoute
+                allowedRoles={["superadmin"]}
+              >
                 <SucursalesPage />
               </RoleRoute>
             }
@@ -64,7 +151,12 @@ const AppRouter = () => {
           <Route
             path="usuarios"
             element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "superadmin",
+                  "admin_sucursal",
+                ]}
+              >
                 <UsuariosPage />
               </RoleRoute>
             }
@@ -73,7 +165,12 @@ const AppRouter = () => {
           <Route
             path="conductores"
             element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "superadmin",
+                  "admin_sucursal",
+                ]}
+              >
                 <ConductoresPage />
               </RoleRoute>
             }
@@ -82,16 +179,12 @@ const AppRouter = () => {
           <Route
             path="vehiculos"
             element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal", "taxista"]}>
-                <VehiculosPage />
-              </RoleRoute>
-            }
-          />
-
-          <Route
-            path="vehiculos"
-            element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal", "taxista"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "superadmin",
+                  "admin_sucursal",
+                ]}
+              >
                 <VehiculosPage />
               </RoleRoute>
             }
@@ -100,7 +193,12 @@ const AppRouter = () => {
           <Route
             path="asignaciones"
             element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "superadmin",
+                  "admin_sucursal",
+                ]}
+              >
                 <AsignacionesPage />
               </RoleRoute>
             }
@@ -109,25 +207,27 @@ const AppRouter = () => {
           <Route
             path="jornadas"
             element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal", "taxista"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "superadmin",
+                  "admin_sucursal",
+                  "taxista",
+                ]}
+              >
                 <JornadasPage />
               </RoleRoute>
             }
           />
 
-          {/* <Route
-            path="ingresos"
-            element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal", "taxista"]}>
-                <IngresosPage />
-              </RoleRoute>
-            }
-          /> */}
-
           <Route
             path="gastos"
             element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal", "taxista"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "superadmin",
+                  "admin_sucursal",
+                ]}
+              >
                 <GastosPage />
               </RoleRoute>
             }
@@ -136,7 +236,12 @@ const AppRouter = () => {
           <Route
             path="adelantos"
             element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal", "taxista"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "superadmin",
+                  "admin_sucursal",
+                ]}
+              >
                 <AdelantosPage />
               </RoleRoute>
             }
@@ -145,7 +250,12 @@ const AppRouter = () => {
           <Route
             path="liquidaciones"
             element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "superadmin",
+                  "admin_sucursal",
+                ]}
+              >
                 <LiquidacionesPage />
               </RoleRoute>
             }
@@ -154,7 +264,12 @@ const AppRouter = () => {
           <Route
             path="mantenimiento"
             element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal", "taxista"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "superadmin",
+                  "admin_sucursal",
+                ]}
+              >
                 <MantenimientoPage />
               </RoleRoute>
             }
@@ -163,7 +278,12 @@ const AppRouter = () => {
           <Route
             path="reportes"
             element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "superadmin",
+                  "admin_sucursal",
+                ]}
+              >
                 <ReportesPage />
               </RoleRoute>
             }
@@ -172,14 +292,26 @@ const AppRouter = () => {
           <Route
             path="configuracion"
             element={
-              <RoleRoute allowedRoles={["superadmin", "admin_sucursal"]}>
+              <RoleRoute
+                allowedRoles={[
+                  "superadmin",
+                  "admin_sucursal",
+                ]}
+              >
                 <ConfiguracionPage />
               </RoleRoute>
             }
           />
         </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          path="*"
+          element={
+            <PrivateRoute>
+              <RedireccionInicial />
+            </PrivateRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../../hooks/useAuth";
 import {
@@ -20,6 +19,7 @@ const normalizarLista = (data) => {
 
 const obtenerFechaLocal = () => {
   const fecha = new Date();
+
   const year = fecha.getFullYear();
   const month = String(fecha.getMonth() + 1).padStart(2, "0");
   const day = String(fecha.getDate()).padStart(2, "0");
@@ -42,7 +42,9 @@ const obtenerMensajeError = (err, mensajeDefault) => {
 
   console.error("Error de jornada:", data || err);
 
-  if (data?.detail) return data.detail;
+  if (data?.detail) {
+    return data.detail;
+  }
 
   if (data?.non_field_errors?.length) {
     return data.non_field_errors[0];
@@ -374,12 +376,57 @@ export const useJornadas = () => {
           return;
         }
 
+        if (
+          form.ingreso_bruto === "" ||
+          form.ingreso_bruto === null ||
+          form.ingreso_bruto === undefined
+        ) {
+          setError(
+            "Debes ingresar el ingreso bruto generado durante la jornada."
+          );
+
+          return;
+        }
+
+        const kilometrajeFinal = Number(
+          form.kilometraje_final
+        );
+
+        const ingresoBruto = Number(
+          form.ingreso_bruto
+        );
+
+        if (
+          Number.isNaN(kilometrajeFinal) ||
+          kilometrajeFinal < 0
+        ) {
+          setError(
+            "El kilometraje final debe ser un número válido."
+          );
+
+          return;
+        }
+
+        if (
+          Number.isNaN(ingresoBruto) ||
+          ingresoBruto < 0
+        ) {
+          setError(
+            "El ingreso bruto debe ser un monto válido."
+          );
+
+          return;
+        }
+
         await cerrarJornada(
           jornadaEditando.id,
           {
-            kilometraje_final: Number(
-              form.kilometraje_final
-            ),
+            kilometraje_final:
+              kilometrajeFinal,
+
+            ingreso_bruto:
+              ingresoBruto,
+
             observaciones:
               form.observaciones || "",
           }
@@ -401,13 +448,17 @@ export const useJornadas = () => {
             jornadaEditando.id,
             {
               tipo_cobro: "alquiler",
+
               ingreso_bruto: 0,
+
               monto_alquiler: Number(
                 form.monto_alquiler ||
                   form.ingreso_bruto ||
                   0
               ),
+
               porcentaje_pago_conductor: 0,
+
               observaciones:
                 form.observaciones || "",
             }
@@ -417,15 +468,19 @@ export const useJornadas = () => {
             jornadaEditando.id,
             {
               tipo_cobro: "porcentaje",
+
               ingreso_bruto: Number(
                 form.ingreso_bruto || 0
               ),
+
               monto_alquiler: 0,
+
               porcentaje_pago_conductor:
                 Number(
                   form.porcentaje_pago_conductor ||
                     30
                 ),
+
               observaciones:
                 form.observaciones || "",
             }
@@ -503,12 +558,57 @@ export const useJornadas = () => {
           form.kilometraje_final !== null &&
           form.kilometraje_final !== undefined
         ) {
+          if (
+            form.ingreso_bruto === "" ||
+            form.ingreso_bruto === null ||
+            form.ingreso_bruto === undefined
+          ) {
+            setError(
+              "Debes ingresar el ingreso bruto generado durante la jornada."
+            );
+
+            return;
+          }
+
+          const kilometrajeFinal = Number(
+            form.kilometraje_final
+          );
+
+          const ingresoBruto = Number(
+            form.ingreso_bruto
+          );
+
+          if (
+            Number.isNaN(kilometrajeFinal) ||
+            kilometrajeFinal < 0
+          ) {
+            setError(
+              "El kilometraje final debe ser un número válido."
+            );
+
+            return;
+          }
+
+          if (
+            Number.isNaN(ingresoBruto) ||
+            ingresoBruto < 0
+          ) {
+            setError(
+              "El ingreso bruto debe ser un monto válido."
+            );
+
+            return;
+          }
+
           await cerrarJornada(
             jornadaExistente.id,
             {
-              kilometraje_final: Number(
-                form.kilometraje_final
-              ),
+              kilometraje_final:
+                kilometrajeFinal,
+
+              ingreso_bruto:
+                ingresoBruto,
+
               observaciones:
                 form.observaciones || "",
             }
@@ -544,11 +644,18 @@ export const useJornadas = () => {
 
       await createJornada({
         fecha,
-        conductor: obtenerId(conductor),
-        vehiculo: obtenerId(vehiculo),
-        kilometraje_inicial: Number(
-          form.kilometraje_inicial
-        ),
+
+        conductor:
+          obtenerId(conductor),
+
+        vehiculo:
+          obtenerId(vehiculo),
+
+        kilometraje_inicial:
+          Number(
+            form.kilometraje_inicial
+          ),
+
         observaciones:
           form.observaciones || "",
       });
@@ -583,7 +690,10 @@ export const useJornadas = () => {
       setSaving(true);
       setError("");
 
-      await deleteJornada(jornada.id);
+      await deleteJornada(
+        jornada.id
+      );
+
       await cargarJornadas();
     } catch (err) {
       setError(
@@ -747,4 +857,3 @@ export const useJornadas = () => {
     eliminarJornada,
   };
 };
-

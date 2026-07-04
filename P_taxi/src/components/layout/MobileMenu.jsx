@@ -23,7 +23,7 @@ const menuItems = [
     label: "Dashboard",
     path: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["superadmin", "admin_sucursal", "taxista"],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Sucursales",
@@ -37,23 +37,17 @@ const menuItems = [
     icon: CalendarDays,
     roles: ["superadmin", "admin_sucursal", "taxista"],
   },
-  // {
-  //   label: "Ingresos",
-  //   path: "/reportes",
-  //   icon: Wallet,
-  //   roles: ["superadmin", "admin_sucursal"],
-  // },
   {
     label: "Gastos",
     path: "/gastos",
     icon: BriefcaseBusiness,
-    roles: ["superadmin", "admin_sucursal", "taxista"],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Adelantos",
     path: "/adelantos",
     icon: HandCoins,
-    roles: ["superadmin", "admin_sucursal", "taxista"],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Liquidaciones",
@@ -71,7 +65,7 @@ const menuItems = [
     label: "Vehículos",
     path: "/vehiculos",
     icon: CarTaxiFront,
-    roles: ["superadmin", "admin_sucursal", "taxista"],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Asignaciones",
@@ -83,7 +77,7 @@ const menuItems = [
     label: "Mantenimiento",
     path: "/mantenimiento",
     icon: Wrench,
-    roles: ["superadmin", "admin_sucursal", "taxista"],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Reportes",
@@ -105,31 +99,45 @@ const menuItems = [
   },
 ];
 
+const obtenerRolNormalizado = (rol, user) => {
+  const valor = String(
+    rol ||
+      user?.rol_codigo ||
+      user?.rol?.codigo ||
+      user?.rol ||
+      ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    valor === "admin" ||
+    valor === "administrador" ||
+    valor === "administrador de sucursal"
+  ) {
+    return "admin_sucursal";
+  }
+
+  if (valor === "super_admin") {
+    return "superadmin";
+  }
+
+  return valor;
+};
+
 const MobileMenu = ({ open, onClose }) => {
   const { rol, user, sucursalNombre, logout } = useAuth();
 
-  let rolNormalizado =
-  rol ||
-  user?.rol_codigo ||
-  user?.rol?.codigo ||
-  user?.rol ||
-  "";
+  const rolNormalizado = obtenerRolNormalizado(rol, user);
 
-if (rolNormalizado === "admin") {
-  rolNormalizado = "admin_sucursal";
-}
+  const visibleItems = menuItems.filter((item) =>
+    item.roles.includes(rolNormalizado)
+  );
 
-if (rolNormalizado === "Administrador") {
-  rolNormalizado = "admin_sucursal";
-}
-
-if (rolNormalizado === "Administrador de Sucursal") {
-  rolNormalizado = "admin_sucursal";
-}
-
-const visibleItems = menuItems.filter((item) =>
-  item.roles.includes(rolNormalizado)
-);
+  const cerrarSesion = () => {
+    onClose();
+    logout();
+  };
 
   if (!open) {
     return null;
@@ -155,6 +163,7 @@ const visibleItems = menuItems.filter((item) =>
               <h1 className="text-xl font-black text-slate-950">
                 TaxiAdmin
               </h1>
+
               <p className="text-xs font-medium text-slate-500">
                 Sistema de Administración
               </p>
@@ -165,6 +174,7 @@ const visibleItems = menuItems.filter((item) =>
             type="button"
             onClick={onClose}
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"
+            aria-label="Cerrar menú"
           >
             <X size={22} />
           </button>
@@ -197,15 +207,19 @@ const visibleItems = menuItems.filter((item) =>
         <div className="border-t border-slate-100 p-4">
           <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
             <p className="truncate text-sm font-black text-slate-900">
-              {user?.username || "Administrador"}
+              {user?.username || "Usuario"}
             </p>
+
             <p className="truncate text-xs font-medium text-slate-500">
-              {sucursalNombre || rol || "Sistema"}
+              {sucursalNombre ||
+                (rolNormalizado === "taxista"
+                  ? "Taxista"
+                  : rolNormalizado || "Sistema")}
             </p>
 
             <button
               type="button"
-              onClick={logout}
+              onClick={cerrarSesion}
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600"
             >
               <LogOut size={15} />
