@@ -1,4 +1,3 @@
-
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -9,6 +8,7 @@ import {
   UserRound,
   CarTaxiFront,
   Wrench,
+  FileBarChart,
   Users,
   Settings,
   Building2,
@@ -22,167 +22,115 @@ const menuItems = [
     label: "Dashboard",
     path: "/dashboard",
     icon: LayoutDashboard,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Sucursales",
     path: "/sucursales",
     icon: Building2,
-    roles: [
-      "superadmin",
-      "super_admin",
-    ],
+    roles: ["superadmin"],
   },
   {
     label: "Jornadas",
     path: "/jornadas",
     icon: CalendarDays,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-      "taxista",
-    ],
+    roles: ["superadmin", "admin_sucursal", "taxista"],
   },
   {
     label: "Gastos",
     path: "/gastos",
     icon: BriefcaseBusiness,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-      
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Adelantos",
     path: "/adelantos",
     icon: HandCoins,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-      "taxista",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Liquidaciones",
     path: "/liquidaciones",
     icon: Wallet,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Conductores",
     path: "/conductores",
     icon: UserRound,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Vehículos",
     path: "/vehiculos",
     icon: CarTaxiFront,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-      "taxista",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Asignaciones",
     path: "/asignaciones",
     icon: Route,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Mantenimiento",
     path: "/mantenimiento",
     icon: Wrench,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-      "taxista",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
+  },
+  {
+    label: "Reportes",
+    path: "/reportes",
+    icon: FileBarChart,
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Usuarios",
     path: "/usuarios",
     icon: Users,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Configuración",
     path: "/configuracion",
     icon: Settings,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
 ];
 
 const obtenerRolNormalizado = (rol, user) => {
-  let valorRol =
+  const valor = String(
     rol ||
-    user?.rol_codigo ||
-    user?.rol?.codigo ||
-    user?.rol ||
-    "";
-
-  if (typeof valorRol !== "string") {
-    return "";
-  }
-
-  valorRol = valorRol
+      user?.rol_codigo ||
+      user?.rol?.codigo ||
+      user?.rol ||
+      ""
+  )
     .trim()
     .toLowerCase();
 
-  const equivalencias = {
-    admin: "admin_sucursal",
-    administrador: "admin_sucursal",
-    "administrador de sucursal": "admin_sucursal",
-  };
+  if (
+    valor === "admin" ||
+    valor === "administrador" ||
+    valor === "administrador de sucursal"
+  ) {
+    return "admin_sucursal";
+  }
 
-  return equivalencias[valorRol] || valorRol;
+  if (valor === "super_admin") {
+    return "superadmin";
+  }
+
+  return valor;
 };
 
 const Sidebar = () => {
-  const {
-    rol,
-    user,
-    sucursalNombre,
-    logout,
-  } = useAuth();
+  const { rol, user, sucursalNombre, logout } = useAuth();
 
-  const rolNormalizado =
-    obtenerRolNormalizado(rol, user);
+  const rolNormalizado = obtenerRolNormalizado(rol, user);
 
-  const visibleItems = menuItems.filter(
-    (item) =>
-      item.roles.includes(rolNormalizado)
+  const visibleItems = menuItems.filter((item) =>
+    item.roles.includes(rolNormalizado)
   );
 
   return (
@@ -191,10 +139,7 @@ const Sidebar = () => {
         <div className="shrink-0 border-b border-slate-100 px-6 py-6">
           <div className="flex items-center gap-4">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F5B800] text-white shadow-md shadow-yellow-100">
-              <CarTaxiFront
-                size={34}
-                strokeWidth={2.8}
-              />
+              <CarTaxiFront size={34} strokeWidth={2.8} />
             </div>
 
             <div>
@@ -209,7 +154,7 @@ const Sidebar = () => {
           </div>
         </div>
 
-        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-4 py-5 [scrollbar-color:#CBD5E1_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 hover:[&::-webkit-scrollbar-thumb]:bg-slate-400">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-4 py-5 [scrollbar-width:thin] [scrollbar-color:#CBD5E1_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 hover:[&::-webkit-scrollbar-thumb]:bg-slate-400">
           {visibleItems.map((item) => {
             const Icon = item.icon;
 
@@ -225,11 +170,7 @@ const Sidebar = () => {
                   }`
                 }
               >
-                <Icon
-                  size={22}
-                  strokeWidth={2.1}
-                />
-
+                <Icon size={22} strokeWidth={2.1} />
                 <span>{item.label}</span>
               </NavLink>
             );
@@ -240,9 +181,7 @@ const Sidebar = () => {
           <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FFE7A3] text-sm font-black text-slate-900">
-                {user?.username
-                  ?.charAt(0)
-                  ?.toUpperCase() || "U"}
+                {user?.username?.charAt(0)?.toUpperCase() || "U"}
               </div>
 
               <div className="min-w-0 flex-1">
@@ -252,8 +191,9 @@ const Sidebar = () => {
 
                 <p className="truncate text-xs font-medium text-slate-500">
                   {sucursalNombre ||
-                    rolNormalizado ||
-                    "Sistema"}
+                    (rolNormalizado === "taxista"
+                      ? "Taxista"
+                      : rolNormalizado || "Sistema")}
                 </p>
               </div>
             </div>
@@ -261,7 +201,7 @@ const Sidebar = () => {
             <button
               type="button"
               onClick={logout}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:cursor-pointer hover:bg-red-100"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
             >
               <LogOut size={15} />
               Cerrar sesión
@@ -274,4 +214,3 @@ const Sidebar = () => {
 };
 
 export default Sidebar;
-

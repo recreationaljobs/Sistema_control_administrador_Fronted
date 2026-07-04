@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter,
   Routes,
@@ -25,44 +24,43 @@ import Layout from "../components/layout/Layout";
 import PrivateRoute from "../routes/PrivateRoute";
 import PublicRoute from "../routes/PublicRoute";
 import RoleRoute from "../routes/RoleRoute";
-
 import { useAuth } from "../hooks/useAuth";
 
-const obtenerCodigoRol = (auth) => {
-  const rolDirecto = auth?.rol;
-
-  if (typeof rolDirecto === "string") {
-    return rolDirecto.toLowerCase();
-  }
-
-  const rolUsuario = auth?.user?.rol;
-
-  if (typeof rolUsuario === "string") {
-    return rolUsuario.toLowerCase();
-  }
+const obtenerRolNormalizado = (rol, user) => {
+  const valor = String(
+    rol ||
+      user?.rol_codigo ||
+      user?.rol?.codigo ||
+      user?.rol ||
+      ""
+  )
+    .trim()
+    .toLowerCase();
 
   if (
-    typeof auth?.user?.rol_codigo ===
-    "string"
+    valor === "admin" ||
+    valor === "administrador" ||
+    valor === "administrador de sucursal"
   ) {
-    return auth.user.rol_codigo.toLowerCase();
+    return "admin_sucursal";
   }
 
-  if (
-    typeof rolUsuario?.codigo ===
-    "string"
-  ) {
-    return rolUsuario.codigo.toLowerCase();
+  if (valor === "super_admin") {
+    return "superadmin";
   }
 
-  return "";
+  return valor;
 };
 
-const InicioPorRol = () => {
-  const auth = useAuth();
-  const rol = obtenerCodigoRol(auth);
+const RedireccionInicial = () => {
+  const { rol, user } = useAuth();
 
-  if (rol === "taxista") {
+  const rolNormalizado = obtenerRolNormalizado(
+    rol,
+    user
+  );
+
+  if (rolNormalizado === "taxista") {
     return (
       <Navigate
         to="/jornadas"
@@ -79,16 +77,15 @@ const InicioPorRol = () => {
   );
 };
 
-const DashboardPorRol = () => {
-  const auth = useAuth();
-  const rol = obtenerCodigoRol(auth);
+const RutaDashboard = () => {
+  const { rol, user } = useAuth();
 
-  /*
-   * El taxista nunca renderiza DashboardPage.
-   * Si intenta entrar manualmente a /dashboard,
-   * se envía directamente a sus jornadas.
-   */
-  if (rol === "taxista") {
+  const rolNormalizado = obtenerRolNormalizado(
+    rol,
+    user
+  );
+
+  if (rolNormalizado === "taxista") {
     return (
       <Navigate
         to="/jornadas"
@@ -101,7 +98,6 @@ const DashboardPorRol = () => {
     <RoleRoute
       allowedRoles={[
         "superadmin",
-        "super_admin",
         "admin_sucursal",
       ]}
     >
@@ -131,26 +127,21 @@ const AppRouter = () => {
             </PrivateRoute>
           }
         >
-          {/* Entrada principal según el rol */}
           <Route
             index
-            element={<InicioPorRol />}
+            element={<RedireccionInicial />}
           />
 
-          {/* Dashboard exclusivo de administradores */}
           <Route
             path="dashboard"
-            element={<DashboardPorRol />}
+            element={<RutaDashboard />}
           />
 
           <Route
             path="sucursales"
             element={
               <RoleRoute
-                allowedRoles={[
-                  "superadmin",
-                  "super_admin",
-                ]}
+                allowedRoles={["superadmin"]}
               >
                 <SucursalesPage />
               </RoleRoute>
@@ -163,7 +154,6 @@ const AppRouter = () => {
               <RoleRoute
                 allowedRoles={[
                   "superadmin",
-                  "super_admin",
                   "admin_sucursal",
                 ]}
               >
@@ -178,7 +168,6 @@ const AppRouter = () => {
               <RoleRoute
                 allowedRoles={[
                   "superadmin",
-                  "super_admin",
                   "admin_sucursal",
                 ]}
               >
@@ -193,9 +182,7 @@ const AppRouter = () => {
               <RoleRoute
                 allowedRoles={[
                   "superadmin",
-                  "super_admin",
                   "admin_sucursal",
-                  "taxista",
                 ]}
               >
                 <VehiculosPage />
@@ -209,7 +196,6 @@ const AppRouter = () => {
               <RoleRoute
                 allowedRoles={[
                   "superadmin",
-                  "super_admin",
                   "admin_sucursal",
                 ]}
               >
@@ -224,7 +210,6 @@ const AppRouter = () => {
               <RoleRoute
                 allowedRoles={[
                   "superadmin",
-                  "super_admin",
                   "admin_sucursal",
                   "taxista",
                 ]}
@@ -240,9 +225,7 @@ const AppRouter = () => {
               <RoleRoute
                 allowedRoles={[
                   "superadmin",
-                  "super_admin",
                   "admin_sucursal",
-                  "taxista",
                 ]}
               >
                 <GastosPage />
@@ -256,9 +239,7 @@ const AppRouter = () => {
               <RoleRoute
                 allowedRoles={[
                   "superadmin",
-                  "super_admin",
                   "admin_sucursal",
-                  "taxista",
                 ]}
               >
                 <AdelantosPage />
@@ -272,7 +253,6 @@ const AppRouter = () => {
               <RoleRoute
                 allowedRoles={[
                   "superadmin",
-                  "super_admin",
                   "admin_sucursal",
                 ]}
               >
@@ -287,9 +267,7 @@ const AppRouter = () => {
               <RoleRoute
                 allowedRoles={[
                   "superadmin",
-                  "super_admin",
                   "admin_sucursal",
-                  "taxista",
                 ]}
               >
                 <MantenimientoPage />
@@ -303,7 +281,6 @@ const AppRouter = () => {
               <RoleRoute
                 allowedRoles={[
                   "superadmin",
-                  "super_admin",
                   "admin_sucursal",
                 ]}
               >
@@ -318,7 +295,6 @@ const AppRouter = () => {
               <RoleRoute
                 allowedRoles={[
                   "superadmin",
-                  "super_admin",
                   "admin_sucursal",
                 ]}
               >
@@ -328,14 +304,12 @@ const AppRouter = () => {
           />
         </Route>
 
-        {/* Rutas inexistentes regresan al inicio por rol */}
         <Route
           path="*"
           element={
-            <Navigate
-              to="/"
-              replace
-            />
+            <PrivateRoute>
+              <RedireccionInicial />
+            </PrivateRoute>
           }
         />
       </Routes>
@@ -344,4 +318,3 @@ const AppRouter = () => {
 };
 
 export default AppRouter;
-

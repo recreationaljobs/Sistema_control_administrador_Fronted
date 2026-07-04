@@ -1,4 +1,3 @@
-
 import { NavLink } from "react-router-dom";
 import {
   X,
@@ -24,188 +23,118 @@ const menuItems = [
     label: "Dashboard",
     path: "/dashboard",
     icon: LayoutDashboard,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Sucursales",
     path: "/sucursales",
     icon: Building2,
-    roles: [
-      "superadmin",
-      "super_admin",
-    ],
+    roles: ["superadmin"],
   },
   {
     label: "Jornadas",
     path: "/jornadas",
     icon: CalendarDays,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-      "taxista",
-    ],
+    roles: ["superadmin", "admin_sucursal", "taxista"],
   },
   {
     label: "Gastos",
     path: "/gastos",
     icon: BriefcaseBusiness,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-      
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Adelantos",
     path: "/adelantos",
     icon: HandCoins,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-      "taxista",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Liquidaciones",
     path: "/liquidaciones",
     icon: Wallet,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Conductores",
     path: "/conductores",
     icon: UserRound,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Vehículos",
     path: "/vehiculos",
     icon: CarTaxiFront,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-      "taxista",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Asignaciones",
     path: "/asignaciones",
     icon: Route,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Mantenimiento",
     path: "/mantenimiento",
     icon: Wrench,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-      "taxista",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Reportes",
     path: "/reportes",
     icon: FileBarChart,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Usuarios",
     path: "/usuarios",
     icon: Users,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
   {
     label: "Configuración",
     path: "/configuracion",
     icon: Settings,
-    roles: [
-      "superadmin",
-      "super_admin",
-      "admin_sucursal",
-    ],
+    roles: ["superadmin", "admin_sucursal"],
   },
 ];
 
 const obtenerRolNormalizado = (rol, user) => {
-  let valorRol =
+  const valor = String(
     rol ||
-    user?.rol_codigo ||
-    user?.rol?.codigo ||
-    user?.rol ||
-    "";
-
-  if (typeof valorRol !== "string") {
-    return "";
-  }
-
-  valorRol = valorRol
+      user?.rol_codigo ||
+      user?.rol?.codigo ||
+      user?.rol ||
+      ""
+  )
     .trim()
     .toLowerCase();
 
-  const equivalencias = {
-    admin: "admin_sucursal",
-    administrador: "admin_sucursal",
-    "administrador de sucursal": "admin_sucursal",
-  };
+  if (
+    valor === "admin" ||
+    valor === "administrador" ||
+    valor === "administrador de sucursal"
+  ) {
+    return "admin_sucursal";
+  }
 
-  return equivalencias[valorRol] || valorRol;
+  if (valor === "super_admin") {
+    return "superadmin";
+  }
+
+  return valor;
 };
 
-const MobileMenu = ({
-  open,
-  onClose,
-}) => {
-  const {
-    rol,
-    user,
-    sucursalNombre,
-    logout,
-  } = useAuth();
+const MobileMenu = ({ open, onClose }) => {
+  const { rol, user, sucursalNombre, logout } = useAuth();
 
-  const rolNormalizado =
-    obtenerRolNormalizado(
-      rol,
-      user
-    );
+  const rolNormalizado = obtenerRolNormalizado(rol, user);
 
-  const visibleItems =
-    menuItems.filter((item) =>
-      item.roles.includes(
-        rolNormalizado
-      )
-    );
+  const visibleItems = menuItems.filter((item) =>
+    item.roles.includes(rolNormalizado)
+  );
 
-  const handleLogout = () => {
+  const cerrarSesion = () => {
     onClose();
     logout();
   };
@@ -219,26 +148,23 @@ const MobileMenu = ({
       <button
         type="button"
         onClick={onClose}
-        className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-slate-950/40"
         aria-label="Cerrar menú"
       />
 
-      <aside className="relative flex h-full w-[310px] max-w-[86vw] flex-col bg-white shadow-2xl">
-        <div className="flex h-20 shrink-0 items-center justify-between border-b border-slate-100 px-5">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#F5B800] text-white shadow-md shadow-yellow-100">
-              <CarTaxiFront
-                size={29}
-                strokeWidth={2.6}
-              />
+      <aside className="relative flex h-full w-[310px] max-w-[85vw] flex-col bg-white shadow-2xl">
+        <div className="flex h-20 items-center justify-between border-b border-slate-100 px-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F5B800] text-white">
+              <CarTaxiFront size={29} strokeWidth={2.6} />
             </div>
 
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-black text-slate-950">
+            <div>
+              <h1 className="text-xl font-black text-slate-950">
                 TaxiAdmin
               </h1>
 
-              <p className="truncate text-xs font-medium text-slate-500">
+              <p className="text-xs font-medium text-slate-500">
                 Sistema de Administración
               </p>
             </div>
@@ -247,75 +173,54 @@ const MobileMenu = ({
           <button
             type="button"
             onClick={onClose}
-            className="ml-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"
             aria-label="Cerrar menú"
           >
             <X size={22} />
           </button>
         </div>
 
-        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-4 py-4 [scrollbar-color:#CBD5E1_transparent] [scrollbar-width:thin]">
-          {visibleItems.map(
-            (item) => {
-              const Icon =
-                item.icon;
+        <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-4">
+          {visibleItems.map((item) => {
+            const Icon = item.icon;
 
-              return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  onClick={onClose}
-                  className={({
-                    isActive,
-                  }) =>
-                    `flex items-center gap-4 rounded-xl px-4 py-3.5 text-[15px] font-semibold transition ${
-                      isActive
-                        ? "bg-[#FFF4CF] text-[#E7A900]"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                    }`
-                  }
-                >
-                  <Icon
-                    size={22}
-                    strokeWidth={2.1}
-                  />
-
-                  <span>
-                    {item.label}
-                  </span>
-                </NavLink>
-              );
-            }
-          )}
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `flex items-center gap-4 rounded-xl px-4 py-3.5 text-[15px] font-semibold transition ${
+                    isActive
+                      ? "bg-[#FFF4CF] text-[#E7A900]"
+                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                  }`
+                }
+              >
+                <Icon size={22} strokeWidth={2.1} />
+                <span>{item.label}</span>
+              </NavLink>
+            );
+          })}
         </nav>
 
-        <div className="shrink-0 border-t border-slate-100 bg-white p-4">
+        <div className="border-t border-slate-100 p-4">
           <div className="rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FFE7A3] text-sm font-black text-slate-900">
-                {user?.username
-                  ?.charAt(0)
-                  ?.toUpperCase() || "U"}
-              </div>
+            <p className="truncate text-sm font-black text-slate-900">
+              {user?.username || "Usuario"}
+            </p>
 
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-black text-slate-900">
-                  {user?.username ||
-                    "Usuario"}
-                </p>
-
-                <p className="truncate text-xs font-medium text-slate-500">
-                  {sucursalNombre ||
-                    rolNormalizado ||
-                    "Sistema"}
-                </p>
-              </div>
-            </div>
+            <p className="truncate text-xs font-medium text-slate-500">
+              {sucursalNombre ||
+                (rolNormalizado === "taxista"
+                  ? "Taxista"
+                  : rolNormalizado || "Sistema")}
+            </p>
 
             <button
               type="button"
-              onClick={handleLogout}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600 transition hover:bg-red-100"
+              onClick={cerrarSesion}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600"
             >
               <LogOut size={15} />
               Cerrar sesión
@@ -328,4 +233,3 @@ const MobileMenu = ({
 };
 
 export default MobileMenu;
-
