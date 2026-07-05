@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   CalendarDays,
   CarTaxiFront,
@@ -37,7 +38,10 @@ const diasTexto = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 
 const crearFechaLocal = (fecha) => {
   if (!fecha) return null;
-  return new Date(`${fecha}T00:00:00`);
+
+  const fechaNormalizada = String(fecha).slice(0, 10);
+
+  return new Date(`${fechaNormalizada}T00:00:00`);
 };
 
 const formatearFechaInput = (date) => {
@@ -84,11 +88,16 @@ const construirDiasMes = (year, month) => {
 const estaEnRango = (fecha, inicio, fin) => {
   if (!fecha || !inicio) return false;
 
-  const actual = crearFechaLocal(fecha);
-  const desde = crearFechaLocal(inicio);
-  const hasta = fin ? crearFechaLocal(fin) : desde;
+  const fechaJornada = String(fecha).slice(0, 10);
+  const fechaInicio = String(inicio).slice(0, 10);
+  const fechaFinal = fin
+    ? String(fin).slice(0, 10)
+    : fechaInicio;
 
-  return actual >= desde && actual <= hasta;
+  return (
+    fechaJornada >= fechaInicio &&
+    fechaJornada <= fechaFinal
+  );
 };
 
 const jornadaEstaLiquidada = (jornada) => {
@@ -109,6 +118,30 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
   const [fechaInicio, setFechaInicio] = useState(fechaHoy);
   const [fechaFin, setFechaFin] = useState("");
   const [primerClickRango, setPrimerClickRango] = useState(fechaHoy);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const calendarioDesdeMenu =
+    searchParams.get("calendario") === "1";
+
+  useEffect(() => {
+    if (!esTaxista) return;
+
+    if (calendarioDesdeMenu) {
+      const fechaSeleccionada =
+        crearFechaLocal(fechaInicio) || new Date();
+
+      setMesActual(fechaSeleccionada.getMonth());
+      setAnioActual(fechaSeleccionada.getFullYear());
+      setModalCalendario(true);
+    } else {
+      setModalCalendario(false);
+    }
+  }, [
+    esTaxista,
+    calendarioDesdeMenu,
+    fechaInicio,
+  ]);
 
   const diasCalendario = useMemo(() => {
     return construirDiasMes(anioActual, mesActual);
@@ -138,23 +171,6 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
     )}`;
   }, [fechaInicio, fechaFin]);
 
-  const resumenDia = useMemo(() => {
-    return jornadasFiltradas.reduce(
-      (acc, jornada) => {
-        acc.km += Number(jornada.kilometros_recorridos || 0);
-        acc.ingreso += Number(jornada.ingreso_bruto || 0);
-        acc.pago += Number(jornada.pago_conductor || 0);
-        acc.ganancia += Number(jornada.ganancia_dueno || 0);
-        return acc;
-      },
-      {
-        km: 0,
-        ingreso: 0,
-        pago: 0,
-        ganancia: 0,
-      }
-    );
-  }, [jornadasFiltradas]);
 
   const cambiarMes = (direccion) => {
     const nuevaFecha = new Date(anioActual, mesActual + direccion, 1);
@@ -162,8 +178,31 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
     setAnioActual(nuevaFecha.getFullYear());
   };
 
+  const cerrarCalendario = () => {
+    setModalCalendario(false);
+
+    if (esTaxista && calendarioDesdeMenu) {
+      const nuevosParametros =
+        new URLSearchParams(searchParams);
+
+      nuevosParametros.delete("calendario");
+
+      setSearchParams(nuevosParametros, {
+        replace: true,
+      });
+    }
+  };
+
   const seleccionarDia = (date) => {
     const fecha = formatearFechaInput(date);
+
+    if (esTaxista) {
+      setFechaInicio(fecha);
+      setFechaFin("");
+      setPrimerClickRango(fecha);
+      cerrarCalendario();
+      return;
+    }
 
     if (!primerClickRango || fechaFin) {
       setFechaInicio(fecha);
@@ -176,7 +215,7 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
       setFechaInicio(fecha);
       setFechaFin("");
       setPrimerClickRango(fecha);
-      setModalCalendario(false);
+      cerrarCalendario();
       return;
     }
 
@@ -192,7 +231,7 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
     }
 
     setPrimerClickRango("");
-    setModalCalendario(false);
+    cerrarCalendario();
   };
 
   const esDiaHoy = (date) => {
@@ -249,59 +288,36 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
     );
   }
 
-  if (!jornadas.length) {
-    return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FFF4CF] text-[#E7A900]">
-          <CalendarDays size={34} />
-        </div>
-
-        <h3 className="mt-4 text-lg font-black text-slate-900">
-          No hay jornadas registradas
-        </h3>
-
-        <p className="mt-2 text-sm text-slate-500">
-          Registra una jornada diaria para iniciar el control operativo.
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h3 className="text-lg font-black text-slate-950">
-              Jornadas por fecha
-            </h3>
+      {!esTaxista && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h3 className="text-lg font-black text-slate-950">
+                Jornadas por fecha
+              </h3>
 
-            <p className="mt-1 text-sm font-medium capitalize text-slate-500">
-              {resumenFiltro}
-            </p>
+              <p className="mt-1 text-sm font-medium capitalize text-slate-500">
+                {resumenFiltro}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPrimerClickRango(fechaFin ? "" : fechaInicio);
+                setModalCalendario(true);
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#F5B800] px-5 py-3 text-sm font-black text-white shadow-md shadow-yellow-100 transition hover:bg-[#DFA600]"
+            >
+              <CalendarDays size={20} />
+              Elegir fecha
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              setPrimerClickRango(fechaFin ? "" : fechaInicio);
-              setModalCalendario(true);
-            }}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#F5B800] px-5 py-3 text-sm font-black text-white shadow-md shadow-yellow-100 transition hover:bg-[#DFA600]"
-          >
-            <CalendarDays size={20} />
-            Elegir fecha
-          </button>
         </div>
-
-        <div
-          className={`mt-5 grid grid-cols-1 gap-4 ${
-            esTaxista ? "md:grid-cols-2" : "md:grid-cols-4"
-          }`}
-        >
-          {/* Aquí iban los resúmenes */}
-        </div>
-      </div>
+      )}
 
       {/* VERSIÓN RESPONSIVE: Tarjetas en móvil, tabla en desktop */}
       <div className="block lg:hidden">
@@ -315,7 +331,9 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
                 No hay jornadas en esta fecha.
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                Puedes seleccionar otro día desde el calendario.
+                {esTaxista
+                  ? "Selecciona otro día desde el botón Fecha."
+                  : "Puedes seleccionar otro día desde el calendario."}
               </p>
             </div>
           )}
@@ -528,7 +546,9 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
                     </p>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      Puedes seleccionar otro día desde el calendario.
+                      {esTaxista
+                        ? "Selecciona otro día desde el botón Fecha."
+                        : "Puedes seleccionar otro día desde el calendario."}
                     </p>
                   </td>
                 </tr>
@@ -680,15 +700,15 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
       </div>
 
       {modalCalendario && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/35 px-4 backdrop-blur-sm">
           <button
             type="button"
-            onClick={() => setModalCalendario(false)}
+            onClick={cerrarCalendario}
             className="absolute inset-0"
             aria-label="Cerrar calendario"
           />
 
-          <div className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-yellow-100 bg-white shadow-2xl">
+          <div className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overflow-x-hidden rounded-[32px] border border-yellow-100 bg-white shadow-2xl">
             <div className="bg-gradient-to-br from-[#FFF7D6] via-[#FFE9A8] to-[#F8C84A] px-6 pb-5 pt-6 text-slate-900">
               <div className="flex items-center justify-between">
                 <button
@@ -709,7 +729,9 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
                   </p>
 
                   <p className="mt-2 text-xs font-bold text-[#8A6500]">
-                    Toca un día. Toca otro día para rango.
+                    {esTaxista
+                      ? "Toca un día para filtrar tus jornadas."
+                      : "Toca un día. Toca otro día para rango."}
                   </p>
                 </div>
 
