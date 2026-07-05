@@ -22,10 +22,12 @@ const JornadaModal = ({
   }
 
   const modoCierre =
-    jornadaEditando?.modoFormulario === "cerrar";
+    jornadaEditando?.modoFormulario ===
+    "cerrar";
 
   const modoEdicion =
-    Boolean(jornadaEditando) && !modoCierre;
+    Boolean(jornadaEditando) &&
+    !modoCierre;
 
   const tituloModal = modoCierre
     ? "Cerrar jornada"
@@ -42,7 +44,7 @@ const JornadaModal = ({
     : "Registra los datos operativos de la jornada.";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-slate-950/40 px-4 py-5 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto overflow-x-hidden bg-slate-950/40 px-4 py-5 backdrop-blur-sm">
       <button
         type="button"
         onClick={onClose}
@@ -54,20 +56,11 @@ const JornadaModal = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="jornada-modal-title"
-        className={`
-          relative z-10
-          flex max-h-[calc(100dvh-2.5rem)]
-          w-full min-w-0
-          flex-col overflow-hidden
-          rounded-[28px]
-          bg-white
-          shadow-2xl
-          ${
-            esTaxista
-              ? "max-w-[420px]"
-              : "max-w-4xl"
-          }
-        `}
+        className={`relative z-10 flex max-h-[calc(100dvh-2.5rem)] w-full min-w-0 flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl ${
+          esTaxista
+            ? "max-w-md"
+            : "max-w-4xl"
+        }`}
       >
         <div className="flex min-w-0 shrink-0 items-start gap-3 border-b border-slate-100 px-4 py-4 sm:gap-4 sm:px-5 sm:py-5">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFF4CF] text-[#E7A900]">
