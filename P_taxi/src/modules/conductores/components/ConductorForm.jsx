@@ -12,6 +12,7 @@ const EMPTY_FORM = {
   numero_licencia: "",
   fecha_inicio_licencia: "",
   fecha_vencimiento_licencia: "",
+  porcentaje_pago: "",
 };
 
 const obtenerFechaActual = () => {
@@ -62,6 +63,9 @@ const obtenerFormularioInicial = (
 
     fecha_vencimiento_licencia:
       initialData.fecha_vencimiento_licencia || "",
+
+    porcentaje_pago:
+      initialData.porcentaje_pago ?? "",
   };
 };
 
@@ -253,7 +257,7 @@ const ConductorForm = ({
       return;
     }
 
-    await onSubmit({
+    const payload = {
       nombre:
         form.nombre.trim(),
 
@@ -281,18 +285,26 @@ const ConductorForm = ({
         form.fecha_vencimiento_licencia,
 
       /*
-       * No enviamos porcentaje_pago.
-       * Se obtiene desde ConfiguracionSistema.
-       */
-
-      /*
        * Conserva el estado actual al editar.
        * Los conductores nuevos se crean activos.
        */
       activo:
         initialData?.activo ??
         true,
-    });
+    };
+
+    /*
+     * El % solo se envia si el usuario lo especifico.
+     * Si se deja vacio, el backend aplica el % por defecto de la sucursal.
+     */
+    const porcentaje =
+      String(form.porcentaje_pago).trim();
+
+    if (porcentaje !== "") {
+      payload.porcentaje_pago = porcentaje;
+    }
+
+    await onSubmit(payload);
   };
 
   const inputClass = (campo) => {
@@ -612,6 +624,53 @@ const ConductorForm = ({
             <ErrorCampo
               mensaje={
                 errors.fecha_vencimiento_licencia
+              }
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:p-6">
+        <div className="mb-5">
+          <h3 className="text-lg font-black text-slate-900">
+            Pago al conductor
+          </h3>
+
+          <p className="mt-1 text-sm font-medium text-slate-500">
+            Porcentaje de comisión propio de este conductor.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-bold text-slate-700">
+              % de pago al conductor
+            </label>
+
+            <input
+              type="number"
+              name="porcentaje_pago"
+              value={
+                form.porcentaje_pago
+              }
+              onChange={
+                handleChange
+              }
+              min={0}
+              max={100}
+              step={0.5}
+              placeholder="Deja vacío para usar el % por defecto de la sucursal"
+              disabled={
+                submitting
+              }
+              className={inputClass(
+                "porcentaje_pago"
+              )}
+            />
+
+            <ErrorCampo
+              mensaje={
+                errors.porcentaje_pago
               }
             />
           </div>

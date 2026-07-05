@@ -81,6 +81,7 @@ const HEADERS = [
   "Cédula",
   "Licencia",
   "Venc. licencia",
+  "%",
   "Acciones",
 ];
 
@@ -144,6 +145,15 @@ const ConductorTable = ({
                           fechaVencimiento
                         }
                       />
+                    </td>
+
+                    <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-slate-700">
+                      {conductor.porcentaje_pago !=
+                        null &&
+                      conductor.porcentaje_pago !==
+                        ""
+                        ? `${conductor.porcentaje_pago}%`
+                        : "—"}
                     </td>
 
                     <td className="whitespace-nowrap px-5 py-4">

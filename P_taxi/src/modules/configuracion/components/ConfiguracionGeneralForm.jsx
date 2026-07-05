@@ -83,7 +83,7 @@ const ConfiguracionGeneralForm = ({
 
         <div>
           <label className="mb-2 block text-sm font-bold text-slate-700">
-            Pago al conductor (%)
+            % por defecto para conductores nuevos
           </label>
 
           <input
@@ -97,6 +97,10 @@ const ConfiguracionGeneralForm = ({
             step="0.01"
             className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
           />
+
+          <p className="mt-1.5 text-xs font-medium text-slate-500">
+            Este valor se aplica solo a conductores nuevos si no se les asigna un % propio.
+          </p>
         </div>
 
         <div>
