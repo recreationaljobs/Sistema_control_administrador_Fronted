@@ -88,29 +88,15 @@ const JornadasPage = () => {
         </div>
 
         {esTaxista && (
-          <div className="relative flex w-full min-w-0">
-            {!jornadaCerradaHoy && (
-              <>
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -inset-1.5 rounded-[20px] border-2 border-dashed border-[#F5B800] opacity-80 motion-safe:animate-pulse"
-                />
-
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -inset-1.5 rounded-[20px] border border-dashed border-[#F5B800]/50 motion-safe:animate-ping"
-                />
-              </>
-            )}
-
+          <div className="relative w-full min-w-0">
             <button
               type="button"
               onClick={handleBotonTaxista}
               disabled={Boolean(jornadaCerradaHoy)}
-              className={`group relative z-10 inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-2xl px-4 py-4 text-center text-xl font-black shadow-md transition-all duration-300 sm:text-2xl ${
+              className={`group relative inline-flex w-full min-w-0 items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 px-4 py-4 text-center text-xl font-black shadow-md transition-all duration-300 sm:text-2xl ${
                 jornadaCerradaHoy
-                  ? "cursor-not-allowed bg-slate-200 text-slate-500 shadow-none"
-                  : "bg-[#F5B800] text-white shadow-yellow-100 hover:-translate-y-0.5 hover:bg-[#DFA600] hover:shadow-lg active:translate-y-0 active:scale-[0.98]"
+                  ? "cursor-not-allowed border-slate-300 bg-slate-200 text-slate-500 shadow-none"
+                  : "border-dashed border-[#FFE080] bg-[#F5B800] text-white shadow-yellow-100 motion-safe:animate-pulse hover:bg-[#DFA600] hover:shadow-lg active:scale-[0.98]"
               }`}
             >
               <Plus
