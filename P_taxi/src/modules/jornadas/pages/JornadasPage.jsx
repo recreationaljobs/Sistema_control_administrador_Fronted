@@ -90,10 +90,17 @@ const JornadasPage = () => {
         {esTaxista && (
           <div className="relative flex w-full min-w-0">
             {!jornadaCerradaHoy && (
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute -inset-1.5 rounded-[20px] border-2 border-dashed border-[#F5B800] opacity-80 motion-safe:animate-pulse"
-              />
+              <>
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -inset-1.5 rounded-[20px] border-2 border-dashed border-[#F5B800] opacity-80 motion-safe:animate-pulse"
+                />
+
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -inset-1.5 rounded-[20px] border border-dashed border-[#F5B800]/50 motion-safe:animate-ping"
+                />
+              </>
             )}
 
             <button
