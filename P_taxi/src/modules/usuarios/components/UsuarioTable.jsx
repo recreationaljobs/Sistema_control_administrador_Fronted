@@ -5,14 +5,19 @@ import {
   Power,
   ShieldCheck,
   Trash2,
+  UserCheck,
   UserRound,
+  UserX,
 } from "lucide-react";
 
 const UsuarioTable = ({
   usuarios,
   loading,
+  esSuperAdmin = false,
   onEdit,
   onToggleStatus,
+  onDarBaja,
+  onReactivar,
   onDelete,
 }) => {
   if (loading) {
@@ -128,7 +133,7 @@ const UsuarioTable = ({
                       className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${
                         usuario.is_active
                           ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                          : "bg-slate-200 text-slate-600"
                       }`}
                     >
                       {usuario.is_active ? "Activo" : "Inactivo"}
@@ -146,18 +151,42 @@ const UsuarioTable = ({
                         <Edit3 size={18} />
                       </button>
 
-                      <button
-                        type="button"
-                        onClick={() => onToggleStatus(usuario)}
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl transition ${
-                          usuario.is_active
-                            ? "bg-orange-50 text-orange-600 hover:bg-orange-100"
-                            : "bg-green-50 text-green-600 hover:bg-green-100"
-                        }`}
-                        title={usuario.is_active ? "Desactivar" : "Activar"}
-                      >
-                        <Power size={18} />
-                      </button>
+                      {esSuperAdmin ? (
+                        usuario.is_active ? (
+                          <button
+                            type="button"
+                            onClick={() => onDarBaja(usuario)}
+                            className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-red-50 px-3 text-xs font-black text-red-600 transition hover:bg-red-100"
+                            title="Dar de baja"
+                          >
+                            <UserX size={16} />
+                            Dar de baja
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => onReactivar(usuario)}
+                            className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-green-50 px-3 text-xs font-black text-green-600 transition hover:bg-green-100"
+                            title="Reactivar"
+                          >
+                            <UserCheck size={16} />
+                            Reactivar
+                          </button>
+                        )
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onToggleStatus(usuario)}
+                          className={`flex h-10 w-10 items-center justify-center rounded-xl transition ${
+                            usuario.is_active
+                              ? "bg-orange-50 text-orange-600 hover:bg-orange-100"
+                              : "bg-green-50 text-green-600 hover:bg-green-100"
+                          }`}
+                          title={usuario.is_active ? "Desactivar" : "Activar"}
+                        >
+                          <Power size={18} />
+                        </button>
+                      )}
 
                       <button
                         type="button"

@@ -36,6 +36,8 @@ const UsuariosPage = () => {
     cerrarModal,
     guardarUsuario,
     cambiarEstadoUsuario,
+    darBaja,
+    reactivar,
     eliminarUsuario,
   } = useUsuarios();
 
@@ -166,8 +168,11 @@ const UsuariosPage = () => {
           <UsuarioTable
             usuarios={usuariosFiltrados}
             loading={loading}
+            esSuperAdmin={esSuperAdmin}
             onEdit={abrirModalEditar}
             onToggleStatus={cambiarEstadoUsuario}
+            onDarBaja={darBaja}
+            onReactivar={reactivar}
             onDelete={eliminarUsuario}
           />
         </div>

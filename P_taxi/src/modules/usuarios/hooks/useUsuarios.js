@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 import { useAuth } from "../../../hooks/useAuth";
 import {
   createUsuario,
+  darBajaUsuario,
   deleteUsuario,
   getConductoresDisponibles,
   getRoles,
   getSucursales,
   getUsuarios,
+  reactivarUsuario,
   updateUsuario,
 } from "../services/usuariosService";
 
@@ -226,6 +229,64 @@ export const useUsuarios = () => {
     }
   };
 
+  const darBaja = async (usuario) => {
+    const result = await Swal.fire({
+      title: "¿Dar de baja al usuario?",
+      text: `${usuario.username} no podrá iniciar sesión hasta que lo reactives.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sí, dar de baja",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+
+      await darBajaUsuario(usuario.id);
+      await cargarUsuarios();
+    } catch (err) {
+      setError(obtenerMensajeError(err, "No se pudo dar de baja al usuario."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const reactivar = async (usuario) => {
+    const result = await Swal.fire({
+      title: "¿Reactivar al usuario?",
+      text: `${usuario.username} podrá volver a iniciar sesión.`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#16a34a",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sí, reactivar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+
+      await reactivarUsuario(usuario.id);
+      await cargarUsuarios();
+    } catch (err) {
+      setError(obtenerMensajeError(err, "No se pudo reactivar al usuario."));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const eliminarUsuario = async (usuario) => {
     const confirmar = window.confirm(
       `¿Seguro que deseas eliminar el usuario "${usuario.username}"?`
@@ -322,6 +383,8 @@ export const useUsuarios = () => {
     cerrarModal,
     guardarUsuario,
     cambiarEstadoUsuario,
+    darBaja,
+    reactivar,
     eliminarUsuario,
   };
 };

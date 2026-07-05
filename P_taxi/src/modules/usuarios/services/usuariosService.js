@@ -20,6 +20,16 @@ export const deleteUsuario = async (id) => {
   return response.data;
 };
 
+export const darBajaUsuario = async (id) => {
+  const response = await api.post(`usuarios/${id}/dar-baja/`);
+  return response.data;
+};
+
+export const reactivarUsuario = async (id) => {
+  const response = await api.post(`usuarios/${id}/reactivar/`);
+  return response.data;
+};
+
 export const getRoles = async () => {
   const response = await api.get("roles/");
   return response.data;

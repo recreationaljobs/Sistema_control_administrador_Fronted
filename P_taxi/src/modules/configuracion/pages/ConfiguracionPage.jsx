@@ -63,7 +63,14 @@ const ConfiguracionPage = () => {
   } = useConfiguracion();
 
   const puedeEditarGeneral = esSuperAdmin || esAdminSucursal;
-  const puedeAdministrarCatalogos = esSuperAdmin;
+  const puedeAdministrarCatalogos = esSuperAdmin || esAdminSucursal;
+
+  // El admin de sucursal solo ve General y Estados (no Roles ni Tipos).
+  const tabsVisibles = esAdminSucursal
+    ? tabs.filter(
+        (tab) => tab.key === "general" || tab.key === "estados"
+      )
+    : tabs;
 
   if (esTaxista) {
     return (
@@ -126,7 +133,7 @@ const ConfiguracionPage = () => {
 
       <section className="rounded-[24px] border border-slate-200 bg-white p-2 shadow-sm">
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-          {tabs.map((tab) => {
+          {tabsVisibles.map((tab) => {
             const Icon = tab.icon;
             const active = tabActiva === tab.key;
 
