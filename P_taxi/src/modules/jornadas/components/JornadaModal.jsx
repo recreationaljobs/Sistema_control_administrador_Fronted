@@ -21,105 +21,49 @@ const JornadaModal = ({
     return null;
   }
 
-  const modoCierre =
-    jornadaEditando?.modoFormulario === "cerrar";
-
-  const modoEdicion =
-    Boolean(jornadaEditando) && !modoCierre;
-
-  const tituloModal = modoCierre
-    ? "Cerrar jornada"
-    : modoEdicion
-    ? "Editar jornada"
-    : "Nueva jornada";
-
-  const descripcionModal = modoCierre
-    ? "Ingresa el kilometraje final para terminar la jornada diaria."
-    : esTaxista
-    ? "Registra el kilometraje inicial para comenzar tu jornada."
-    : modoEdicion
-    ? "Actualiza la información de la jornada."
-    : "Registra los datos operativos de la jornada.";
-
   return (
-    <div
-      className="
-        fixed inset-0 z-50
-        flex items-end justify-center
-        overflow-hidden
-        bg-slate-950/40
-        px-3 py-3
-        backdrop-blur-sm
-        sm:items-center
-        sm:px-4 sm:py-6
-      "
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
       <button
         type="button"
         onClick={onClose}
-        className="absolute inset-0 cursor-default"
+        className="absolute inset-0 bg-slate-950/40"
         aria-label="Cerrar modal"
       />
 
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="jornada-modal-title"
-        className={`
-          relative z-10
-          flex max-h-[calc(100dvh-1.5rem)]
-          w-full min-w-0 max-w-full
-          flex-col overflow-hidden
-          rounded-[28px]
-          bg-white
-          shadow-2xl
-          ${
-            esTaxista
-              ? "sm:max-w-md"
-              : "sm:max-w-4xl"
-          }
-        `}
-      >
-        <div className="flex min-w-0 shrink-0 items-start gap-3 border-b border-slate-100 px-4 py-4 sm:gap-4 sm:px-6 sm:py-5">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFF4CF] text-[#E7A900] sm:h-14 sm:w-14">
-            <CalendarDays size={26} />
-          </div>
+      <div className="relative max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFF4CF] text-[#E7A900]">
+              <CalendarDays size={26} />
+            </div>
 
-          <div className="min-w-0 flex-1">
-            <h2
-              id="jornada-modal-title"
-              className="break-words text-xl font-black leading-tight text-slate-950 sm:text-2xl"
-            >
-              {tituloModal}
-            </h2>
+            <div>
+              <h2 className="text-xl font-black text-slate-950">
+                {jornadaEditando?.modoFormulario === "cerrar"
+                  ? "Cerrar jornada"
+                  : jornadaEditando
+                  ? "Editar jornada"
+                  : "Nueva jornada"}
+              </h2>
 
-            <p className="mt-1 break-words text-sm font-medium leading-5 text-slate-500">
-              {descripcionModal}
-            </p>
+             <p className="text-sm font-medium text-slate-500">
+                {jornadaEditando?.modoFormulario === "cerrar"
+                  ? "Ingresa el kilometraje final al terminar la jornada diaria."
+                  : "Registra el kilometraje inicial y los datos operativos del día."}
+              </p>
+            </div>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            disabled={saving}
-            className="
-              flex h-10 w-10 shrink-0
-              items-center justify-center
-              rounded-full bg-slate-100
-              text-slate-500
-              transition
-              hover:bg-slate-200
-              hover:text-slate-800
-              disabled:cursor-not-allowed
-              disabled:opacity-50
-            "
-            aria-label="Cerrar"
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
           >
-            <X size={20} />
+            <X size={22} />
           </button>
         </div>
 
-        <div className="min-h-0 w-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="max-h-[calc(92vh-90px)] overflow-y-auto">
           <JornadaForm
             jornadaEditando={jornadaEditando}
             conductores={conductores}
