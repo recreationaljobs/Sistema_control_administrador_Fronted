@@ -708,115 +708,120 @@ const JornadaForm = ({
     });
   };
 
-  if (esTaxista) {
-    return (
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-5 px-5 py-6"
-      >
-        {formError && (
-          <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-            <AlertCircle
-              size={19}
-              className="mt-0.5 shrink-0"
-            />
+ if (esTaxista) {
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="w-full min-w-0 max-w-full space-y-5 overflow-x-hidden px-4 py-5 sm:px-5 sm:py-6"
+    >
+      {formError && (
+        <div className="flex min-w-0 items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+          <AlertCircle
+            size={19}
+            className="mt-0.5 shrink-0"
+          />
 
-            <span>{formError}</span>
-          </div>
-        )}
+          <span className="min-w-0 break-words">
+            {formError}
+          </span>
+        </div>
+      )}
 
-        {!modoCierre && (
-          <div>
+      {!modoCierre && (
+        <div className="w-full min-w-0">
+          <label
+            htmlFor="kilometraje_inicial"
+            className="mb-2 block text-sm font-black text-slate-800"
+          >
+            Ingrese el kilometraje inicial
+          </label>
+
+          <input
+            id="kilometraje_inicial"
+            type="number"
+            name="kilometraje_inicial"
+            value={form.kilometraje_inicial}
+            onChange={handleChange}
+            min="0"
+            inputMode="numeric"
+            placeholder="Ejemplo: 25000"
+            className="block w-full min-w-0 max-w-full rounded-2xl border border-slate-300 bg-white px-4 py-4 text-base font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
+          />
+        </div>
+      )}
+
+      {modoCierre && (
+        <>
+          <div className="w-full min-w-0">
             <label
-              htmlFor="kilometraje_inicial"
+              htmlFor="kilometraje_final"
               className="mb-2 block text-sm font-black text-slate-800"
             >
-              Ingrese el kilometraje inicial
+              Ingrese el kilometraje final
             </label>
 
             <input
-              id="kilometraje_inicial"
+              id="kilometraje_final"
               type="number"
-              name="kilometraje_inicial"
-              value={form.kilometraje_inicial}
+              name="kilometraje_final"
+              value={form.kilometraje_final}
               onChange={handleChange}
               min="0"
-              placeholder="Ejemplo: 25000"
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-4 text-base font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
+              inputMode="numeric"
+              placeholder="Ejemplo: 25120"
+              className="block w-full min-w-0 max-w-full rounded-2xl border border-slate-300 bg-white px-4 py-4 text-base font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
             />
           </div>
-        )}
 
-        {modoCierre && (
-          <>
-            <div>
-              <label
-                htmlFor="kilometraje_final"
-                className="mb-2 block text-sm font-black text-slate-800"
-              >
-                Ingrese el kilometraje final
-              </label>
+          <div className="w-full min-w-0">
+            <label
+              htmlFor="ingreso_bruto"
+              className="mb-2 block text-sm font-black text-slate-800"
+            >
+              Ingrese el monto bruto
+            </label>
 
-              <input
-                id="kilometraje_final"
-                type="number"
-                name="kilometraje_final"
-                value={form.kilometraje_final}
-                onChange={handleChange}
-                min="0"
-                placeholder="Ejemplo: 25120"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-4 text-base font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
-              />
-            </div>
+            <input
+              id="ingreso_bruto"
+              type="number"
+              name="ingreso_bruto"
+              value={form.ingreso_bruto}
+              onChange={handleChange}
+              min="0"
+              step="0.01"
+              inputMode="decimal"
+              placeholder="Ejemplo: 1500.00"
+              className="block w-full min-w-0 max-w-full rounded-2xl border border-slate-300 bg-white px-4 py-4 text-base font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
+            />
+          </div>
+        </>
+      )}
 
-            <div>
-              <label
-                htmlFor="ingreso_bruto"
-                className="mb-2 block text-sm font-black text-slate-800"
-              >
-                Ingrese el monto bruto
-              </label>
+      <div className="grid w-full min-w-0 grid-cols-1 gap-3 border-t border-slate-100 pt-5 sm:grid-cols-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={saving}
+          className="inline-flex w-full min-w-0 items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-base font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+        >
+          Cancelar
+        </button>
 
-              <input
-                id="ingreso_bruto"
-                type="number"
-                name="ingreso_bruto"
-                value={form.ingreso_bruto}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-                placeholder="Ejemplo: 1500.00"
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-4 text-base font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
-              />
-            </div>
-          </>
-        )}
-
-        <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={saving}
-            className="rounded-2xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
-          >
-            Cancelar
-          </button>
-
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-2xl bg-[#F5B800] px-5 py-3.5 text-sm font-black text-white shadow-md shadow-yellow-100 transition hover:bg-[#DFA600] disabled:opacity-60"
-          >
-            {saving
-              ? "Guardando..."
-              : modoCierre
-              ? "Cerrar jornada"
-              : "Iniciar jornada"}
-          </button>
-        </div>
-      </form>
-    );
-  }
+        <button
+          type="submit"
+          disabled={saving}
+          className="inline-flex w-full min-w-0 items-center justify-center rounded-2xl bg-[#F5B800] px-4 py-3.5 text-base font-black text-white shadow-md shadow-yellow-100 transition hover:bg-[#DFA600] disabled:opacity-60"
+        >
+          {saving
+            ? "Guardando..."
+            : modoCierre
+            ? "Cerrar jornada"
+            : "Iniciar jornada"}
+        </button>
+      </div>
+    </form>
+  );
+}
 
   return (
     <form
