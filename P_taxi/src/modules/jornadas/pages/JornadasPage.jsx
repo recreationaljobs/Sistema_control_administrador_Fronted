@@ -95,14 +95,14 @@ const JornadasPage = () => {
               type="button"
               onClick={handleBotonTaxista}
               disabled={Boolean(jornadaCerradaHoy)}
-              className={`relative z-10 inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-4 text-sm font-black shadow-md transition-all duration-300 w-full ${
+              className={`relative z-10 inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-4 text-2xl font-black shadow-md transition-all duration-300 w-full ${
                 jornadaCerradaHoy
                   ? "cursor-not-allowed bg-slate-200 text-slate-500 shadow-none"
                   : "bg-[#F5B800] text-white shadow-yellow-100 hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#DFA600] hover:shadow-lg active:translate-y-0 active:scale-95"
               }`}
             >
               <Plus
-                size={20}
+                size={30}
                 className={
                   jornadaCerradaHoy
                     ? ""
