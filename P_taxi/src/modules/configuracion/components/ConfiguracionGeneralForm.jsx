@@ -7,6 +7,7 @@ const initialForm = {
   intervalo_cambio_aceite_km: "5000",
   intervalo_mantenimiento_km: "10000",
   alerta_previa_km: "300",
+  km_aviso_mantenimiento: "30",
 };
 
 const ConfiguracionGeneralForm = ({
@@ -31,6 +32,9 @@ const ConfiguracionGeneralForm = ({
           configuracion.intervalo_mantenimiento_km ?? "10000"
         ),
         alerta_previa_km: String(configuracion.alerta_previa_km ?? "300"),
+        km_aviso_mantenimiento: String(
+          configuracion.km_aviso_mantenimiento ?? "30"
+        ),
       });
     }
   }, [configuracion]);
@@ -149,6 +153,26 @@ const ConfiguracionGeneralForm = ({
             min="0"
             className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
           />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-bold text-slate-700">
+            Kilómetros antes del aviso de mantenimiento
+          </label>
+
+          <input
+            type="number"
+            name="km_aviso_mantenimiento"
+            value={form.km_aviso_mantenimiento}
+            onChange={handleChange}
+            disabled={!puedeEditar || saving}
+            min="0"
+            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
+          />
+
+          <p className="mt-1.5 text-xs font-medium text-slate-500">
+            El aviso de cambio de aceite se dispara estos km antes de alcanzar el intervalo.
+          </p>
         </div>
       </div>
 

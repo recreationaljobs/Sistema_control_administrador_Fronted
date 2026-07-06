@@ -192,6 +192,7 @@ export const useConfiguracion = () => {
           form.intervalo_mantenimiento_km || 0
         ),
         alerta_previa_km: Number(form.alerta_previa_km || 0),
+        km_aviso_mantenimiento: Number(form.km_aviso_mantenimiento || 0),
       };
 
       if (payload.porcentaje_pago_conductor < 0) {
