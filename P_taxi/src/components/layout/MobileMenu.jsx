@@ -79,12 +79,14 @@ const menuItems = [
     icon: Wrench,
     roles: ["superadmin", "admin_sucursal"],
   },
+  /* TODO: reactivar cuando se implemente el módulo Reportes
   {
     label: "Reportes",
     path: "/reportes",
     icon: FileBarChart,
     roles: ["superadmin", "admin_sucursal"],
   },
+  */
   {
     label: "Usuarios",
     path: "/usuarios",

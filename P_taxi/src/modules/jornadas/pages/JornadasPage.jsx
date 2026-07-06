@@ -222,7 +222,6 @@ const JornadasPage = () => {
           jornadas={jornadasFiltradas}
           loading={loading}
           onEdit={abrirModalEditar}
-          onCloseJornada={abrirModalCerrar}
           onDelete={eliminarJornada}
           esTaxista={esTaxista}
         />

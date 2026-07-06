@@ -1,6 +1,8 @@
 import { AlertTriangle, Bell, ChevronRight, Wrench } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const MaintenanceAlerts = ({ alertas = [], totalAlertas = 0 }) => {
+  const navigate = useNavigate();
   if (!alertas.length && !totalAlertas) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -53,6 +55,7 @@ const MaintenanceAlerts = ({ alertas = [], totalAlertas = 0 }) => {
             <button
               key={`${alerta.vehiculo_id}-${alerta.tipo}-${index}`}
               type="button"
+              onClick={() => navigate("/mantenimiento")}
               className="flex w-full items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 text-left shadow-sm transition hover:bg-slate-50"
             >
               <div
