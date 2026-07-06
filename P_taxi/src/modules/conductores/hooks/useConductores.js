@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
+import Swal from "sweetalert2";
 import {
   getConductores,
   createConductor,
   updateConductor,
   deleteConductor,
+  despedirConductor,
+  reactivarConductor,
 } from "../services/conductoresService";
+import { mostrarError, mostrarExito } from "../../../utils/sweetAlert";
 
 export const useConductores = () => {
   const [conductores, setConductores] = useState([]);
@@ -114,6 +118,68 @@ export const useConductores = () => {
     }
   };
 
+  const handleDespedir = async (conductor) => {
+    const result = await Swal.fire({
+      title: `¿Despedir a ${conductor.nombre} ${conductor.apellido}?`,
+      text: "Su vehículo quedará libre. Esta acción puede revertirse.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#EF4444",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sí, despedir",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const updated = await despedirConductor(conductor.id);
+      setConductores((prev) =>
+        prev.map((c) => (c.id === updated.id ? updated : c))
+      );
+      mostrarExito({
+        titulo: "Conductor despedido",
+        mensaje: `${conductor.nombre} quedó inactivo y su vehículo fue liberado.`,
+      });
+    } catch (err) {
+      mostrarError({
+        mensaje:
+          err.response?.data?.detail || "No se pudo despedir al conductor.",
+      });
+    }
+  };
+
+  const handleReactivar = async (conductor) => {
+    const result = await Swal.fire({
+      title: `¿Reactivar a ${conductor.nombre} ${conductor.apellido}?`,
+      text: "Volverá a estar disponible para asignaciones y jornadas.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#16a34a",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: "Sí, reactivar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      const updated = await reactivarConductor(conductor.id);
+      setConductores((prev) =>
+        prev.map((c) => (c.id === updated.id ? updated : c))
+      );
+      mostrarExito({
+        titulo: "Conductor reactivado",
+        mensaje: `${conductor.nombre} vuelve a estar activo.`,
+      });
+    } catch (err) {
+      mostrarError({
+        mensaje:
+          err.response?.data?.detail || "No se pudo reactivar al conductor.",
+      });
+    }
+  };
+
   return {
     conductores,
     loading,
@@ -132,6 +198,8 @@ export const useConductores = () => {
     handleCreate,
     handleUpdate,
     handleDelete,
+    handleDespedir,
+    handleReactivar,
     refetch: fetchConductores,
   };
 };

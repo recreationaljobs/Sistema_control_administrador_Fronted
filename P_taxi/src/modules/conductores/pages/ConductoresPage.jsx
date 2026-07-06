@@ -1,5 +1,6 @@
 import { Plus, UserCircle2 } from "lucide-react";
 import { useConductores } from "../hooks/useConductores";
+import { useAuth } from "../../../hooks/useAuth";
 import ConductorTable from "../components/ConductorTable";
 import ConductorModal from "../components/ConductorModal";
 import Loading from "../../../components/shared/Loading";
@@ -26,7 +27,12 @@ const ConductoresPage = () => {
     handleCreate,
     handleUpdate,
     handleDelete,
+    handleDespedir,
+    handleReactivar,
   } = useConductores();
+
+  const { rol } = useAuth();
+  const canManage = rol === "superadmin" || rol === "admin_sucursal";
 
   return (
     <div>
@@ -65,6 +71,9 @@ const ConductoresPage = () => {
           conductores={conductores}
           onEdit={openEdit}
           onDelete={openDelete}
+          onDespedir={handleDespedir}
+          onReactivar={handleReactivar}
+          canManage={canManage}
         />
       )}
 

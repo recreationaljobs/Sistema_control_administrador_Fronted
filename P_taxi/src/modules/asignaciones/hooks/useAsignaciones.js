@@ -4,8 +4,8 @@ import {
   createAsignacion,
   deleteAsignacion,
   getAsignaciones,
-  getConductores,
-  getVehiculos,
+  getConductoresDisponibles,
+  getVehiculosDisponibles,
   updateAsignacion,
 } from "../services/asignacionesService";
 
@@ -58,13 +58,15 @@ export const useAsignaciones = () => {
     }
   };
 
-  const cargarCatalogos = async () => {
+  // Solo conductores/vehículos libres. Al editar (asignacionId) se incluye
+  // además el conductor/vehículo que ya tiene esa asignación.
+  const cargarCatalogos = async (asignacionId = null) => {
     try {
       setLoadingCatalogos(true);
       setError("");
 
-      const conductoresData = await getConductores();
-      const vehiculosData = await getVehiculos();
+      const conductoresData = await getConductoresDisponibles(asignacionId);
+      const vehiculosData = await getVehiculosDisponibles(asignacionId);
 
       setConductores(normalizarLista(conductoresData));
       setVehiculos(normalizarLista(vehiculosData));
@@ -80,11 +82,13 @@ export const useAsignaciones = () => {
 
   const abrirModalCrear = () => {
     setAsignacionEditando(null);
+    cargarCatalogos();
     setModalOpen(true);
   };
 
   const abrirModalEditar = (asignacion) => {
     setAsignacionEditando(asignacion);
+    cargarCatalogos(asignacion.id);
     setModalOpen(true);
   };
 

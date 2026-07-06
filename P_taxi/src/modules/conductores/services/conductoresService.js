@@ -23,3 +23,13 @@ export const updateConductor = async (id, data) => {
 export const deleteConductor = async (id) => {
   await api.delete(`conductores/${id}/`);
 };
+
+export const despedirConductor = async (id) => {
+  const response = await api.post(`conductores/${id}/despedir/`);
+  return response.data;
+};
+
+export const reactivarConductor = async (id) => {
+  const response = await api.post(`conductores/${id}/reactivar/`);
+  return response.data;
+};

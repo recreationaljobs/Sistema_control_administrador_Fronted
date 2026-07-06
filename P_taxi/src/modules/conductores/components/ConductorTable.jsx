@@ -3,6 +3,8 @@ import {
   Pencil,
   Trash2,
   AlertTriangle,
+  UserX,
+  UserCheck,
 } from "lucide-react";
 
 const getDaysUntilExpiry = (dateStr) => {
@@ -82,13 +84,28 @@ const HEADERS = [
   "Licencia",
   "Venc. licencia",
   "%",
+  "Estado",
   "Acciones",
 ];
+
+const EstadoBadge = ({ activo }) =>
+  activo ? (
+    <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-700">
+      Activo
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 rounded-full bg-slate-200 px-2.5 py-1 text-xs font-bold text-slate-600">
+      Despedido
+    </span>
+  );
 
 const ConductorTable = ({
   conductores = [],
   onEdit,
   onDelete,
+  onDespedir,
+  onReactivar,
+  canManage = false,
 }) => {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -119,6 +136,8 @@ const ConductorTable = ({
                   conductor.fecha_vencimiento_licencia ||
                   conductor.vencimiento_licencia ||
                   null;
+
+                const activo = conductor.activo !== false;
 
                 return (
                   <tr
@@ -157,6 +176,10 @@ const ConductorTable = ({
                     </td>
 
                     <td className="whitespace-nowrap px-5 py-4">
+                      <EstadoBadge activo={activo} />
+                    </td>
+
+                    <td className="whitespace-nowrap px-5 py-4">
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
@@ -173,6 +196,33 @@ const ConductorTable = ({
                             size={15}
                           />
                         </button>
+
+                        {canManage &&
+                          (activo ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onDespedir?.(conductor)
+                              }
+                              className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:border-red-300 hover:bg-red-50 hover:text-red-600"
+                              aria-label="Despedir conductor"
+                              title="Despedir conductor"
+                            >
+                              <UserX size={15} />
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onReactivar?.(conductor)
+                              }
+                              className="rounded-xl border border-slate-200 p-2 text-slate-500 transition hover:border-green-300 hover:bg-green-50 hover:text-green-600"
+                              aria-label="Reactivar conductor"
+                              title="Reactivar conductor"
+                            >
+                              <UserCheck size={15} />
+                            </button>
+                          ))}
 
                         <button
                           type="button"

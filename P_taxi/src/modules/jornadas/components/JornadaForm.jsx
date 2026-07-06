@@ -97,10 +97,12 @@ const JornadaForm = ({
         String(item.conductor)
       );
 
-    return conductores.filter((conductor) =>
-      idsConductoresAsignados.includes(
-        String(conductor.id)
-      )
+    return conductores.filter(
+      (conductor) =>
+        conductor.activo !== false &&
+        idsConductoresAsignados.includes(
+          String(conductor.id)
+        )
     );
   }, [
     conductores,

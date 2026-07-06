@@ -153,11 +153,16 @@ const AdelantoForm = ({
           .trim()
           .toLowerCase();
 
+      // Solo conductores activos: los despedidos no reciben adelantos.
+      const activos = conductores.filter(
+        (conductor) => conductor.activo !== false
+      );
+
       if (!value) {
-        return conductores.slice(0, 8);
+        return activos.slice(0, 8);
       }
 
-      return conductores
+      return activos
         .filter((conductor) => {
           const texto =
             nombreConductor(conductor)

@@ -30,3 +30,17 @@ export const getVehiculos = async () => {
   return response.data;
 };
 
+// Solo conductores/vehículos libres (sin asignación activa). Al editar se pasa
+// el id de la asignación para conservar el conductor/vehículo ya asignado.
+export const getConductoresDisponibles = async (asignacionId) => {
+  const params = asignacionId ? { asignacion: asignacionId } : {};
+  const response = await api.get("conductores/disponibles/", { params });
+  return response.data;
+};
+
+export const getVehiculosDisponibles = async (asignacionId) => {
+  const params = asignacionId ? { asignacion: asignacionId } : {};
+  const response = await api.get("vehiculos/disponibles/", { params });
+  return response.data;
+};
+
