@@ -119,6 +119,21 @@ const validarFormulario = (form) => {
         "El porcentaje debe estar entre 1 y 100.";
     }
   }
+    if (String(form.porcentaje_pago).trim() === "") {
+    errors.porcentaje_pago =
+      "El porcentaje de pago es obligatorio.";
+  } else {
+    const porcentaje = Number(form.porcentaje_pago);
+
+    if (
+      Number.isNaN(porcentaje) ||
+      porcentaje < 1 ||
+      porcentaje > 100
+    ) {
+      errors.porcentaje_pago =
+        "El porcentaje debe estar entre 1 y 100.";
+    }
+  }
 
   return errors;
 };
@@ -305,12 +320,7 @@ const ConductorForm = ({
      * El % solo se envia si el usuario lo especifico.
      * Si se deja vacio, el backend aplica el % por defecto de la sucursal.
      */
-    const porcentaje =
-      String(form.porcentaje_pago).trim();
-
-    if (porcentaje !== "") {
-      payload.porcentaje_pago = porcentaje;
-    }
+    payload.porcentaje_pago = Number(form.porcentaje_pago);
 
     await onSubmit(payload);
   };
@@ -664,10 +674,10 @@ const ConductorForm = ({
               onChange={
                 handleChange
               }
-              min={0}
+              min={1}
               max={100}
               step={0.5}
-              placeholder="Deja vacío para usar el % por defecto de la sucursal"
+              placeholder="Ejemplo: 30, 40 o 50"
               disabled={
                 submitting
               }
