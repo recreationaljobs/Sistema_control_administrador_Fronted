@@ -181,18 +181,23 @@ export const useLiquidaciones = () => {
   };
 
   const verRecibo = async (liquidacion) => {
-    try {
-      setError("");
+  try {
+    setError("");
 
-      const data = await getReciboLiquidacion(liquidacion.id);
-      setRecibo(data);
-      setModalReciboOpen(true);
-    } catch (err) {
-      setError(
-        obtenerMensajeError(err, "No se pudo cargar el recibo de liquidación.")
-      );
+    if (!liquidacion?.id) {
+      setError("No se encontró el ID de la liquidación.");
+      return;
     }
-  };
+
+    const data = await getReciboLiquidacion(liquidacion.id);
+    setRecibo(data);
+    setModalReciboOpen(true);
+  } catch (err) {
+    setError(
+      obtenerMensajeError(err, "No se pudo cargar el recibo de liquidación.")
+    );
+  }
+};
 
   const cerrarRecibo = () => {
     setModalReciboOpen(false);

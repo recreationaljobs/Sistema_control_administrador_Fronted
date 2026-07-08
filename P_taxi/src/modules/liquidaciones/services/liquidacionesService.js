@@ -28,6 +28,10 @@ export const createLiquidacion = async (data) => {
 };
 
 export const getReciboLiquidacion = async (id) => {
+  if (!id) {
+    throw new Error("No se encontró el ID de la liquidación.");
+  }
+
   const response = await api.get(`liquidaciones/${id}/recibo/`);
   return response.data;
 };

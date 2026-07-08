@@ -75,13 +75,14 @@ const LiquidacionTable = ({ liquidaciones = [], loading, onViewRecibo }) => {
 
               <td className="px-4 py-3 text-center">
                 <button
-                  type="button"
-                  onClick={() => onViewRecibo(item)}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50"
-                >
-                  <Eye size={16} />
-                  Ver
-                </button>
+                    type="button"
+                    disabled={!item.id}
+                    onClick={() => onViewRecibo(item)}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Eye size={16} />
+                    Ver
+                  </button>
               </td>
             </tr>
           ))}

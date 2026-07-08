@@ -111,6 +111,14 @@ const validarFormulario = (form) => {
     errors.fecha_vencimiento_licencia =
       "La fecha de vencimiento debe ser posterior a la fecha de emisión.";
   }
+    if (String(form.porcentaje_pago).trim() !== "") {
+    const porcentaje = Number(form.porcentaje_pago);
+
+    if (Number.isNaN(porcentaje) || porcentaje < 1 || porcentaje > 100) {
+      errors.porcentaje_pago =
+        "El porcentaje debe estar entre 1 y 100.";
+    }
+  }
 
   return errors;
 };
