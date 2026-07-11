@@ -12,6 +12,7 @@ import UsuariosPage from "../modules/usuarios/pages/UsuariosPage";
 import ConductoresPage from "../modules/conductores/pages/ConductoresPage";
 import VehiculosPage from "../modules/vehiculos/pages/VehiculosPage";
 import AsignacionesPage from "../modules/asignaciones/pages/AsignacionesPage";
+import GananciasTaxistaPage from "../modules/jornadas/pages/GananciasTaxistaPage";
 import JornadasPage from "../modules/jornadas/pages/JornadasPage";
 import GastosPage from "../modules/gastos/pages/GastosPage";
 import AdelantosPage from "../modules/adelantos/pages/AdelantosPage";
@@ -218,6 +219,17 @@ const AppRouter = () => {
               </RoleRoute>
             }
           />
+
+          <Route
+              path="ganancias"
+              element={
+                <RoleRoute
+                  allowedRoles={["taxista"]}
+                >
+                  <GananciasTaxistaPage />
+                </RoleRoute>
+              }
+            />
 
           <Route
             path="gastos"
