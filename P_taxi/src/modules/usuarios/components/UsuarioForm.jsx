@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import Swal from "sweetalert2";
 
 const initialForm = {
   username: "",
@@ -11,6 +12,29 @@ const initialForm = {
   sucursal: "",
   conductor_id: "",
   is_active: true,
+};
+
+const mostrarAlertaExito = async (usuarioEditando) => {
+  await Swal.fire({
+    title: usuarioEditando
+      ? "Usuario actualizado"
+      : "Usuario registrado",
+
+    text: usuarioEditando
+      ? "Los cambios del usuario se guardaron correctamente."
+      : "El usuario se registró correctamente.",
+
+    icon: "success",
+
+    showConfirmButton: false,
+    showCancelButton: false,
+
+    timer: 2200,
+    timerProgressBar: true,
+
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+  });
 };
 
 const UsuarioForm = ({
@@ -39,8 +63,12 @@ const UsuarioForm = ({
         last_name: usuarioEditando.last_name || "",
         email: usuarioEditando.email || "",
         telefono: usuarioEditando.telefono || "",
-        rol: usuarioEditando.rol ? String(usuarioEditando.rol) : "",
-        sucursal: usuarioEditando.sucursal ? String(usuarioEditando.sucursal) : "",
+        rol: usuarioEditando.rol
+          ? String(usuarioEditando.rol)
+          : "",
+        sucursal: usuarioEditando.sucursal
+          ? String(usuarioEditando.sucursal)
+          : "",
         conductor_id: "",
         is_active:
           typeof usuarioEditando.is_active === "boolean"
@@ -56,14 +84,21 @@ const UsuarioForm = ({
   }, [usuarioEditando]);
 
   const rolSeleccionado = useMemo(() => {
-    return roles.find((item) => String(item.id) === String(form.rol));
+    return roles.find(
+      (item) => String(item.id) === String(form.rol)
+    );
   }, [roles, form.rol]);
 
-  const necesitaSucursal = rolSeleccionado?.codigo === "admin_sucursal";
-  const esRolTaxista = rolSeleccionado?.codigo === "taxista";
-  const esUsuarioSinSucursal = ["superadmin", "usuario_sistema"].includes(
-    rolSeleccionado?.codigo
-  );
+  const necesitaSucursal =
+    rolSeleccionado?.codigo === "admin_sucursal";
+
+  const esRolTaxista =
+    rolSeleccionado?.codigo === "taxista";
+
+  const esUsuarioSinSucursal = [
+    "superadmin",
+    "usuario_sistema",
+  ].includes(rolSeleccionado?.codigo);
 
   const limpiarError = () => {
     if (formError) {
@@ -82,7 +117,9 @@ const UsuarioForm = ({
     const { name, value, type, checked } = event.target;
 
     if (name === "rol") {
-      const nuevoRol = roles.find((item) => String(item.id) === String(value));
+      const nuevoRol = roles.find(
+        (item) => String(item.id) === String(value)
+      );
 
       setForm((prev) => ({
         ...prev,
@@ -126,7 +163,7 @@ const UsuarioForm = ({
     cargarTaxistasDisponibles(value);
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!form.username.trim()) {
@@ -135,7 +172,9 @@ const UsuarioForm = ({
     }
 
     if (!usuarioEditando && !form.password.trim()) {
-      setFormError("La contraseña es obligatoria al crear un usuario.");
+      setFormError(
+        "La contraseña es obligatoria al crear un usuario."
+      );
       return;
     }
 
@@ -144,19 +183,29 @@ const UsuarioForm = ({
       return;
     }
 
-    if (esSuperAdmin && necesitaSucursal && !form.sucursal) {
-      setFormError("Debes seleccionar una sucursal para este administrador.");
+    if (
+      esSuperAdmin &&
+      necesitaSucursal &&
+      !form.sucursal
+    ) {
+      setFormError(
+        "Debes seleccionar una sucursal para este administrador."
+      );
       return;
     }
 
-    if (!usuarioEditando && esRolTaxista && !form.conductor_id) {
+    if (
+      !usuarioEditando &&
+      esRolTaxista &&
+      !form.conductor_id
+    ) {
       setFormError(
         "Debes seleccionar el taxista/conductor al que se le creará el usuario."
       );
       return;
     }
 
-    onSave({
+    const payload = {
       ...form,
       username: form.username.trim(),
       password: form.password.trim(),
@@ -165,9 +214,51 @@ const UsuarioForm = ({
       email: form.email.trim(),
       telefono: form.telefono.trim(),
       rol: form.rol ? Number(form.rol) : null,
-      sucursal: form.sucursal ? Number(form.sucursal) : null,
-      conductor_id: form.conductor_id ? Number(form.conductor_id) : null,
-    });
+      sucursal: form.sucursal
+        ? Number(form.sucursal)
+        : null,
+      conductor_id: form.conductor_id
+        ? Number(form.conductor_id)
+        : null,
+    };
+
+    try {
+      setFormError("");
+
+      await Promise.resolve(
+        onSave(payload)
+      );
+
+      await mostrarAlertaExito(
+        usuarioEditando
+      );
+    } catch (error) {
+      const data = error?.response?.data;
+
+      if (data?.detail) {
+        setFormError(data.detail);
+        return;
+      }
+
+      if (typeof data === "object" && data !== null) {
+        const firstKey = Object.keys(data)[0];
+        const firstValue = data[firstKey];
+
+        if (Array.isArray(firstValue)) {
+          setFormError(`${firstKey}: ${firstValue[0]}`);
+          return;
+        }
+
+        if (typeof firstValue === "string") {
+          setFormError(`${firstKey}: ${firstValue}`);
+          return;
+        }
+      }
+
+      setFormError(
+        "No se pudo guardar el usuario."
+      );
+    }
   };
 
   useEffect(() => {
@@ -177,7 +268,10 @@ const UsuarioForm = ({
   }, [esRolTaxista]);
 
   return (
-    <form onSubmit={handleSubmit} className="px-6 py-6">
+    <form
+      onSubmit={handleSubmit}
+      className="px-6 py-6"
+    >
       {formError && (
         <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
           {formError}
@@ -298,10 +392,15 @@ const UsuarioForm = ({
             onChange={handleChange}
             className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
           >
-            <option value="">Selecciona un rol</option>
+            <option value="">
+              Selecciona un rol
+            </option>
 
             {roles.map((rolItem) => (
-              <option key={rolItem.id} value={rolItem.id}>
+              <option
+                key={rolItem.id}
+                value={rolItem.id}
+              >
                 {rolItem.nombre}
               </option>
             ))}
@@ -320,10 +419,15 @@ const UsuarioForm = ({
               onChange={handleChange}
               className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
             >
-              <option value="">Selecciona una sucursal</option>
+              <option value="">
+                Selecciona una sucursal
+              </option>
 
               {sucursales.map((sucursal) => (
-                <option key={sucursal.id} value={sucursal.id}>
+                <option
+                  key={sucursal.id}
+                  value={sucursal.id}
+                >
                   {sucursal.nombre}
                 </option>
               ))}
@@ -347,7 +451,9 @@ const UsuarioForm = ({
             <input
               type="text"
               value={searchConductor}
-              onChange={(event) => buscarConductores(event.target.value)}
+              onChange={(event) =>
+                buscarConductores(event.target.value)
+              }
               placeholder="Escribe el nombre, apellido o cédula del taxista"
               className="mb-3 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
             />
@@ -358,26 +464,36 @@ const UsuarioForm = ({
               onChange={handleChange}
               className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
             >
-              <option value="">Selecciona el taxista</option>
+              <option value="">
+                Selecciona el taxista
+              </option>
 
-              {(conductoresDisponibles || []).map((conductor) => {
-                const nombreCompleto =
-                  conductor.nombre_completo ||
-                  `${conductor.nombre || ""} ${conductor.apellido || ""}`.trim();
+              {(conductoresDisponibles || []).map(
+                (conductor) => {
+                  const nombreCompleto =
+                    conductor.nombre_completo ||
+                    `${conductor.nombre || ""} ${
+                      conductor.apellido || ""
+                    }`.trim();
 
-                return (
-                  <option key={conductor.id} value={conductor.id}>
-                    {nombreCompleto} - {conductor.cedula}
-                    {conductor.sucursal_nombre
-                      ? ` - ${conductor.sucursal_nombre}`
-                      : " - Panel superadmin"}
-                  </option>
-                );
-              })}
+                  return (
+                    <option
+                      key={conductor.id}
+                      value={conductor.id}
+                    >
+                      {nombreCompleto} - {conductor.cedula}
+                      {conductor.sucursal_nombre
+                        ? ` - ${conductor.sucursal_nombre}`
+                        : " - Panel superadmin"}
+                    </option>
+                  );
+                }
+              )}
             </select>
 
             <p className="mt-2 text-xs font-medium text-slate-500">
-              Primero registra al taxista en el módulo Conductores. Aquí solo se crea su cuenta de acceso.
+              Primero registra al taxista en el módulo Conductores.
+              Aquí solo se crea su cuenta de acceso.
             </p>
           </div>
         )}
