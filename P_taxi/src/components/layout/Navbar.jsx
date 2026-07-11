@@ -210,13 +210,21 @@ const Navbar = ({ onOpenMobileMenu }) => {
   return (
     <header className="sticky top-0 z-30 flex h-[92px] items-center justify-between bg-[#F8FAFC] px-4 md:px-6 lg:px-7">
       <div className="flex min-w-0 items-center gap-3">
-        
+        <button
+          type="button"
+          onClick={onOpenMobileMenu}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm lg:hidden"
+          aria-label="Abrir menú"
+        >
+          <Menu size={23} />
+        </button>
 
         <div className="min-w-0">
           <h2 className="truncate text-xl font-black text-slate-950 md:text-[28px]">
             ¡Bienvenido,{" "}
             {user?.first_name || user?.username || "Usuario"}!
           </h2>
+
           {/* <p className="mt-1 truncate text-sm font-medium text-slate-500 md:text-base">
             {esTaxista
               ? "Control de tu jornada diaria"
