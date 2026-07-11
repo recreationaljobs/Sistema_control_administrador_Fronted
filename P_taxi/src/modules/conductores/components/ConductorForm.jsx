@@ -1,6 +1,20 @@
+// src/modules/conductores/components/ConductorForm.jsx
 
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
+
+import {
+  BadgeCheck,
+  CalendarDays,
+  IdCard,
+  Loader2,
+  MapPin,
+  Percent,
+  Phone,
+  Save,
+  UserRound,
+} from "lucide-react";
+
 import "sweetalert2/dist/sweetalert2.min.css";
 
 const EMPTY_FORM = {
@@ -34,36 +48,22 @@ const obtenerFormularioInicial = (
   initialData
 ) => {
   if (!initialData) {
-    return {
-      ...EMPTY_FORM,
-    };
+    return { ...EMPTY_FORM };
   }
 
   return {
-    nombre:
-      initialData.nombre || "",
-
-    apellido:
-      initialData.apellido || "",
-
-    cedula:
-      initialData.cedula || "",
-
-    telefono:
-      initialData.telefono || "",
-
-    direccion:
-      initialData.direccion || "",
-
+    nombre: initialData.nombre || "",
+    apellido: initialData.apellido || "",
+    cedula: initialData.cedula || "",
+    telefono: initialData.telefono || "",
+    direccion: initialData.direccion || "",
     numero_licencia:
       initialData.numero_licencia || "",
-
     fecha_inicio_licencia:
       initialData.fecha_inicio_licencia || "",
-
     fecha_vencimiento_licencia:
-      initialData.fecha_vencimiento_licencia || "",
-
+      initialData.fecha_vencimiento_licencia ||
+      "",
     porcentaje_pago:
       initialData.porcentaje_pago ?? "",
   };
@@ -89,7 +89,7 @@ const validarFormulario = (form) => {
 
   if (!form.numero_licencia.trim()) {
     errors.numero_licencia =
-      "El número de licencia es obligatorio.";
+      "La licencia es obligatoria.";
   }
 
   if (!form.fecha_inicio_licencia) {
@@ -109,24 +109,22 @@ const validarFormulario = (form) => {
       form.fecha_inicio_licencia
   ) {
     errors.fecha_vencimiento_licencia =
-      "La fecha de vencimiento debe ser posterior a la fecha de emisión.";
+      "El vencimiento debe ser posterior a la emisión.";
   }
-    if (String(form.porcentaje_pago).trim() !== "") {
-    const porcentaje = Number(form.porcentaje_pago);
 
-    if (Number.isNaN(porcentaje) || porcentaje < 1 || porcentaje > 100) {
-      errors.porcentaje_pago =
-        "El porcentaje debe estar entre 1 y 100.";
-    }
-  }
-    if (String(form.porcentaje_pago).trim() === "") {
+  if (
+    String(form.porcentaje_pago).trim() ===
+    ""
+  ) {
     errors.porcentaje_pago =
-      "El porcentaje de pago es obligatorio.";
+      "El porcentaje es obligatorio.";
   } else {
-    const porcentaje = Number(form.porcentaje_pago);
+    const porcentaje = Number(
+      form.porcentaje_pago
+    );
 
     if (
-      Number.isNaN(porcentaje) ||
+      !Number.isFinite(porcentaje) ||
       porcentaje < 1 ||
       porcentaje > 100
     ) {
@@ -150,9 +148,26 @@ const ErrorCampo = ({ mensaje }) => {
   );
 };
 
+const CampoIcono = ({
+  icono: Icono,
+  children,
+}) => {
+  return (
+    <div className="relative">
+      <Icono
+        size={18}
+        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+      />
+
+      {children}
+    </div>
+  );
+};
+
 const ConductorForm = ({
-  initialData,
+  initialData = null,
   onSubmit,
+  onCancel,
   submitting = false,
   submitError = "",
 }) => {
@@ -160,16 +175,14 @@ const ConductorForm = ({
     ...EMPTY_FORM,
   });
 
-  const [errors, setErrors] =
-    useState({});
+  const [errors, setErrors] = useState({});
 
   const hoy = obtenerFechaActual();
+  const esEdicion = Boolean(initialData);
 
   useEffect(() => {
     setForm(
-      obtenerFormularioInicial(
-        initialData
-      )
+      obtenerFormularioInicial(initialData)
     );
 
     setErrors({});
@@ -180,37 +193,32 @@ const ConductorForm = ({
       return;
     }
 
-    Swal.fire({
+    void Swal.fire({
       title: "No se pudo guardar",
       text: submitError,
       icon: "error",
-      confirmButtonColor: "#3085d6",
       confirmButtonText: "Entendido",
+      confirmButtonColor: "#eab308",
     });
   }, [submitError]);
 
   const handleChange = (event) => {
-    const {
-      name,
-      value,
-    } = event.target;
+    const { name, value } = event.target;
 
-    setForm((prev) => ({
-      ...prev,
+    setForm((formAnterior) => ({
+      ...formAnterior,
       [name]: value,
     }));
 
     if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
+      setErrors((erroresAnteriores) => ({
+        ...erroresAnteriores,
         [name]: "",
       }));
     }
   };
 
-  const handleSubmit = async (
-    event
-  ) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (submitting) {
@@ -221,248 +229,171 @@ const ConductorForm = ({
       validarFormulario(form);
 
     if (
-      Object.keys(
-        nuevosErrores
-      ).length > 0
+      Object.keys(nuevosErrores).length > 0
     ) {
-      setErrors(
-        nuevosErrores
-      );
+      setErrors(nuevosErrores);
 
       const primerError =
-        Object.values(
-          nuevosErrores
-        )[0];
+        Object.values(nuevosErrores)[0];
 
-      await Swal.fire({
+      void Swal.fire({
         title: "Revisa los datos",
         text: primerError,
         icon: "warning",
-        confirmButtonColor:
-          "#3085d6",
-        confirmButtonText:
-          "Entendido",
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#eab308",
       });
 
       return;
     }
 
-    const resultado =
-      await Swal.fire({
-        title: initialData
-          ? "¿Actualizar conductor?"
-          : "¿Registrar conductor?",
+    const confirmacion = await Swal.fire({
+      title: esEdicion
+        ? "¿Actualizar conductor?"
+        : "¿Registrar conductor?",
+      text: esEdicion
+        ? "Se guardarán los cambios realizados."
+        : "El conductor será agregado al sistema.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: esEdicion
+        ? "Actualizar"
+        : "Registrar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#eab308",
+      cancelButtonColor: "#64748b",
+      reverseButtons: true,
+    });
 
-        text: initialData
-          ? "Se guardarán los cambios realizados."
-          : "El nuevo conductor será registrado en el sistema.",
-
-        icon: "warning",
-
-        showCancelButton: true,
-
-        confirmButtonColor:
-          "#3085d6",
-
-        cancelButtonColor:
-          "#d33",
-
-        confirmButtonText:
-          initialData
-            ? "Sí, actualizar"
-            : "Sí, registrar",
-
-        cancelButtonText:
-          "Cancelar",
-      });
-
-    if (!resultado.isConfirmed) {
+    if (!confirmacion.isConfirmed) {
       return;
     }
 
     const payload = {
-      nombre:
-        form.nombre.trim(),
-
-      apellido:
-        form.apellido.trim(),
-
-      cedula:
-        form.cedula.trim(),
-
+      nombre: form.nombre.trim(),
+      apellido: form.apellido.trim(),
+      cedula: form.cedula.trim(),
       telefono:
-        form.telefono.trim() ||
-        null,
-
+        form.telefono.trim() || null,
       direccion:
-        form.direccion.trim() ||
-        null,
-
+        form.direccion.trim() || null,
       numero_licencia:
         form.numero_licencia.trim(),
-
       fecha_inicio_licencia:
         form.fecha_inicio_licencia,
-
       fecha_vencimiento_licencia:
         form.fecha_vencimiento_licencia,
-
-      /*
-       * Conserva el estado actual al editar.
-       * Los conductores nuevos se crean activos.
-       */
+      porcentaje_pago: Number(
+        form.porcentaje_pago
+      ),
       activo:
-        initialData?.activo ??
-        true,
+        initialData?.activo ?? true,
     };
-
-    /*
-     * El % solo se envia si el usuario lo especifico.
-     * Si se deja vacio, el backend aplica el % por defecto de la sucursal.
-     */
-    payload.porcentaje_pago = Number(form.porcentaje_pago);
 
     await onSubmit(payload);
   };
 
   const inputClass = (campo) => {
-    return `
-      w-full
-      rounded-xl
-      border
-      bg-white
-      px-4
-      py-3
-      text-sm
-      font-semibold
-      text-slate-800
-      outline-none
-      transition
-      placeholder:text-slate-400
-      disabled:cursor-not-allowed
-      disabled:bg-slate-100
-      disabled:text-slate-500
-      ${
-        errors[campo]
-          ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100"
-          : "border-slate-300 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
-      }
-    `;
+    return `w-full rounded-2xl border bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 ${
+      errors[campo]
+        ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100"
+        : "border-slate-300 hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
+    }`;
+  };
+
+  const textareaClass = (campo) => {
+    return `w-full resize-none rounded-2xl border bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 ${
+      errors[campo]
+        ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100"
+        : "border-slate-300 hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
+    }`;
   };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6"
+      className="space-y-5 p-5 sm:p-6"
       noValidate
     >
-      <section className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:p-6">
-        <div className="mb-5">
-          <h3 className="text-lg font-black text-slate-900">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+            <UserRound size={20} />
+          </div>
+
+          <h3 className="font-black text-slate-900">
             Datos personales
           </h3>
-
-          <p className="mt-1 text-sm font-medium text-slate-500">
-            Información general del conductor.
-          </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
             <label className="mb-2 block text-sm font-bold text-slate-700">
-              Nombre
-
-              <span className="ml-1 text-red-500">
-                *
-              </span>
+              Nombre *
             </label>
 
-            <input
-              type="text"
-              name="nombre"
-              value={form.nombre}
-              onChange={
-                handleChange
-              }
-              placeholder="Ej. Carlos"
-              disabled={
-                submitting
-              }
-              autoComplete="given-name"
-              className={inputClass(
-                "nombre"
-              )}
-            />
+            <CampoIcono icono={UserRound}>
+              <input
+                type="text"
+                name="nombre"
+                value={form.nombre}
+                onChange={handleChange}
+                placeholder="Nombre"
+                disabled={submitting}
+                autoComplete="given-name"
+                className={inputClass("nombre")}
+              />
+            </CampoIcono>
 
             <ErrorCampo
-              mensaje={
-                errors.nombre
-              }
+              mensaje={errors.nombre}
             />
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-bold text-slate-700">
-              Apellido
-
-              <span className="ml-1 text-red-500">
-                *
-              </span>
+              Apellido *
             </label>
 
-            <input
-              type="text"
-              name="apellido"
-              value={form.apellido}
-              onChange={
-                handleChange
-              }
-              placeholder="Ej. Ramírez"
-              disabled={
-                submitting
-              }
-              autoComplete="family-name"
-              className={inputClass(
-                "apellido"
-              )}
-            />
+            <CampoIcono icono={UserRound}>
+              <input
+                type="text"
+                name="apellido"
+                value={form.apellido}
+                onChange={handleChange}
+                placeholder="Apellido"
+                disabled={submitting}
+                autoComplete="family-name"
+                className={inputClass(
+                  "apellido"
+                )}
+              />
+            </CampoIcono>
 
             <ErrorCampo
-              mensaje={
-                errors.apellido
-              }
+              mensaje={errors.apellido}
             />
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-bold text-slate-700">
-              Cédula
-
-              <span className="ml-1 text-red-500">
-                *
-              </span>
+              Cédula *
             </label>
 
-            <input
-              type="text"
-              name="cedula"
-              value={form.cedula}
-              onChange={
-                handleChange
-              }
-              placeholder="Ej. 001-010190-0000A"
-              disabled={
-                submitting
-              }
-              className={inputClass(
-                "cedula"
-              )}
-            />
+            <CampoIcono icono={IdCard}>
+              <input
+                type="text"
+                name="cedula"
+                value={form.cedula}
+                onChange={handleChange}
+                placeholder="001-010190-0000A"
+                disabled={submitting}
+                className={inputClass("cedula")}
+              />
+            </CampoIcono>
 
             <ErrorCampo
-              mensaje={
-                errors.cedula
-              }
+              mensaje={errors.cedula}
             />
           </div>
 
@@ -471,29 +402,23 @@ const ConductorForm = ({
               Teléfono
             </label>
 
-            <input
-              type="tel"
-              name="telefono"
-              value={
-                form.telefono
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="Ej. 8888-8888"
-              disabled={
-                submitting
-              }
-              autoComplete="tel"
-              className={inputClass(
-                "telefono"
-              )}
-            />
+            <CampoIcono icono={Phone}>
+              <input
+                type="tel"
+                name="telefono"
+                value={form.telefono}
+                onChange={handleChange}
+                placeholder="8888-8888"
+                disabled={submitting}
+                autoComplete="tel"
+                className={inputClass(
+                  "telefono"
+                )}
+              />
+            </CampoIcono>
 
             <ErrorCampo
-              mensaje={
-                errors.telefono
-              }
+              mensaje={errors.telefono}
             />
           </div>
 
@@ -502,71 +427,58 @@ const ConductorForm = ({
               Dirección
             </label>
 
-            <textarea
-              name="direccion"
-              value={
-                form.direccion
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="Dirección del conductor"
-              disabled={
-                submitting
-              }
-              rows={3}
-              className={`${inputClass(
-                "direccion"
-              )} resize-none`}
-            />
+            <div className="relative">
+              <MapPin
+                size={18}
+                className="pointer-events-none absolute left-4 top-4 text-slate-400"
+              />
 
-            <ErrorCampo
-              mensaje={
-                errors.direccion
-              }
-            />
+              <textarea
+                name="direccion"
+                value={form.direccion}
+                onChange={handleChange}
+                placeholder="Dirección"
+                disabled={submitting}
+                rows={2}
+                className={`${textareaClass(
+                  "direccion"
+                )} pl-11`}
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:p-6">
-        <div className="mb-5">
-          <h3 className="text-lg font-black text-slate-900">
-            Licencia de conducir
-          </h3>
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-100 text-yellow-700">
+            <BadgeCheck size={20} />
+          </div>
 
-          <p className="mt-1 text-sm font-medium text-slate-500">
-            Número, fecha de emisión y fecha de vencimiento.
-          </p>
+          <h3 className="font-black text-slate-900">
+            Licencia
+          </h3>
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div>
             <label className="mb-2 block text-sm font-bold text-slate-700">
-              Número de licencia
-
-              <span className="ml-1 text-red-500">
-                *
-              </span>
+              Número *
             </label>
 
-            <input
-              type="text"
-              name="numero_licencia"
-              value={
-                form.numero_licencia
-              }
-              onChange={
-                handleChange
-              }
-              placeholder="Ej. L-987654"
-              disabled={
-                submitting
-              }
-              className={inputClass(
-                "numero_licencia"
-              )}
-            />
+            <CampoIcono icono={BadgeCheck}>
+              <input
+                type="text"
+                name="numero_licencia"
+                value={form.numero_licencia}
+                onChange={handleChange}
+                placeholder="L-987654"
+                disabled={submitting}
+                className={inputClass(
+                  "numero_licencia"
+                )}
+              />
+            </CampoIcono>
 
             <ErrorCampo
               mensaje={
@@ -577,30 +489,24 @@ const ConductorForm = ({
 
           <div>
             <label className="mb-2 block text-sm font-bold text-slate-700">
-              Fecha de emisión
-
-              <span className="ml-1 text-red-500">
-                *
-              </span>
+              Emisión *
             </label>
 
-            <input
-              type="date"
-              name="fecha_inicio_licencia"
-              value={
-                form.fecha_inicio_licencia
-              }
-              onChange={
-                handleChange
-              }
-              max={hoy}
-              disabled={
-                submitting
-              }
-              className={inputClass(
-                "fecha_inicio_licencia"
-              )}
-            />
+            <CampoIcono icono={CalendarDays}>
+              <input
+                type="date"
+                name="fecha_inicio_licencia"
+                value={
+                  form.fecha_inicio_licencia
+                }
+                onChange={handleChange}
+                max={hoy}
+                disabled={submitting}
+                className={inputClass(
+                  "fecha_inicio_licencia"
+                )}
+              />
+            </CampoIcono>
 
             <ErrorCampo
               mensaje={
@@ -611,33 +517,27 @@ const ConductorForm = ({
 
           <div>
             <label className="mb-2 block text-sm font-bold text-slate-700">
-              Fecha de vencimiento
-
-              <span className="ml-1 text-red-500">
-                *
-              </span>
+              Vencimiento *
             </label>
 
-            <input
-              type="date"
-              name="fecha_vencimiento_licencia"
-              value={
-                form.fecha_vencimiento_licencia
-              }
-              onChange={
-                handleChange
-              }
-              min={
-                form.fecha_inicio_licencia ||
-                undefined
-              }
-              disabled={
-                submitting
-              }
-              className={inputClass(
-                "fecha_vencimiento_licencia"
-              )}
-            />
+            <CampoIcono icono={CalendarDays}>
+              <input
+                type="date"
+                name="fecha_vencimiento_licencia"
+                value={
+                  form.fecha_vencimiento_licencia
+                }
+                onChange={handleChange}
+                min={
+                  form.fecha_inicio_licencia ||
+                  undefined
+                }
+                disabled={submitting}
+                className={inputClass(
+                  "fecha_vencimiento_licencia"
+                )}
+              />
+            </CampoIcono>
 
             <ErrorCampo
               mensaje={
@@ -648,64 +548,74 @@ const ConductorForm = ({
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:p-6">
-        <div className="mb-5">
-          <h3 className="text-lg font-black text-slate-900">
-            Pago al conductor
-          </h3>
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+            <Percent size={20} />
+          </div>
 
-          <p className="mt-1 text-sm font-medium text-slate-500">
-            Porcentaje de comisión propio de este conductor.
-          </p>
+          <h3 className="font-black text-slate-900">
+            Porcentaje de pago
+          </h3>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-bold text-slate-700">
-              % de pago al conductor
-            </label>
+        <div className="max-w-sm">
+          <label className="mb-2 block text-sm font-bold text-slate-700">
+            Porcentaje *
+          </label>
 
+          <CampoIcono icono={Percent}>
             <input
               type="number"
               name="porcentaje_pago"
-              value={
-                form.porcentaje_pago
-              }
-              onChange={
-                handleChange
-              }
+              value={form.porcentaje_pago}
+              onChange={handleChange}
               min={1}
               max={100}
               step={0.5}
-              placeholder="Ejemplo: 30, 40 o 50"
-              disabled={
-                submitting
-              }
+              placeholder="30"
+              disabled={submitting}
               className={inputClass(
                 "porcentaje_pago"
               )}
             />
+          </CampoIcono>
 
-            <ErrorCampo
-              mensaje={
-                errors.porcentaje_pago
-              }
-            />
-          </div>
+          <ErrorCampo
+            mensaje={errors.porcentaje_pago}
+          />
         </div>
       </section>
 
-      <div className="sticky bottom-0 z-10 flex flex-col-reverse gap-3 border-t border-slate-200 bg-white py-4 sm:flex-row sm:justify-end">
+      <div className="sticky bottom-0 z-10 flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 py-4 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={submitting}
+          className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Cancelar
+        </button>
+
         <button
           type="submit"
           disabled={submitting}
-          className="w-full rounded-xl bg-yellow-400 px-7 py-3 text-sm font-black text-slate-950 shadow-sm transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-6 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
+          {submitting ? (
+            <Loader2
+              size={18}
+              className="animate-spin"
+            />
+          ) : (
+            <Save size={18} />
+          )}
+
           {submitting
             ? "Guardando..."
-            : initialData
-              ? "Actualizar conductor"
-              : "Crear conductor"}
+            : esEdicion
+              ? "Actualizar"
+              : "Registrar"}
         </button>
       </div>
     </form>
@@ -713,4 +623,3 @@ const ConductorForm = ({
 };
 
 export default ConductorForm;
-

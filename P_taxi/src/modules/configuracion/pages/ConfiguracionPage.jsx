@@ -1,34 +1,51 @@
+// src/modules/configuracion/pages/ConfiguracionPage.jsx
+
 import {
+  AlertTriangle,
+  Database,
   KeyRound,
   ListChecks,
+  Loader2,
   RefreshCcw,
   Search,
   Settings,
+  ShieldX,
   Tags,
+  X,
 } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import Swal from "sweetalert2";
+
+import "sweetalert2/dist/sweetalert2.min.css";
+
 import CatalogoModal from "../components/CatalogoModal";
 import CatalogoTable from "../components/CatalogoTable";
 import ConfiguracionGeneralForm from "../components/ConfiguracionGeneralForm";
 import { useConfiguracion } from "../hooks/useConfiguracion";
+
 const tabs = [
   {
     key: "general",
     label: "General",
+    descripcion: "Parámetros",
     icon: Settings,
   },
   {
     key: "roles",
     label: "Roles",
+    descripcion: "Permisos",
     icon: KeyRound,
   },
   {
     key: "estados",
     label: "Estados",
+    descripcion: "Situaciones",
     icon: ListChecks,
   },
   {
     key: "tipos",
     label: "Tipos",
+    descripcion: "Clasificaciones",
     icon: Tags,
   },
 ];
@@ -62,94 +79,219 @@ const ConfiguracionPage = () => {
     filtrarRegistros,
   } = useConfiguracion();
 
-  const puedeEditarGeneral = esSuperAdmin || esAdminSucursal;
-  const puedeAdministrarCatalogos = esSuperAdmin || esAdminSucursal;
+  const puedeEditarGeneral =
+    esSuperAdmin || esAdminSucursal;
 
-  // El admin de sucursal solo ve General y Estados (no Roles ni Tipos).
+  const puedeAdministrarCatalogos =
+    esSuperAdmin || esAdminSucursal;
+
   const tabsVisibles = esAdminSucursal
     ? tabs.filter(
-        (tab) => tab.key === "general" || tab.key === "estados"
+        (tab) =>
+          tab.key === "general" ||
+          tab.key === "estados"
       )
     : tabs;
 
+  const tabSeleccionada =
+    tabsVisibles.find(
+      (tab) => tab.key === tabActiva
+    ) || tabsVisibles[0];
+
+  const totalRegistros = useMemo(() => {
+    return catalogosVisibles.reduce(
+      (total, meta) =>
+        total +
+        filtrarRegistros(
+          catalogos[meta.key] || []
+        ).length,
+      0
+    );
+  }, [
+    catalogos,
+    catalogosVisibles,
+    filtrarRegistros,
+    search,
+  ]);
+
+  useEffect(() => {
+    if (!success) {
+      return;
+    }
+
+    void Swal.fire({
+      title: success,
+      icon: "success",
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 1800,
+      timerProgressBar: true,
+    });
+  }, [success]);
+
+  const eliminarConConfirmacion = async (
+    meta,
+    item
+  ) => {
+    const confirmacion = await Swal.fire({
+      title: "¿Eliminar registro?",
+      html: `
+        <p style="margin:0;color:#475569">
+          Se eliminará <strong>${item.nombre}</strong>.
+        </p>
+      `,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Eliminar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      reverseButtons: true,
+    });
+
+    if (!confirmacion.isConfirmed) {
+      return;
+    }
+
+    await eliminarCatalogo(meta, item);
+  };
+
   if (esTaxista) {
     return (
-      <div className="rounded-[28px] border border-red-200 bg-red-50 p-6">
-        <h1 className="text-xl font-black text-red-800">
-          Acceso no permitido
-        </h1>
+      <div className="flex min-h-[55vh] items-center justify-center">
+        <div className="w-full max-w-lg rounded-[28px] border border-red-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 text-red-600">
+            <ShieldX size={32} />
+          </div>
 
-        <p className="mt-2 text-sm font-semibold text-red-700">
-          El usuario taxista no tiene acceso al módulo de configuración.
-        </p>
+          <h1 className="mt-4 text-xl font-black text-slate-950">
+            Acceso restringido
+          </h1>
+
+          <p className="mt-2 text-sm font-medium text-slate-500">
+            Este módulo está disponible para administradores.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#FFF4CF] text-[#E7A900]">
-              <Settings size={30} />
+      {/* Encabezado */}
+      <section className="overflow-hidden rounded-[30px] bg-slate-950 shadow-lg">
+        <div className="h-1.5 bg-yellow-400" />
+
+        <div className="relative p-5 sm:p-7">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-yellow-400/10" />
+
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-yellow-400 text-slate-950">
+                <Settings size={29} />
+              </div>
+
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-yellow-400">
+                  Administración
+                </p>
+
+                <h1 className="mt-1 text-2xl font-black text-white md:text-[28px]">
+                  Configuración
+                </h1>
+
+                <p className="mt-1 text-sm font-medium text-slate-400">
+                  Parámetros y catálogos del sistema.
+                </p>
+              </div>
             </div>
 
-            <div>
-              <h1 className="text-2xl font-black text-slate-950 md:text-[28px]">
-                Configuración
-              </h1>
+            <button
+              type="button"
+              onClick={cargarTodo}
+              disabled={loading}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-black text-white transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RefreshCcw
+                size={18}
+                className={loading ? "animate-spin" : ""}
+              />
 
-              <p className="mt-1 text-sm font-medium text-slate-500 md:text-base">
-                Administra parámetros generales, roles, estados y tipos del
-                sistema.
-              </p>
-            </div>
+              Actualizar
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={cargarTodo}
-            disabled={loading}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
-          >
-            <RefreshCcw size={18} />
-            Actualizar
-          </button>
         </div>
       </section>
 
       {error && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-bold text-red-700">
-          {error}
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-5 py-4"
+        >
+          <AlertTriangle
+            size={20}
+            className="mt-0.5 shrink-0 text-red-600"
+          />
+
+          <div>
+            <p className="text-sm font-black text-red-700">
+              No se pudo completar la operación
+            </p>
+
+            <p className="mt-1 text-sm font-medium text-red-600">
+              {error}
+            </p>
+          </div>
         </div>
       )}
 
-      {success && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-bold text-emerald-700">
-          {success}
-        </div>
-      )}
-
-      <section className="rounded-[24px] border border-slate-200 bg-white p-2 shadow-sm">
-        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+      {/* Pestañas */}
+      <section className="overflow-x-auto rounded-[24px] border border-slate-200 bg-white p-2 shadow-sm">
+        <div className="flex min-w-max gap-2 md:grid md:min-w-0 md:grid-cols-4">
           {tabsVisibles.map((tab) => {
-            const Icon = tab.icon;
-            const active = tabActiva === tab.key;
+            const Icono = tab.icon;
+            const activa = tabActiva === tab.key;
 
             return (
               <button
                 key={tab.key}
                 type="button"
-                onClick={() => setTabActiva(tab.key)}
-                className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black transition ${
-                  active
-                    ? "bg-[#F5B800] text-white shadow-md shadow-yellow-100"
+                onClick={() => {
+                  setTabActiva(tab.key);
+                  setSearch("");
+                }}
+                className={`flex min-w-[145px] items-center gap-3 rounded-2xl px-4 py-3 text-left transition md:min-w-0 ${
+                  activa
+                    ? "bg-yellow-400 text-slate-950 shadow-md shadow-yellow-100"
                     : "bg-white text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                <Icon size={18} />
-                {tab.label}
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+                    activa
+                      ? "bg-slate-950/10"
+                      : "bg-slate-100"
+                  }`}
+                >
+                  <Icono size={18} />
+                </div>
+
+                <div>
+                  <p className="text-sm font-black">
+                    {tab.label}
+                  </p>
+
+                  <p
+                    className={`text-xs font-medium ${
+                      activa
+                        ? "text-slate-700"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {tab.descripcion}
+                  </p>
+                </div>
               </button>
             );
           })}
@@ -157,8 +299,13 @@ const ConfiguracionPage = () => {
       </section>
 
       {loading ? (
-        <div className="rounded-[28px] border border-slate-200 bg-white p-10 text-center shadow-sm">
-          <p className="text-sm font-bold text-slate-500">
+        <div className="rounded-[28px] border border-slate-200 bg-white p-12 text-center shadow-sm">
+          <Loader2
+            size={34}
+            className="mx-auto animate-spin text-yellow-500"
+          />
+
+          <p className="mt-3 text-sm font-bold text-slate-500">
             Cargando configuración...
           </p>
         </div>
@@ -175,33 +322,51 @@ const ConfiguracionPage = () => {
 
           {tabActiva !== "general" && (
             <section className="space-y-5">
-              <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div>
-                    <h2 className="text-lg font-black text-slate-950">
-                      Catálogos del sistema
-                    </h2>
+              <div className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+                      <Database size={23} />
+                    </div>
 
-                    <p className="mt-1 text-sm font-medium text-slate-500">
-                      {puedeAdministrarCatalogos
-                        ? "Puedes crear, editar y eliminar registros de catálogos."
-                        : "Puedes consultar catálogos. Solo el superadministrador puede modificarlos."}
-                    </p>
+                    <div>
+                      <h2 className="text-lg font-black text-slate-950">
+                        {tabSeleccionada?.label}
+                      </h2>
+
+                      <p className="mt-1 text-sm font-medium text-slate-500">
+                        {catalogosVisibles.length} catálogo(s) ·{" "}
+                        {totalRegistros} registro(s)
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="relative">
+                  <div className="relative w-full lg:w-96">
                     <Search
                       size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                     />
 
                     <input
                       type="text"
                       value={search}
-                      onChange={(event) => setSearch(event.target.value)}
-                      placeholder="Buscar por nombre o código..."
-                      className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 lg:w-[320px]"
+                      onChange={(event) =>
+                        setSearch(event.target.value)
+                      }
+                      placeholder="Buscar nombre o código..."
+                      className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-11 pr-11 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
                     />
+
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() => setSearch("")}
+                        className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                        aria-label="Limpiar búsqueda"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -211,11 +376,15 @@ const ConfiguracionPage = () => {
                   <CatalogoTable
                     key={meta.key}
                     meta={meta}
-                    registros={filtrarRegistros(catalogos[meta.key] || [])}
-                    puedeAdministrar={puedeAdministrarCatalogos}
+                    registros={filtrarRegistros(
+                      catalogos[meta.key] || []
+                    )}
+                    puedeAdministrar={
+                      puedeAdministrarCatalogos
+                    }
                     onCreate={abrirModalCrear}
                     onEdit={abrirModalEditar}
-                    onDelete={eliminarCatalogo}
+                    onDelete={eliminarConConfirmacion}
                   />
                 ))}
               </div>

@@ -1,35 +1,70 @@
+// src/modules/adelantos/components/AdelantoTable.jsx
 
 import {
   Building2,
   CalendarDays,
   Edit3,
   HandCoins,
+  Loader2,
   Printer,
   Trash2,
   UserRound,
   Wallet,
 } from "lucide-react";
 
-const formatoDinero = (valor) => {
-  return `C$ ${Number(valor || 0).toLocaleString("es-NI", {
+const formateadorDinero =
+  new Intl.NumberFormat("es-NI", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  })}`;
+  });
+
+const formatoDinero = (valor) => {
+  const monto = Number(valor);
+
+  return `C$ ${formateadorDinero.format(
+    Number.isFinite(monto) ? monto : 0
+  )}`;
 };
 
 const formatearFecha = (fecha) => {
-  if (!fecha) return "Sin fecha";
+  if (!fecha) {
+    return "Sin fecha";
+  }
 
   const valor = String(fecha).slice(0, 10);
   const partes = valor.split("-");
 
-  if (partes.length !== 3) return fecha;
+  if (partes.length !== 3) {
+    return String(fecha);
+  }
 
-  return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  const [anio, mes, dia] = partes;
+
+  return `${dia}/${mes}/${anio}`;
+};
+
+const normalizarTipo = (tipo) => {
+  return String(tipo || "")
+    .trim()
+    .toUpperCase();
+};
+
+const obtenerSaldo = (adelanto) => {
+  const saldo = Number(
+    adelanto.saldo_movimiento ??
+      adelanto.saldo_pendiente ??
+      0
+  );
+
+  return Number.isFinite(saldo)
+    ? saldo
+    : 0;
 };
 
 const TipoBadge = ({ adelanto }) => {
-  const esAbono = adelanto.tipo === "ABONO";
+  const esAbono =
+    normalizarTipo(adelanto.tipo) ===
+    "ABONO";
 
   const texto =
     adelanto.tipo_display ||
@@ -37,13 +72,13 @@ const TipoBadge = ({ adelanto }) => {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-black ${
+      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-black ${
         esAbono
-          ? "bg-emerald-100 text-emerald-700"
-          : "bg-red-100 text-red-700"
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+          : "border-yellow-200 bg-yellow-50 text-yellow-700"
       }`}
     >
-      {esAbono ? "Abono" : "Adelanto"} · {texto}
+      {texto}
     </span>
   );
 };
@@ -51,10 +86,42 @@ const TipoBadge = ({ adelanto }) => {
 const EstadoBadge = ({ adelanto }) => {
   const texto =
     adelanto.estado_nombre ||
+    adelanto.estado_display ||
+    adelanto.estado ||
     "Sin estado";
 
+  const estado = String(texto)
+    .trim()
+    .toUpperCase();
+
+  let estilos =
+    "border-slate-200 bg-slate-50 text-slate-700";
+
+  if (
+    estado.includes("PAGADO") ||
+    estado.includes("COMPLETO") ||
+    estado.includes("COMPLETADO")
+  ) {
+    estilos =
+      "border-emerald-200 bg-emerald-50 text-emerald-700";
+  } else if (
+    estado.includes("PENDIENTE") ||
+    estado.includes("PARCIAL")
+  ) {
+    estilos =
+      "border-amber-200 bg-amber-50 text-amber-700";
+  } else if (
+    estado.includes("ANULADO") ||
+    estado.includes("CANCELADO")
+  ) {
+    estilos =
+      "border-red-200 bg-red-50 text-red-700";
+  }
+
   return (
-    <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+    <span
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-black ${estilos}`}
+    >
       {texto}
     </span>
   );
@@ -62,19 +129,29 @@ const EstadoBadge = ({ adelanto }) => {
 
 const AdelantoTable = ({
   adelantos = [],
-  loading,
+  loading = false,
   onEdit,
   onDelete,
   onRecibo,
-  esTaxista,
+  esTaxista = false,
   mostrarConductor = true,
   mostrarSucursal = true,
 }) => {
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <p className="text-sm font-bold text-slate-500">
+      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+        <Loader2
+          size={30}
+          className="mx-auto animate-spin text-yellow-500"
+        />
+
+        <p className="mt-3 text-sm font-bold text-slate-600">
           Cargando movimientos...
+        </p>
+
+        <p className="mt-1 text-xs font-medium text-slate-400">
+          Estamos consultando los adelantos y
+          abonos registrados.
         </p>
       </div>
     );
@@ -83,7 +160,7 @@ const AdelantoTable = ({
   if (!adelantos.length) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FFF4CF] text-[#E7A900]">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-50 text-yellow-600">
           <HandCoins size={34} />
         </div>
 
@@ -91,10 +168,10 @@ const AdelantoTable = ({
           No hay movimientos
         </h3>
 
-        <p className="mt-2 text-sm text-slate-500">
+        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
           {esTaxista
-            ? "No tienes adelantos ni abonos registrados con estos filtros."
-            : "No hay adelantos ni abonos registrados con estos filtros."}
+            ? "No tienes adelantos ni abonos registrados con los filtros seleccionados."
+            : "No hay adelantos ni abonos registrados con los filtros seleccionados."}
         </p>
       </div>
     );
@@ -102,165 +179,199 @@ const AdelantoTable = ({
 
   return (
     <>
-      {/* Vista móvil */}
+      {/* Vista para teléfonos */}
       <div className="grid gap-4 md:hidden">
         {adelantos.map((adelanto) => {
           const esAbono =
-            adelanto.tipo === "ABONO";
+            normalizarTipo(
+              adelanto.tipo
+            ) === "ABONO";
+
+          const saldoMovimiento =
+            obtenerSaldo(adelanto);
+
+          const mostrarAcciones =
+            Boolean(onRecibo) ||
+            (!esTaxista &&
+              (Boolean(onEdit) ||
+                Boolean(onDelete)));
 
           return (
             <article
               key={adelanto.id}
-              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  {mostrarConductor && (
-                    <p className="flex items-center gap-2 text-sm font-black text-slate-900">
-                      <UserRound
-                        size={16}
-                        className="text-blue-500"
+              <div
+                className={`h-1 w-full ${
+                  esAbono
+                    ? "bg-emerald-500"
+                    : "bg-yellow-400"
+                }`}
+              />
+
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    {mostrarConductor && (
+                      <p className="flex items-center gap-2 text-sm font-black text-slate-900">
+                        <UserRound
+                          size={16}
+                          className="shrink-0 text-blue-500"
+                        />
+
+                        <span className="truncate">
+                          {adelanto.conductor_nombre ||
+                            "Sin conductor"}
+                        </span>
+                      </p>
+                    )}
+
+                    <p
+                      className={`flex items-center gap-2 text-xs font-bold text-slate-500 ${
+                        mostrarConductor
+                          ? "mt-2"
+                          : ""
+                      }`}
+                    >
+                      <CalendarDays
+                        size={15}
+                        className="shrink-0 text-slate-400"
                       />
 
-                      {adelanto.conductor_nombre ||
-                        "Sin conductor"}
+                      {formatearFecha(
+                        adelanto.fecha_movimiento ||
+                          adelanto.fecha
+                      )}
+                    </p>
+                  </div>
+
+                  <TipoBadge
+                    adelanto={adelanto}
+                  />
+                </div>
+
+                <div className="mt-4 rounded-2xl bg-slate-50 p-3">
+                  {mostrarSucursal && (
+                    <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                      <Building2
+                        size={17}
+                        className="shrink-0 text-yellow-600"
+                      />
+
+                      <span className="truncate">
+                        {adelanto.sucursal_nombre ||
+                          "Sin sucursal"}
+                      </span>
                     </p>
                   )}
 
                   <p
-                    className={`flex items-center gap-2 text-xs font-bold text-slate-500 ${
-                      mostrarConductor
+                    className={`text-sm font-medium leading-6 text-slate-600 ${
+                      mostrarSucursal
                         ? "mt-2"
                         : ""
                     }`}
                   >
-                    <CalendarDays
-                      size={15}
-                      className="text-slate-400"
+                    {adelanto.observacion ||
+                      "Sin observación"}
+                  </p>
+
+                  <div className="mt-3">
+                    <EstadoBadge
+                      adelanto={adelanto}
                     />
-
-                    {formatearFecha(
-                      adelanto.fecha_movimiento ||
-                        adelanto.fecha
-                    )}
-                  </p>
+                  </div>
                 </div>
 
-                <TipoBadge
-                  adelanto={adelanto}
-                />
-              </div>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <p className="text-[11px] font-black uppercase tracking-wide text-slate-400">
+                      Monto
+                    </p>
 
-              <div className="mt-4 rounded-2xl bg-slate-50 p-3">
-                {mostrarSucursal && (
-                  <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                    <Building2
-                      size={17}
-                      className="text-[#E7A900]"
-                    />
-
-                    {adelanto.sucursal_nombre ||
-                      "Sin sucursal"}
-                  </p>
-                )}
-
-                <p
-                  className={`text-sm font-medium text-slate-600 ${
-                    mostrarSucursal
-                      ? "mt-2"
-                      : ""
-                  }`}
-                >
-                  {adelanto.observacion ||
-                    "Sin observación"}
-                </p>
-
-                <div className="mt-3">
-                  <EstadoBadge
-                    adelanto={adelanto}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                  <p className="text-[11px] font-black uppercase tracking-wide text-slate-400">
-                    Monto
-                  </p>
-
-                  <p
-                    className={`mt-1 flex items-center gap-1 text-sm font-black ${
-                      esAbono
-                        ? "text-emerald-600"
-                        : "text-red-600"
-                    }`}
-                  >
-                    <Wallet size={16} />
-                    {formatoDinero(
-                      adelanto.monto
-                    )}
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-slate-200 bg-white p-3">
-                  <p className="text-[11px] font-black uppercase tracking-wide text-slate-400">
-                    Saldo pendiente
-                  </p>
-
-                  <p
-                    className={`mt-1 text-sm font-black ${
-                      Number(
-                        adelanto.saldo_movimiento ||
-                          0
-                      ) > 0
-                        ? "text-red-600"
-                        : "text-emerald-600"
-                    }`}
-                  >
-                    {formatoDinero(
-                      adelanto.saldo_movimiento
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    onRecibo?.(adelanto)
-                  }
-                  className="flex h-10 items-center justify-center gap-1 rounded-xl bg-amber-50 px-3 text-xs font-black text-[#C98A00] transition hover:bg-amber-100"
-                  title="Abrir recibo"
-                >
-                  <Printer size={16} />
-                  Recibo
-                </button>
-
-                {!esTaxista && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onEdit?.(adelanto)
-                      }
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
-                      title="Editar"
+                    <p
+                      className={`mt-1 flex items-center gap-1 text-sm font-black tabular-nums ${
+                        esAbono
+                          ? "text-emerald-600"
+                          : "text-yellow-700"
+                      }`}
                     >
-                      <Edit3 size={18} />
-                    </button>
+                      <Wallet size={16} />
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onDelete?.(adelanto)
-                      }
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
-                      title="Eliminar"
+                      {formatoDinero(
+                        adelanto.monto
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <p className="text-[11px] font-black uppercase tracking-wide text-slate-400">
+                      Saldo pendiente
+                    </p>
+
+                    <p
+                      className={`mt-1 text-sm font-black tabular-nums ${
+                        saldoMovimiento > 0
+                          ? "text-red-600"
+                          : "text-emerald-600"
+                      }`}
                     >
-                      <Trash2 size={18} />
-                    </button>
-                  </>
+                      {formatoDinero(
+                        saldoMovimiento
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {mostrarAcciones && (
+                  <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
+                    {onRecibo && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onRecibo(adelanto)
+                        }
+                        className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-50 px-3 text-xs font-black text-amber-700 transition hover:bg-amber-100 hover:cursor-pointer"
+                        title="Abrir recibo"
+                      >
+                        <Printer size={16} className="cursor-pointer"/>
+                        Recibo
+                      </button>
+                    )}
+
+                    {!esTaxista && onEdit && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onEdit(adelanto)
+                        }
+                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100 cursor-pointer"
+                        title="Editar"
+                        aria-label="Editar movimiento"
+                      >
+                        <Edit3 size={18} />
+                      </button>
+                    )}
+
+                    {!esTaxista &&
+                      onDelete && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            onDelete(
+                              adelanto
+                            )
+                          }
+                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100 cursor-pointer"
+                          title="Eliminar"
+                          aria-label="Eliminar movimiento"
+                        >
+                          <Trash2
+                            size={18}
+                          />
+                        </button>
+                      )}
+                  </div>
                 )}
               </div>
             </article>
@@ -268,41 +379,41 @@ const AdelantoTable = ({
         })}
       </div>
 
-      {/* Vista escritorio */}
+      {/* Vista para computadoras */}
       <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead className="bg-slate-50">
               <tr>
                 {mostrarConductor && (
-                  <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                  <th className="whitespace-nowrap px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
                     Conductor
                   </th>
                 )}
 
                 {mostrarSucursal && (
-                  <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                  <th className="whitespace-nowrap px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
                     Sucursal
                   </th>
                 )}
 
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                <th className="whitespace-nowrap px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
                   Fecha
                 </th>
 
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                <th className="whitespace-nowrap px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
                   Tipo
                 </th>
 
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                <th className="whitespace-nowrap px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
                   Monto
                 </th>
 
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                <th className="whitespace-nowrap px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
                   Saldo
                 </th>
 
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                <th className="whitespace-nowrap px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
                   Estado
                 </th>
 
@@ -310,7 +421,7 @@ const AdelantoTable = ({
                   Observación
                 </th>
 
-                <th className="px-5 py-4 text-right text-xs font-black uppercase tracking-wide text-slate-500">
+                <th className="whitespace-nowrap px-5 py-4 text-right text-xs font-black uppercase tracking-wide text-slate-500">
                   Acciones
                 </th>
               </tr>
@@ -319,11 +430,12 @@ const AdelantoTable = ({
             <tbody className="divide-y divide-slate-100">
               {adelantos.map((adelanto) => {
                 const esAbono =
-                  adelanto.tipo === "ABONO";
+                  normalizarTipo(
+                    adelanto.tipo
+                  ) === "ABONO";
 
-                const saldoMovimiento = Number(
-                  adelanto.saldo_movimiento || 0
-                );
+                const saldoMovimiento =
+                  obtenerSaldo(adelanto);
 
                 return (
                   <tr
@@ -334,10 +446,12 @@ const AdelantoTable = ({
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                            <UserRound size={20} />
+                            <UserRound
+                              size={20}
+                            />
                           </div>
 
-                          <p className="text-sm font-black text-slate-900">
+                          <p className="whitespace-nowrap text-sm font-black text-slate-900">
                             {adelanto.conductor_nombre ||
                               "Sin conductor"}
                           </p>
@@ -347,10 +461,10 @@ const AdelantoTable = ({
 
                     {mostrarSucursal && (
                       <td className="px-5 py-4">
-                        <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                        <p className="flex items-center gap-2 whitespace-nowrap text-sm font-bold text-slate-700">
                           <Building2
                             size={16}
-                            className="text-[#E7A900]"
+                            className="shrink-0 text-yellow-600"
                           />
 
                           {adelanto.sucursal_nombre ||
@@ -381,10 +495,10 @@ const AdelantoTable = ({
 
                     <td className="whitespace-nowrap px-5 py-4">
                       <p
-                        className={`flex items-center gap-2 text-sm font-black ${
+                        className={`flex items-center gap-2 text-sm font-black tabular-nums ${
                           esAbono
                             ? "text-emerald-600"
-                            : "text-red-600"
+                            : "text-yellow-700"
                         }`}
                       >
                         <Wallet size={16} />
@@ -397,7 +511,7 @@ const AdelantoTable = ({
 
                     <td className="whitespace-nowrap px-5 py-4">
                       <p
-                        className={`text-sm font-black ${
+                        className={`text-sm font-black tabular-nums ${
                           saldoMovimiento > 0
                             ? "text-red-600"
                             : saldoMovimiento < 0
@@ -419,7 +533,7 @@ const AdelantoTable = ({
 
                     <td className="px-5 py-4">
                       <p
-                        className="max-w-[220px] truncate text-sm font-medium text-slate-500"
+                        className="max-w-[240px] truncate text-sm font-medium text-slate-500"
                         title={
                           adelanto.observacion ||
                           ""
@@ -432,43 +546,61 @@ const AdelantoTable = ({
 
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onRecibo?.(adelanto)
-                          }
-                          className="flex h-10 items-center justify-center gap-1 rounded-xl bg-amber-50 px-3 text-xs font-black text-[#C98A00] transition hover:bg-amber-100"
-                          title="Abrir recibo"
-                        >
-                          <Printer size={16} />
-                          Recibo
-                        </button>
+                        {onRecibo && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onRecibo(
+                                adelanto
+                              )
+                            }
+                            className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-50 px-3 text-xs font-black text-amber-700 transition hover:bg-amber-100"
+                            title="Abrir recibo"
+                          >
+                            <Printer
+                              size={16}
+                            />
+                            Recibo
+                          </button>
+                        )}
 
-                        {!esTaxista && (
-                          <>
+                        {!esTaxista &&
+                          onEdit && (
                             <button
                               type="button"
                               onClick={() =>
-                                onEdit?.(adelanto)
+                                onEdit(
+                                  adelanto
+                                )
                               }
                               className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
                               title="Editar"
+                              aria-label="Editar movimiento"
                             >
-                              <Edit3 size={18} />
+                              <Edit3
+                                size={18}
+                              />
                             </button>
+                          )}
 
+                        {!esTaxista &&
+                          onDelete && (
                             <button
                               type="button"
                               onClick={() =>
-                                onDelete?.(adelanto)
+                                onDelete(
+                                  adelanto
+                                )
                               }
                               className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
                               title="Eliminar"
+                              aria-label="Eliminar movimiento"
                             >
-                              <Trash2 size={18} />
+                              <Trash2
+                                size={18}
+                              />
                             </button>
-                          </>
-                        )}
+                          )}
                       </div>
                     </td>
                   </tr>
@@ -483,4 +615,3 @@ const AdelantoTable = ({
 };
 
 export default AdelantoTable;
-

@@ -41,7 +41,7 @@ export const useLogin = () => {
       return false;
     }
 
-    if (!form.password.trim()) {
+    if (!form.password) {
       setError("Ingresa tu contraseña.");
       return false;
     }
@@ -49,36 +49,21 @@ export const useLogin = () => {
     return true;
   };
 
-  const redirectByRole = (rol) => {
-    if (rol === "superadmin") {
-      navigate("/dashboard", { replace: true });
-      return;
-    }
-
-    if (rol === "admin_sucursal") {
-      navigate("/dashboard", { replace: true });
-      return;
-    }
-
-    if (rol === "taxista") {
-      navigate("/dashboard", { replace: true });
-      return;
-    }
-
-    navigate("/dashboard", { replace: true });
-  };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (loading) {
+      return;
+    }
 
     if (!validateForm()) {
       return;
     }
 
-    try {
-      setLoading(true);
-      setError("");
+    setLoading(true);
+    setError("");
 
+    try {
       const data = await loginRequest({
         username: form.username.trim(),
         password: form.password,
@@ -86,8 +71,10 @@ export const useLogin = () => {
 
       login(data);
 
-      const rol = data?.rol || data?.user?.rol_codigo;
-      redirectByRole(rol);
+      // Entra inmediatamente al dashboard.
+      navigate("/dashboard", {
+        replace: true,
+      });
     } catch (err) {
       const message =
         err.response?.data?.detail ||
@@ -95,7 +82,6 @@ export const useLogin = () => {
         "No se pudo iniciar sesión. Revisa el usuario y la contraseña.";
 
       setError(message);
-    } finally {
       setLoading(false);
     }
   };
