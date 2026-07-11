@@ -111,7 +111,6 @@ const AsignacionesPage = () => {
         icon: "success",
         showConfirmButton: false,
         showCancelButton: false,
-        timer: 1600,
         timerProgressBar: true,
         allowOutsideClick: false,
         allowEscapeKey: false,

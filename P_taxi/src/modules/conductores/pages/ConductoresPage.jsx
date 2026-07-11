@@ -182,7 +182,6 @@ const ConductoresPage = () => {
         : "El conductor fue registrado correctamente.",
       icon: "success",
       showConfirmButton: false,
-      timer: 1500,
       timerProgressBar: true,
     });
 
@@ -219,7 +218,6 @@ const ConductoresPage = () => {
       title: "Conductor despedido",
       icon: "success",
       showConfirmButton: false,
-      timer: 1300,
       timerProgressBar: true,
     });
   };
@@ -254,7 +252,6 @@ const ConductoresPage = () => {
       title: "Conductor reactivado",
       icon: "success",
       showConfirmButton: false,
-      timer: 1300,
       timerProgressBar: true,
     });
   };
