@@ -12,7 +12,9 @@ import {
   UserCheck,
   UserRound,
   UserX,
+  MessageCircle,
 } from "lucide-react";
+import { MdWhatsapp } from "react-icons/md";
 
 const normalizarUsuarios = (data) => {
   if (Array.isArray(data)) {
@@ -154,6 +156,7 @@ const UsuarioTable = ({
   usuarios = [],
   loading = false,
   esSuperAdmin = false,
+  onWhatsApp,
   onEdit,
   onToggleStatus,
   onDarBaja,
@@ -323,6 +326,22 @@ const UsuarioTable = ({
 
                     <td className="px-4 py-4">
                       <div className="flex min-w-[160px] justify-end gap-2">
+
+                           {typeof onWhatsApp ===
+                          "function" && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onWhatsApp(usuario)
+                            }
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100"
+                            title="Enviar datos por WhatsApp"
+                            aria-label="Enviar datos por WhatsApp"
+                          > 
+                            <MdWhatsapp  size={18}/>
+                          </button>
+                        )}
+
                         {typeof onEdit ===
                           "function" && (
                           <button
@@ -426,6 +445,9 @@ const UsuarioTable = ({
                             />
                           </button>
                         )}
+
+
+                       
                       </div>
                     </td>
                   </tr>

@@ -16,6 +16,7 @@ import {
   Lock,
   Mail,
   Phone,
+  RefreshCw,
   Search,
   ShieldCheck,
   UserRound,
@@ -36,6 +37,103 @@ const initialForm = {
   sucursal: "",
   conductor_id: "",
   is_active: true,
+};
+
+const obtenerEnteroSeguro = (maximo) => {
+  if (
+    typeof window !== "undefined" &&
+    window.crypto?.getRandomValues
+  ) {
+    const valores = new Uint32Array(1);
+
+    window.crypto.getRandomValues(valores);
+
+    return valores[0] % maximo;
+  }
+
+  return Math.floor(Math.random() * maximo);
+};
+
+const mezclarCaracteres = (texto) => {
+  const caracteres = [...texto];
+
+  for (
+    let posicion = caracteres.length - 1;
+    posicion > 0;
+    posicion -= 1
+  ) {
+    const nuevaPosicion = obtenerEnteroSeguro(
+      posicion + 1
+    );
+
+    [
+      caracteres[posicion],
+      caracteres[nuevaPosicion],
+    ] = [
+      caracteres[nuevaPosicion],
+      caracteres[posicion],
+    ];
+  }
+
+  return caracteres.join("");
+};
+
+const generarPassword = (longitud = 14) => {
+  const mayusculas =
+    "ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+  const minusculas =
+    "abcdefghijkmnopqrstuvwxyz";
+
+  const numeros = "23456789";
+
+  const simbolos = "!@#$%&*_-";
+
+  const todos =
+    mayusculas +
+    minusculas +
+    numeros +
+    simbolos;
+
+  const caracteres = [
+    mayusculas[
+      obtenerEnteroSeguro(
+        mayusculas.length
+      )
+    ],
+
+    minusculas[
+      obtenerEnteroSeguro(
+        minusculas.length
+      )
+    ],
+
+    numeros[
+      obtenerEnteroSeguro(
+        numeros.length
+      )
+    ],
+
+    simbolos[
+      obtenerEnteroSeguro(
+        simbolos.length
+      )
+    ],
+  ];
+
+  while (caracteres.length < longitud) {
+    caracteres.push(
+      todos[
+        obtenerEnteroSeguro(
+          todos.length
+        )
+      ]
+    );
+  }
+
+  return mezclarCaracteres(
+    caracteres.join("")
+  );
 };
 
 const normalizarLista = (data) => {
@@ -260,9 +358,13 @@ const UsuarioForm = ({
         conductorInicial
       );
     } else {
-      setForm(initialForm);
-      setConductorSeleccionado(null);
-    }
+        setForm({
+          ...initialForm,
+          password: generarPassword(),
+        });
+
+        setConductorSeleccionado(null);
+      }
 
     setSearchConductor("");
     setMostrarConductores(false);

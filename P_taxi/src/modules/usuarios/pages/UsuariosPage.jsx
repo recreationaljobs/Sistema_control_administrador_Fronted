@@ -35,6 +35,7 @@ const UsuariosPage = () => {
     abrirModalEditar,
     cerrarModal,
     guardarUsuario,
+    enviarDatosWhatsApp,
     cambiarEstadoUsuario,
     darBaja,
     reactivar,
@@ -169,6 +170,7 @@ const UsuariosPage = () => {
             usuarios={usuariosFiltrados}
             loading={loading}
             esSuperAdmin={esSuperAdmin}
+            onWhatsApp={enviarDatosWhatsApp}
             onEdit={abrirModalEditar}
             onToggleStatus={cambiarEstadoUsuario}
             onDarBaja={darBaja}
