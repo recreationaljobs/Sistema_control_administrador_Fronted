@@ -10,8 +10,6 @@ import {
   XCircle,
 } from "lucide-react";
 
-import Swal from "sweetalert2";
-
 import AsignacionModal from "../components/AsignacionModal";
 import AsignacionTable from "../components/AsignacionTable";
 import { useAsignaciones } from "../hooks/useAsignaciones";
@@ -61,80 +59,45 @@ const AsignacionesPage = () => {
     asignacionesFiltradas,
     conductores,
     vehiculos,
+
     loading,
     loadingCatalogos,
     saving,
     error,
+
     search,
     setSearch,
+
     modalOpen,
     asignacionEditando,
+
     totalAsignaciones,
     asignacionesActivas,
     asignacionesInactivas,
+
     esSuperAdmin,
     esAdminSucursal,
+
     abrirModalCrear,
     abrirModalEditar,
     cerrarModal,
+
     guardarAsignacion,
     cambiarEstadoAsignacion,
     eliminarAsignacion,
   } = useAsignaciones();
 
- const guardarConAlerta = async (datos) => {
-  const resultado =
-    await guardarAsignacion(datos);
-
-  return resultado;
-};
-
-    try {
-      const resultado =
-        await guardarAsignacion(datos);
-
-      /*
-       * Si el hook devuelve false cuando ocurre
-       * un error, no se muestra la alerta.
-       */
-      if (resultado === false) {
-        return;
-      }
-
-      void Swal.fire({
-        title: esEdicion
-          ? "Asignación actualizada"
-          : "Asignación registrada",
-        text: esEdicion
-          ? ""
-          : "El vehículo fue asignado correctamente al conductor.",
-        icon: "success",
-        confirmButtonColor: "#F5B800",
-        confirmButtonText: "Aceptar",
-      });
-    } catch (guardarError) {
-     const mensaje =
-             obtenerMensajeError(error);
-     
-           setFormError(mensaje);
-     
-           void Swal.fire({
-             title: "No se pudo guardar",
-             text: mensaje,
-             icon: "error",
-             confirmButtonText: "Entendido",
-             confirmButtonColor: "#dc2626",
-           });
-    }
-  };
-
+  /*
+   * Garantiza que la página y la tabla
+   * siempre trabajen con un arreglo.
+   */
   const listaAsignaciones =
-  Array.isArray(asignacionesFiltradas)
-    ? asignacionesFiltradas.filter(Boolean)
-    : [];
+    Array.isArray(asignacionesFiltradas)
+      ? asignacionesFiltradas.filter(Boolean)
+      : [];
 
-const cantidadResultados =
-  listaAsignaciones.length;
+  const cantidadResultados =
+    listaAsignaciones.length;
 
   return (
     <div className="space-y-6">
@@ -154,10 +117,8 @@ const cantidadResultados =
                 </h1>
 
                 <p className="mt-1 max-w-2xl text-sm font-medium leading-6 text-slate-500 md:text-base">
-                  Relaciona conductores con
-                  vehículos para habilitar el
-                  registro de sus jornadas
-                  diarias.
+                  Relaciona conductores con vehículos para habilitar el
+                  registro de sus jornadas diarias.
                 </p>
               </div>
             </div>
@@ -165,9 +126,7 @@ const cantidadResultados =
             <button
               type="button"
               onClick={abrirModalCrear}
-              disabled={
-                saving || loadingCatalogos
-              }
+              disabled={saving || loadingCatalogos}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:-translate-y-0.5 hover:bg-yellow-500 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
             >
               {loadingCatalogos ? (
@@ -198,12 +157,11 @@ const cantidadResultados =
 
             <div>
               <p className="text-sm font-black text-red-700">
-                No se pudo completar la
-                operación
+                No se pudo completar la operación
               </p>
 
               <p className="mt-1 text-sm font-medium text-red-600">
-                {error}
+                {String(error)}
               </p>
             </div>
           </div>
@@ -250,8 +208,7 @@ const cantidadResultados =
             </h2>
 
             <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
-              Consulta qué vehículo tiene
-              asignado cada conductor.
+              Consulta qué vehículo tiene asignado cada conductor.
             </p>
           </div>
 
@@ -274,9 +231,7 @@ const cantidadResultados =
                 type="text"
                 value={search}
                 onChange={(event) =>
-                  setSearch(
-                    event.target.value
-                  )
+                  setSearch(event.target.value)
                 }
                 placeholder="Conductor, placa, número o sucursal..."
                 className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
@@ -321,20 +276,14 @@ const cantidadResultados =
       <AsignacionModal
         open={modalOpen}
         onClose={cerrarModal}
-        onSave={guardarConAlerta}
+        onSave={guardarAsignacion}
         saving={saving}
-        loadingCatalogos={
-          loadingCatalogos
-        }
-        asignacionEditando={
-          asignacionEditando
-        }
+        loadingCatalogos={loadingCatalogos}
+        asignacionEditando={asignacionEditando}
         conductores={conductores}
         vehiculos={vehiculos}
         esSuperAdmin={esSuperAdmin}
-        esAdminSucursal={
-          esAdminSucursal
-        }
+        esAdminSucursal={esAdminSucursal}
       />
     </div>
   );
