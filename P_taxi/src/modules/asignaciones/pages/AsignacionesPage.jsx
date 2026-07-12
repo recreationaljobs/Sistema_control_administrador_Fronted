@@ -106,11 +106,14 @@ const AsignacionesPage = () => {
           ? "Asignación actualizada"
           : "Asignación registrada",
         text: esEdicion
-          ? "Los cambios de la asignación se guardaron correctamente."
+          ? ""
           : "El vehículo fue asignado correctamente al conductor.",
         icon: "success",
         showConfirmButton: false,
         showCancelButton: false,
+        timerProgressBar: true,
+      
+        timer: 1800,
         timerProgressBar: true,
         allowOutsideClick: false,
         allowEscapeKey: false,

@@ -12,70 +12,150 @@ import {
   UserRound,
 } from "lucide-react";
 
-const formatearFecha = (fecha) => {
-  if (!fecha) {
-    return "Sin finalizar";
+const normalizarAsignaciones = (data) => {
+  if (Array.isArray(data)) {
+    return data.filter(Boolean);
   }
 
-  const valor = String(fecha).slice(0, 10);
+  if (Array.isArray(data?.results)) {
+    return data.results.filter(Boolean);
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data.filter(Boolean);
+  }
+
+  if (Array.isArray(data?.data?.results)) {
+    return data.data.results.filter(
+      Boolean
+    );
+  }
+
+  return [];
+};
+
+const formatearFecha = (fecha) => {
+  if (!fecha) {
+    return "Sin fecha";
+  }
+
+  const valor = String(fecha).slice(
+    0,
+    10
+  );
+
   const partes = valor.split("-");
 
   if (partes.length !== 3) {
-    return String(fecha);
+    return valor;
   }
 
-  const [anio, mes, dia] = partes;
-
-  return `${dia}/${mes}/${anio}`;
+  return `${partes[2]}/${partes[1]}/${partes[0]}`;
 };
 
-const obtenerNombreConductor = (
+const obtenerEstado = (asignacion) => {
+  const valor =
+    asignacion?.activa ??
+    asignacion?.activo ??
+    asignacion?.is_active;
+
+  return (
+    valor === true ||
+    valor === 1 ||
+    valor === "1" ||
+    String(valor).toLowerCase() ===
+      "true"
+  );
+};
+
+const obtenerConductor = (
   asignacion
 ) => {
   return (
-    asignacion.conductor_nombre ||
-    asignacion.nombre_conductor ||
+    asignacion?.conductor_nombre ||
+    asignacion?.conductor?.nombre_completo ||
+    [
+      asignacion?.conductor?.nombre,
+      asignacion?.conductor?.apellido,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
     "Sin conductor"
   );
 };
 
-const obtenerNombreVehiculo = (
-  asignacion
-) => {
-  const identificacion = [
-    asignacion.vehiculo_numero,
-    asignacion.vehiculo_placa,
-  ]
-    .filter(Boolean)
-    .join(" - ");
-
+const obtenerCedula = (asignacion) => {
   return (
-    identificacion ||
-    asignacion.vehiculo_nombre ||
-    "Sin vehículo"
+    asignacion?.conductor_cedula ||
+    asignacion?.conductor?.cedula ||
+    ""
   );
 };
 
-const EstadoAsignacion = ({
-  activa,
-}) => {
+const obtenerVehiculo = (
+  asignacion
+) => {
+  return (
+    asignacion?.vehiculo_numero ||
+    asignacion?.vehiculo?.numero_unidad ||
+    asignacion?.vehiculo?.numero ||
+    "Sin número"
+  );
+};
+
+const obtenerPlaca = (asignacion) => {
+  return (
+    asignacion?.vehiculo_placa ||
+    asignacion?.vehiculo?.placa ||
+    "Sin placa"
+  );
+};
+
+const obtenerDescripcionVehiculo = (
+  asignacion
+) => {
+  return (
+    asignacion?.vehiculo_descripcion ||
+    [
+      asignacion?.vehiculo?.marca,
+      asignacion?.vehiculo?.modelo,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
+    ""
+  );
+};
+
+const obtenerSucursal = (
+  asignacion
+) => {
+  return (
+    asignacion?.sucursal_nombre ||
+    asignacion?.sucursal?.nombre ||
+    "Sin sucursal"
+  );
+};
+
+const EstadoBadge = ({ activo }) => {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-black ${
-        activa
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-black ${
+        activo
           ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-          : "border-red-200 bg-red-50 text-red-700"
+          : "border-slate-200 bg-slate-100 text-slate-600"
       }`}
     >
       <span
         className={`h-1.5 w-1.5 rounded-full ${
-          activa
+          activo
             ? "bg-emerald-500"
-            : "bg-red-500"
+            : "bg-slate-400"
         }`}
       />
 
-      {activa ? "Activa" : "Inactiva"}
+      {activo ? "Activa" : "Inactiva"}
     </span>
   );
 };
@@ -84,9 +164,16 @@ const AsignacionTable = ({
   asignaciones = [],
   loading = false,
   onEdit,
-  onToggleStatus,
+  onToggle,
   onDelete,
+  onCambiarEstado,
 }) => {
+  const listaAsignaciones =
+    normalizarAsignaciones(asignaciones);
+
+  const cambiarEstado =
+    onToggle || onCambiarEstado;
+
   if (loading) {
     return (
       <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
@@ -95,19 +182,14 @@ const AsignacionTable = ({
           className="mx-auto animate-spin text-yellow-500"
         />
 
-        <p className="mt-3 text-sm font-bold text-slate-600">
+        <p className="mt-3 text-sm font-bold text-slate-500">
           Cargando asignaciones...
-        </p>
-
-        <p className="mt-1 text-xs font-medium text-slate-400">
-          Estamos consultando los
-          conductores y vehículos asignados.
         </p>
       </div>
     );
   }
 
-  if (!asignaciones.length) {
+  if (!listaAsignaciones.length) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-50 text-yellow-600">
@@ -115,312 +197,184 @@ const AsignacionTable = ({
         </div>
 
         <h3 className="mt-4 text-lg font-black text-slate-900">
-          No hay asignaciones registradas
+          No hay asignaciones
         </h3>
 
-        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-          Crea una asignación para relacionar
-          un conductor con el vehículo que
-          utilizará en sus jornadas.
+        <p className="mt-2 text-sm font-medium text-slate-500">
+          No se encontraron registros.
         </p>
       </div>
     );
   }
 
   return (
-    <>
-      <div className="grid gap-4 lg:hidden">
-        {asignaciones.map((asignacion) => (
-          <article
-            key={asignacion.id}
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
-          >
-            <div
-              className={`h-1 w-full ${
-                asignacion.activa
-                  ? "bg-emerald-500"
-                  : "bg-red-500"
-              }`}
-            />
+    <div className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="w-full overflow-x-auto overscroll-x-contain">
+        <table className="min-w-[1100px] w-full">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="whitespace-nowrap px-4 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                Conductor
+              </th>
 
-            <div className="p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                    <UserRound size={21} />
-                  </div>
+              <th className="whitespace-nowrap px-4 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                Vehículo
+              </th>
 
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-black text-slate-900">
-                      {obtenerNombreConductor(
-                        asignacion
-                      )}
-                    </p>
+              <th className="whitespace-nowrap px-4 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                Inicio
+              </th>
 
-                    <p className="mt-1 text-xs font-medium text-slate-500">
-                      Conductor asignado
-                    </p>
-                  </div>
-                </div>
+              <th className="whitespace-nowrap px-4 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                Finalización
+              </th>
 
-                <EstadoAsignacion
-                  activa={
-                    asignacion.activa
-                  }
-                />
-              </div>
+              <th className="whitespace-nowrap px-4 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                Sucursal
+              </th>
 
-              <div className="mt-4 rounded-2xl bg-slate-50 p-4">
-                <div className="flex items-start gap-3">
-                  <CarTaxiFront
-                    size={20}
-                    className="mt-0.5 shrink-0 text-yellow-600"
-                  />
+              <th className="whitespace-nowrap px-4 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
+                Estado
+              </th>
 
-                  <div>
-                    <p className="text-sm font-black text-slate-800">
-                      {obtenerNombreVehiculo(
-                        asignacion
-                      )}
-                    </p>
+              <th className="whitespace-nowrap px-4 py-4 text-right text-xs font-black uppercase tracking-wide text-slate-500">
+                Acciones
+              </th>
+            </tr>
+          </thead>
 
-                    <p className="mt-1 text-xs font-medium text-slate-500">
-                      {asignacion.vehiculo_descripcion ||
-                        "Vehículo asignado"}
-                    </p>
-                  </div>
-                </div>
+          <tbody className="divide-y divide-slate-100">
+            {listaAsignaciones.map(
+              (asignacion, index) => {
+                const activa =
+                  obtenerEstado(asignacion);
 
-                <div className="mt-4 border-t border-slate-200 pt-3">
-                  <p className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                    <CalendarDays
-                      size={15}
-                      className="text-slate-400"
-                    />
+                const conductor =
+                  obtenerConductor(
+                    asignacion
+                  );
 
-                    Inicio:{" "}
-                    {formatearFecha(
-                      asignacion.fecha_inicio
-                    )}
-                  </p>
+                const cedula =
+                  obtenerCedula(asignacion);
 
-                  <p className="mt-2 flex items-center gap-2 text-xs font-bold text-slate-600">
-                    <CalendarDays
-                      size={15}
-                      className="text-slate-400"
-                    />
+                const vehiculo =
+                  obtenerVehiculo(
+                    asignacion
+                  );
 
-                    Final:{" "}
-                    {formatearFecha(
-                      asignacion.fecha_fin
-                    )}
-                  </p>
-                </div>
+                const placa =
+                  obtenerPlaca(asignacion);
 
-                <div className="mt-3 flex items-center gap-2 text-xs font-bold text-slate-600">
-                  <Building2
-                    size={15}
-                    className="text-slate-400"
-                  />
+                const descripcion =
+                  obtenerDescripcionVehiculo(
+                    asignacion
+                  );
 
-                  {asignacion.sucursal_nombre ||
-                    "Panel general"}
-                </div>
-              </div>
-
-              <div className="mt-4 flex justify-end gap-2 border-t border-slate-100 pt-4">
-                {onEdit && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onEdit(asignacion)
-                    }
-                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
-                    title="Editar"
-                    aria-label="Editar asignación"
-                  >
-                    <Edit3 size={18} />
-                  </button>
-                )}
-
-                {onToggleStatus && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onToggleStatus(
-                        asignacion
-                      )
-                    }
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl transition ${
-                      asignacion.activa
-                        ? "bg-orange-50 text-orange-600 hover:bg-orange-100"
-                        : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-                    }`}
-                    title={
-                      asignacion.activa
-                        ? "Desactivar"
-                        : "Activar"
-                    }
-                    aria-label={
-                      asignacion.activa
-                        ? "Desactivar asignación"
-                        : "Activar asignación"
-                    }
-                  >
-                    <Power size={18} />
-                  </button>
-                )}
-
-                {onDelete && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onDelete(asignacion)
-                    }
-                    className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
-                    title="Eliminar"
-                    aria-label="Eliminar asignación"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                )}
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      <div className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:block">
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
-                  Conductor
-                </th>
-
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
-                  Vehículo
-                </th>
-
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
-                  Fechas
-                </th>
-
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
-                  Sucursal
-                </th>
-
-                <th className="px-5 py-4 text-left text-xs font-black uppercase tracking-wide text-slate-500">
-                  Estado
-                </th>
-
-                <th className="px-5 py-4 text-right text-xs font-black uppercase tracking-wide text-slate-500">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-slate-100">
-              {asignaciones.map(
-                (asignacion) => (
+                return (
                   <tr
-                    key={asignacion.id}
-                    className="transition hover:bg-slate-50/80"
+                    key={
+                      asignacion?.id ??
+                      `${conductor}-${vehiculo}-${index}`
+                    }
+                    className="transition hover:bg-slate-50"
                   >
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="px-4 py-4">
+                      <div className="flex min-w-[210px] items-center gap-3">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
                           <UserRound
-                            size={22}
+                            size={20}
                           />
                         </div>
 
                         <div className="min-w-0">
-                          <p className="max-w-[220px] truncate text-sm font-black text-slate-900">
-                            {obtenerNombreConductor(
-                              asignacion
-                            )}
+                          <p className="max-w-[180px] truncate text-sm font-black text-slate-900">
+                            {conductor}
                           </p>
 
-                          <p className="mt-1 text-xs font-medium text-slate-500">
-                            ID:{" "}
-                            {asignacion.conductor ||
-                              "Sin ID"}
+                          <p className="mt-1 max-w-[180px] truncate text-xs font-medium text-slate-500">
+                            {cedula
+                              ? `Cédula: ${cedula}`
+                              : "Sin cédula"}
                           </p>
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-yellow-100 text-yellow-700">
+                    <td className="px-4 py-4">
+                      <div className="flex min-w-[210px] items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-100 text-yellow-700">
                           <CarTaxiFront
-                            size={22}
+                            size={19}
                           />
                         </div>
 
                         <div className="min-w-0">
-                          <p className="max-w-[220px] truncate text-sm font-black text-slate-900">
-                            {obtenerNombreVehiculo(
-                              asignacion
-                            )}
+                          <p className="max-w-[180px] truncate text-sm font-black text-slate-900">
+                            Unidad {vehiculo}
                           </p>
 
-                          <p className="mt-1 max-w-[220px] truncate text-xs font-medium text-slate-500">
-                            {asignacion.vehiculo_descripcion ||
-                              "Vehículo asignado"}
+                          <p className="mt-1 max-w-[180px] truncate text-xs font-medium text-slate-500">
+                            {placa}
+
+                            {descripcion
+                              ? ` · ${descripcion}`
+                              : ""}
                           </p>
                         </div>
                       </div>
                     </td>
 
-                    <td className="whitespace-nowrap px-5 py-4">
-                      <div className="space-y-1.5">
-                        <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                          <CalendarDays
-                            size={15}
-                            className="text-slate-400"
-                          />
-
-                          Inicio:{" "}
-                          {formatearFecha(
-                            asignacion.fecha_inicio
-                          )}
-                        </p>
-
-                        <p className="pl-6 text-xs font-medium text-slate-500">
-                          Final:{" "}
-                          {formatearFecha(
-                            asignacion.fecha_fin
-                          )}
-                        </p>
-                      </div>
-                    </td>
-
-                    <td className="px-5 py-4">
-                      <p className="flex items-center gap-2 whitespace-nowrap text-sm font-bold text-slate-700">
-                        <Building2
+                    <td className="whitespace-nowrap px-4 py-4">
+                      <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                        <CalendarDays
                           size={16}
                           className="text-slate-400"
                         />
 
-                        {asignacion.sucursal_nombre ||
-                          "Panel general"}
+                        {formatearFecha(
+                          asignacion?.fecha_inicio
+                        )}
                       </p>
                     </td>
 
-                    <td className="px-5 py-4">
-                      <EstadoAsignacion
-                        activa={
-                          asignacion.activa
-                        }
+                    <td className="whitespace-nowrap px-4 py-4">
+                      <p className="flex items-center gap-2 text-sm font-bold text-slate-700">
+                        <CalendarDays
+                          size={16}
+                          className="text-slate-400"
+                        />
+
+                        {asignacion?.fecha_fin
+                          ? formatearFecha(
+                              asignacion.fecha_fin
+                            )
+                          : "Sin finalizar"}
+                      </p>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <p className="flex min-w-[150px] items-center gap-2 whitespace-nowrap text-sm font-bold text-slate-700">
+                        <Building2
+                          size={16}
+                          className="shrink-0 text-slate-400"
+                        />
+
+                        {obtenerSucursal(
+                          asignacion
+                        )}
+                      </p>
+                    </td>
+
+                    <td className="px-4 py-4">
+                      <EstadoBadge
+                        activo={activa}
                       />
                     </td>
 
-                    <td className="px-5 py-4">
-                      <div className="flex justify-end gap-2">
-                        {onEdit && (
+                    <td className="px-4 py-4">
+                      <div className="flex min-w-[135px] justify-end gap-2">
+                        {typeof onEdit ===
+                          "function" && (
                           <button
                             type="button"
                             onClick={() =>
@@ -428,36 +382,37 @@ const AsignacionTable = ({
                                 asignacion
                               )
                             }
-                            className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
                             title="Editar"
                             aria-label="Editar asignación"
                           >
                             <Edit3
-                              size={18}
+                              size={17}
                             />
                           </button>
                         )}
 
-                        {onToggleStatus && (
+                        {typeof cambiarEstado ===
+                          "function" && (
                           <button
                             type="button"
                             onClick={() =>
-                              onToggleStatus(
+                              cambiarEstado(
                                 asignacion
                               )
                             }
-                            className={`flex h-10 w-10 items-center justify-center rounded-xl transition ${
-                              asignacion.activa
+                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition ${
+                              activa
                                 ? "bg-orange-50 text-orange-600 hover:bg-orange-100"
                                 : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
                             }`}
                             title={
-                              asignacion.activa
+                              activa
                                 ? "Desactivar"
                                 : "Activar"
                             }
                             aria-label={
-                              asignacion.activa
+                              activa
                                 ? "Desactivar asignación"
                                 : "Activar asignación"
                             }
@@ -468,7 +423,8 @@ const AsignacionTable = ({
                           </button>
                         )}
 
-                        {onDelete && (
+                        {typeof onDelete ===
+                          "function" && (
                           <button
                             type="button"
                             onClick={() =>
@@ -476,25 +432,32 @@ const AsignacionTable = ({
                                 asignacion
                               )
                             }
-                            className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
                             title="Eliminar"
                             aria-label="Eliminar asignación"
                           >
                             <Trash2
-                              size={18}
+                              size={17}
                             />
                           </button>
                         )}
                       </div>
                     </td>
                   </tr>
-                )
-              )}
-            </tbody>
-          </table>
-        </div>
+                );
+              }
+            )}
+          </tbody>
+        </table>
       </div>
-    </>
+
+      <div className="border-t border-slate-100 bg-slate-50 px-4 py-2 sm:hidden">
+        <p className="text-center text-xs font-semibold text-slate-500">
+          Desliza horizontalmente para ver
+          más información.
+        </p>
+      </div>
+    </div>
   );
 };
 
