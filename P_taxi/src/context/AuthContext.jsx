@@ -83,8 +83,6 @@ export const AuthProvider = ({ children }) => {
 
       showConfirmButton: false,
       showCancelButton: false,
-
-      timer: 2200,
       timerProgressBar: true,
 
       allowOutsideClick: false,

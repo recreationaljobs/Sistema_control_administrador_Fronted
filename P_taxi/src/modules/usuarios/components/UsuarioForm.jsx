@@ -38,6 +38,32 @@ const initialForm = {
   is_active: true,
 };
 
+const normalizarLista = (data) => {
+  if (Array.isArray(data)) {
+    return data.filter(Boolean);
+  }
+
+  if (Array.isArray(data?.results)) {
+    return data.results.filter(Boolean);
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data.filter(Boolean);
+  }
+
+  if (Array.isArray(data?.data?.results)) {
+    return data.data.results.filter(Boolean);
+  }
+
+  return [];
+};
+
+const normalizarCodigo = (valor) => {
+  return String(valor || "")
+    .trim()
+    .toLowerCase();
+};
+
 const obtenerId = (valor) => {
   if (!valor) {
     return "";
@@ -52,7 +78,9 @@ const obtenerId = (valor) => {
   return String(valor);
 };
 
-const obtenerNombreConductor = (conductor) => {
+const obtenerNombreConductor = (
+  conductor
+) => {
   if (!conductor) {
     return "Conductor";
   }
@@ -68,15 +96,15 @@ const obtenerNombreConductor = (conductor) => {
 };
 
 const obtenerConductorInicial = (
-  usuarioEditando
+  usuario
 ) => {
-  if (!usuarioEditando) {
+  if (!usuario) {
     return null;
   }
 
   const conductorId = obtenerId(
-    usuarioEditando.conductor_id ||
-      usuarioEditando.conductor
+    usuario.conductor_id ||
+      usuario.conductor
   );
 
   if (!conductorId) {
@@ -87,20 +115,20 @@ const obtenerConductorInicial = (
     id: conductorId,
 
     nombre_completo:
-      usuarioEditando.conductor_nombre ||
-      usuarioEditando.nombre_conductor ||
-      usuarioEditando.conductor?.nombre_completo ||
+      usuario.conductor_nombre ||
+      usuario.nombre_conductor ||
+      usuario.conductor?.nombre_completo ||
       "",
 
     cedula:
-      usuarioEditando.conductor_cedula ||
-      usuarioEditando.conductor?.cedula ||
+      usuario.conductor_cedula ||
+      usuario.conductor?.cedula ||
       "",
 
     sucursal_nombre:
-      usuarioEditando.conductor_sucursal_nombre ||
-      usuarioEditando.sucursal_nombre ||
-      usuarioEditando.conductor?.sucursal_nombre ||
+      usuario.conductor_sucursal_nombre ||
+      usuario.sucursal_nombre ||
+      usuario.conductor?.sucursal_nombre ||
       "",
   };
 };
@@ -108,7 +136,7 @@ const obtenerConductorInicial = (
 const obtenerMensajeError = (error) => {
   const data = error?.response?.data;
 
-  if (data?.detail) {
+  if (typeof data?.detail === "string") {
     return data.detail;
   }
 
@@ -131,36 +159,12 @@ const obtenerMensajeError = (error) => {
   );
 };
 
-const mostrarAlertaExito = (
-  usuarioEditando
-) => {
-  void Swal.fire({
-    title: usuarioEditando
-      ? "Usuario actualizado"
-      : "Usuario registrado",
-
-    text: usuarioEditando
-      ? "Los cambios se guardaron correctamente."
-      : "El usuario se registró correctamente.",
-
-    icon: "success",
-
-    toast: true,
-    position: "top-end",
-
-    showConfirmButton: false,
-
-    timer: 1500,
-    timerProgressBar: true,
-  });
-};
-
 const UsuarioForm = ({
   usuarioEditando = null,
   roles = [],
   sucursales = [],
   conductoresDisponibles = [],
-  cargarConductoresDisponibles = () => {},
+  cargarConductoresDisponibles = () => [],
   onSave,
   onCancel,
   saving = false,
@@ -199,9 +203,17 @@ const UsuarioForm = ({
     setShowPassword,
   ] = useState(false);
 
-  const esEdicion = Boolean(
-    usuarioEditando
-  );
+  const esEdicion =
+    Boolean(usuarioEditando);
+
+  const codigoRolOriginal =
+    normalizarCodigo(
+      usuarioEditando?.rol_codigo ||
+        usuarioEditando?.rol?.codigo
+    );
+
+  const usuarioEraTaxista =
+    codigoRolOriginal === "taxista";
 
   useEffect(() => {
     if (usuarioEditando) {
@@ -228,25 +240,20 @@ const UsuarioForm = ({
         telefono:
           usuarioEditando.telefono || "",
 
-        rol: usuarioEditando.rol
-          ? String(usuarioEditando.rol)
-          : "",
+        rol: obtenerId(
+          usuarioEditando.rol
+        ),
 
-        sucursal:
-          obtenerId(
-            usuarioEditando.sucursal
-          ),
+        sucursal: obtenerId(
+          usuarioEditando.sucursal
+        ),
 
         conductor_id:
-          conductorInicial?.id
-            ? String(conductorInicial.id)
-            : "",
+          conductorInicial?.id || "",
 
         is_active:
-          typeof usuarioEditando.is_active ===
-          "boolean"
-            ? usuarioEditando.is_active
-            : true,
+          usuarioEditando.is_active !==
+          false,
       });
 
       setConductorSeleccionado(
@@ -259,25 +266,42 @@ const UsuarioForm = ({
 
     setSearchConductor("");
     setMostrarConductores(false);
+    setBuscandoConductores(false);
     setFormError("");
     setShowPassword(false);
   }, [usuarioEditando]);
 
+  const listaRoles = useMemo(
+    () => normalizarLista(roles),
+    [roles]
+  );
+
+  const listaSucursales = useMemo(
+    () => normalizarLista(sucursales),
+    [sucursales]
+  );
+
+  const listaConductores = useMemo(
+    () =>
+      normalizarLista(
+        conductoresDisponibles
+      ),
+    [conductoresDisponibles]
+  );
+
   const rolSeleccionado = useMemo(() => {
     return (
-      roles.find(
+      listaRoles.find(
         (item) =>
           String(item.id) ===
           String(form.rol)
       ) || null
     );
-  }, [roles, form.rol]);
+  }, [listaRoles, form.rol]);
 
-  const codigoRol = String(
-    rolSeleccionado?.codigo || ""
-  )
-    .trim()
-    .toLowerCase();
+  const codigoRol = normalizarCodigo(
+    rolSeleccionado?.codigo
+  );
 
   const necesitaSucursal =
     codigoRol === "admin_sucursal";
@@ -297,14 +321,15 @@ const UsuarioForm = ({
         .trim()
         .toLowerCase();
 
-      return (
-        conductoresDisponibles || []
-      )
-        .filter((conductor) => {
-          if (!busqueda) {
-            return true;
-          }
+      if (!busqueda) {
+        return listaConductores.slice(
+          0,
+          10
+        );
+      }
 
+      return listaConductores
+        .filter((conductor) => {
           const texto = [
             conductor.nombre_completo,
             conductor.nombre,
@@ -316,33 +341,42 @@ const UsuarioForm = ({
             .join(" ")
             .toLowerCase();
 
-          return texto.includes(busqueda);
+          return texto.includes(
+            busqueda
+          );
         })
         .slice(0, 10);
     }, [
-      conductoresDisponibles,
+      listaConductores,
       searchConductor,
     ]);
 
+  /*
+   * Este efecto ya no genera un ciclo porque
+   * la función del hook usa useCallback.
+   */
   useEffect(() => {
-    if (!esRolTaxista) {
+    if (
+      !esRolTaxista ||
+      conductorSeleccionado
+    ) {
       setBuscandoConductores(false);
       return undefined;
     }
 
-    let activo = true;
+    let componenteActivo = true;
 
     const timer = window.setTimeout(
       async () => {
         try {
           setBuscandoConductores(true);
 
-          await Promise.resolve(
-            cargarConductoresDisponibles({
+          await cargarConductoresDisponibles(
+            {
               sucursalId: "",
               searchText:
                 searchConductor.trim(),
-            })
+            }
           );
         } catch (error) {
           console.error(
@@ -350,20 +384,23 @@ const UsuarioForm = ({
             error
           );
         } finally {
-          if (activo) {
-            setBuscandoConductores(false);
+          if (componenteActivo) {
+            setBuscandoConductores(
+              false
+            );
           }
         }
       },
-      searchConductor.trim() ? 300 : 0
+      searchConductor.trim() ? 350 : 0
     );
 
     return () => {
-      activo = false;
+      componenteActivo = false;
       window.clearTimeout(timer);
     };
   }, [
     esRolTaxista,
+    conductorSeleccionado,
     searchConductor,
     cargarConductoresDisponibles,
   ]);
@@ -383,34 +420,23 @@ const UsuarioForm = ({
     } = event.target;
 
     if (name === "rol") {
-      setForm((formAnterior) => ({
-        ...formAnterior,
+      setForm((anterior) => ({
+        ...anterior,
         rol: value,
         sucursal: "",
         conductor_id: "",
       }));
 
-      setSearchConductor("");
       setConductorSeleccionado(null);
+      setSearchConductor("");
       setMostrarConductores(false);
       limpiarError();
 
       return;
     }
 
-    if (name === "sucursal") {
-      setForm((formAnterior) => ({
-        ...formAnterior,
-        sucursal: value,
-      }));
-
-      limpiarError();
-      return;
-    }
-
-    setForm((formAnterior) => ({
-      ...formAnterior,
-
+    setForm((anterior) => ({
+      ...anterior,
       [name]:
         type === "checkbox"
           ? checked
@@ -423,30 +449,27 @@ const UsuarioForm = ({
   const handleBusquedaConductor = (
     event
   ) => {
-    const value = event.target.value;
+    setSearchConductor(
+      event.target.value
+    );
 
-    setSearchConductor(value);
     setMostrarConductores(true);
-
-    if (conductorSeleccionado) {
-      setConductorSeleccionado(null);
-
-      setForm((formAnterior) => ({
-        ...formAnterior,
-        conductor_id: "",
-      }));
-    }
-
     limpiarError();
   };
 
   const seleccionarConductor = (
     conductor
   ) => {
-    setConductorSeleccionado(conductor);
+    if (!conductor?.id) {
+      return;
+    }
 
-    setForm((formAnterior) => ({
-      ...formAnterior,
+    setConductorSeleccionado(
+      conductor
+    );
+
+    setForm((anterior) => ({
+      ...anterior,
       conductor_id: String(
         conductor.id
       ),
@@ -460,14 +483,13 @@ const UsuarioForm = ({
   const quitarConductor = () => {
     setConductorSeleccionado(null);
 
-    setForm((formAnterior) => ({
-      ...formAnterior,
+    setForm((anterior) => ({
+      ...anterior,
       conductor_id: "",
     }));
 
     setSearchConductor("");
     setMostrarConductores(true);
-    limpiarError();
   };
 
   const validarFormulario = () => {
@@ -476,10 +498,10 @@ const UsuarioForm = ({
     }
 
     if (
-      !usuarioEditando &&
+      !esEdicion &&
       !form.password.trim()
     ) {
-      return "La contraseña es obligatoria al crear un usuario.";
+      return "La contraseña es obligatoria.";
     }
 
     if (
@@ -503,10 +525,14 @@ const UsuarioForm = ({
       return "Debes seleccionar una sucursal.";
     }
 
+    /*
+     * Se exige conductor al crear un taxista
+     * o al cambiar un usuario a taxista.
+     */
     if (
-      !usuarioEditando &&
       esRolTaxista &&
-      !form.conductor_id
+      !form.conductor_id &&
+      !usuarioEraTaxista
     ) {
       return "Debes seleccionar un conductor.";
     }
@@ -547,11 +573,10 @@ const UsuarioForm = ({
           : "¿Crear usuario?",
 
         text: esEdicion
-          ? "Se guardarán los cambios realizados."
-          : "El usuario podrá acceder según el rol seleccionado.",
+          ? "Se guardarán los cambios."
+          : "Se creará la cuenta de acceso.",
 
         icon: "question",
-
         showCancelButton: true,
 
         confirmButtonText: esEdicion
@@ -562,7 +587,6 @@ const UsuarioForm = ({
 
         confirmButtonColor: "#eab308",
         cancelButtonColor: "#64748b",
-
         reverseButtons: true,
       });
 
@@ -571,7 +595,8 @@ const UsuarioForm = ({
     }
 
     const payload = {
-      username: form.username.trim(),
+      username:
+        form.username.trim(),
 
       first_name:
         form.first_name.trim(),
@@ -584,25 +609,37 @@ const UsuarioForm = ({
       telefono:
         form.telefono.trim(),
 
-      rol: form.rol
-        ? Number(form.rol)
-        : null,
+      rol: Number(form.rol),
 
-      sucursal: form.sucursal
-        ? Number(form.sucursal)
-        : null,
-
-      conductor_id: form.conductor_id
-        ? Number(form.conductor_id)
-        : null,
-
-      is_active: Boolean(
-        form.is_active
-      ),
+      is_active:
+        Boolean(form.is_active),
     };
 
+    if (esSuperAdmin) {
+      payload.sucursal =
+        necesitaSucursal &&
+        form.sucursal
+          ? Number(form.sucursal)
+          : null;
+    }
+
+    if (esRolTaxista) {
+      if (form.conductor_id) {
+        payload.conductor_id =
+          Number(form.conductor_id);
+      } else if (!usuarioEraTaxista) {
+        payload.conductor_id = null;
+      }
+    } else {
+      /*
+       * Si cambia de taxista a otro rol,
+       * se elimina la relación anterior.
+       */
+      payload.conductor_id = null;
+    }
+
     if (
-      !usuarioEditando ||
+      !esEdicion ||
       form.password.trim()
     ) {
       payload.password =
@@ -613,17 +650,28 @@ const UsuarioForm = ({
       setFormError("");
 
       const resultado =
-        await Promise.resolve(
-          onSave(payload)
-        );
+        await onSave(payload);
 
       if (resultado === false) {
         return;
       }
 
-      mostrarAlertaExito(
-        usuarioEditando
-      );
+      void Swal.fire({
+        title: esEdicion
+          ? "Usuario actualizado"
+          : "Usuario registrado",
+
+        text: esEdicion
+          ? "Los cambios se guardaron correctamente."
+          : "La cuenta fue creada correctamente.",
+
+        icon: "success",
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+      });
     } catch (error) {
       const mensaje =
         obtenerMensajeError(error);
@@ -650,10 +698,7 @@ const UsuarioForm = ({
       noValidate
     >
       {formError && (
-        <div
-          role="alert"
-          className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3"
-        >
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
           <p className="text-sm font-black text-red-700">
             Revisa la información
           </p>
@@ -672,7 +717,7 @@ const UsuarioForm = ({
           />
 
           <p className="text-sm font-bold text-slate-600">
-            Cargando roles y sucursales...
+            Cargando catálogos...
           </p>
         </div>
       )}
@@ -690,38 +735,24 @@ const UsuarioForm = ({
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <div>
-            <label
-              htmlFor="usuario-username"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
+            <label className="mb-2 block text-sm font-bold text-slate-700">
               Usuario
             </label>
 
-            <div className="relative">
-              <UserRound
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-
-              <input
-                id="usuario-username"
-                type="text"
-                name="username"
-                value={form.username}
-                onChange={handleChange}
-                disabled={disabled}
-                placeholder="taxista_juan"
-                autoComplete="username"
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-              />
-            </div>
+            <input
+              type="text"
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              disabled={disabled}
+              autoComplete="username"
+              placeholder="taxista_juan"
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100"
+            />
           </div>
 
           <div>
-            <label
-              htmlFor="usuario-password"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
+            <label className="mb-2 block text-sm font-bold text-slate-700">
               Contraseña
             </label>
 
@@ -732,7 +763,6 @@ const UsuarioForm = ({
               />
 
               <input
-                id="usuario-password"
                 type={
                   showPassword
                     ? "text"
@@ -742,29 +772,24 @@ const UsuarioForm = ({
                 value={form.password}
                 onChange={handleChange}
                 disabled={disabled}
+                autoComplete="new-password"
                 placeholder={
-                  usuarioEditando
+                  esEdicion
                     ? "Vacío para conservarla"
                     : "Contraseña"
                 }
-                autoComplete="new-password"
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-12 text-sm font-semibold text-slate-800 outline-none transition focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-12 text-sm font-semibold text-slate-800 outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100"
               />
 
               <button
                 type="button"
                 onClick={() =>
                   setShowPassword(
-                    (actual) => !actual
+                    (valor) => !valor
                   )
                 }
                 disabled={disabled}
-                className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
-                aria-label={
-                  showPassword
-                    ? "Ocultar contraseña"
-                    : "Mostrar contraseña"
-                }
+                className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100"
               >
                 {showPassword ? (
                   <EyeOff size={18} />
@@ -776,50 +801,39 @@ const UsuarioForm = ({
           </div>
 
           <div>
-            <label
-              htmlFor="usuario-nombre"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
+            <label className="mb-2 block text-sm font-bold text-slate-700">
               Nombre
             </label>
 
             <input
-              id="usuario-nombre"
               type="text"
               name="first_name"
               value={form.first_name}
               onChange={handleChange}
               disabled={disabled}
               placeholder="Nombre"
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="usuario-apellido"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
+            <label className="mb-2 block text-sm font-bold text-slate-700">
               Apellido
             </label>
 
             <input
-              id="usuario-apellido"
               type="text"
               name="last_name"
               value={form.last_name}
               onChange={handleChange}
               disabled={disabled}
               placeholder="Apellido"
-              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="usuario-email"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
+            <label className="mb-2 block text-sm font-bold text-slate-700">
               Correo
             </label>
 
@@ -830,23 +844,19 @@ const UsuarioForm = ({
               />
 
               <input
-                id="usuario-email"
                 type="email"
                 name="email"
                 value={form.email}
                 onChange={handleChange}
                 disabled={disabled}
                 placeholder="correo@ejemplo.com"
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100"
               />
             </div>
           </div>
 
           <div>
-            <label
-              htmlFor="usuario-telefono"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
+            <label className="mb-2 block text-sm font-bold text-slate-700">
               Teléfono
             </label>
 
@@ -857,14 +867,13 @@ const UsuarioForm = ({
               />
 
               <input
-                id="usuario-telefono"
                 type="tel"
                 name="telefono"
                 value={form.telefono}
                 onChange={handleChange}
                 disabled={disabled}
                 placeholder="8888 8888"
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100"
               />
             </div>
           </div>
@@ -884,10 +893,7 @@ const UsuarioForm = ({
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <div>
-            <label
-              htmlFor="usuario-rol"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
+            <label className="mb-2 block text-sm font-bold text-slate-700">
               Rol
             </label>
 
@@ -898,18 +904,17 @@ const UsuarioForm = ({
               />
 
               <select
-                id="usuario-rol"
                 name="rol"
                 value={form.rol}
                 onChange={handleChange}
                 disabled={disabled}
-                className="w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none transition focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                className="w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100"
               >
                 <option value="">
                   Selecciona un rol
                 </option>
 
-                {roles.map((rolItem) => (
+                {listaRoles.map((rolItem) => (
                   <option
                     key={rolItem.id}
                     value={rolItem.id}
@@ -924,10 +929,7 @@ const UsuarioForm = ({
           {esSuperAdmin &&
             necesitaSucursal && (
               <div>
-                <label
-                  htmlFor="usuario-sucursal"
-                  className="mb-2 block text-sm font-bold text-slate-700"
-                >
+                <label className="mb-2 block text-sm font-bold text-slate-700">
                   Sucursal
                 </label>
 
@@ -938,18 +940,17 @@ const UsuarioForm = ({
                   />
 
                   <select
-                    id="usuario-sucursal"
                     name="sucursal"
                     value={form.sucursal}
                     onChange={handleChange}
                     disabled={disabled}
-                    className="w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none transition focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                    className="w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100"
                   >
                     <option value="">
                       Selecciona una sucursal
                     </option>
 
-                    {sucursales.map(
+                    {listaSucursales.map(
                       (sucursal) => (
                         <option
                           key={sucursal.id}
@@ -966,26 +967,32 @@ const UsuarioForm = ({
 
           {esSuperAdmin &&
             esUsuarioSinSucursal && (
-              <div className="md:col-span-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
+              <div className="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 md:col-span-2">
                 <p className="text-sm font-bold text-blue-700">
-                  Usuario del sistema general
+                  Usuario general sin sucursal.
+                </p>
+              </div>
+            )}
+
+          {esAdminSucursal &&
+            esRolTaxista && (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 md:col-span-2">
+                <p className="text-sm font-bold text-emerald-700">
+                  Se asociará a tu sucursal.
                 </p>
               </div>
             )}
 
           {esRolTaxista && (
             <div className="md:col-span-2">
-              <label
-                htmlFor="buscar-conductor"
-                className="mb-2 block text-sm font-bold text-slate-700"
-              >
+              <label className="mb-2 block text-sm font-bold text-slate-700">
                 Conductor asociado
               </label>
 
               {conductorSeleccionado ? (
                 <div className="flex items-start justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
                   <div className="flex min-w-0 items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600 shadow-sm">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-600">
                       <CheckCircle2
                         size={22}
                       />
@@ -999,14 +1006,12 @@ const UsuarioForm = ({
                       </p>
 
                       <p className="mt-1 text-xs font-semibold text-emerald-700">
-                        Cédula:{" "}
                         {conductorSeleccionado.cedula ||
                           "Sin cédula"}
                       </p>
 
                       {conductorSeleccionado.sucursal_nombre && (
                         <p className="mt-1 text-xs font-semibold text-emerald-700">
-                          Sucursal:{" "}
                           {
                             conductorSeleccionado.sucursal_nombre
                           }
@@ -1019,8 +1024,7 @@ const UsuarioForm = ({
                     type="button"
                     onClick={quitarConductor}
                     disabled={saving}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
-                    title="Cambiar conductor"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-700 hover:bg-emerald-100"
                     aria-label="Cambiar conductor"
                   >
                     <X size={17} />
@@ -1035,7 +1039,6 @@ const UsuarioForm = ({
                     />
 
                     <input
-                      id="buscar-conductor"
                       type="text"
                       value={searchConductor}
                       onChange={
@@ -1049,31 +1052,21 @@ const UsuarioForm = ({
                       disabled={saving}
                       autoComplete="off"
                       placeholder="Nombre, apellido o cédula..."
-                      className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-11 text-sm font-semibold text-slate-800 outline-none transition focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                      className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-11 text-sm font-semibold text-slate-800 outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
                     />
 
                     {buscandoConductores && (
                       <Loader2
                         size={18}
-                        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-yellow-600"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-yellow-600"
                       />
                     )}
                   </div>
 
                   {mostrarConductores && (
                     <div className="mt-3 max-h-72 space-y-2 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-2">
-                      {buscandoConductores &&
-                      !conductoresFiltrados.length ? (
-                        <div className="flex items-center justify-center gap-2 px-4 py-6 text-sm font-bold text-slate-500">
-                          <Loader2
-                            size={18}
-                            className="animate-spin"
-                          />
-
-                          Buscando...
-                        </div>
-                      ) : conductoresFiltrados.length >
-                        0 ? (
+                      {conductoresFiltrados.length >
+                      0 ? (
                         conductoresFiltrados.map(
                           (conductor) => (
                             <button
@@ -1111,31 +1104,35 @@ const UsuarioForm = ({
                                 </p>
                               </div>
 
-                              <span className="shrink-0 rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-600">
-                                Seleccionar
+                              <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-600">
+                                Elegir
                               </span>
                             </button>
                           )
                         )
                       ) : (
                         <div className="px-4 py-7 text-center">
-                          <UserRound
-                            size={28}
-                            className="mx-auto text-slate-300"
-                          />
+                          {buscandoConductores ? (
+                            <Loader2
+                              size={25}
+                              className="mx-auto animate-spin text-yellow-500"
+                            />
+                          ) : (
+                            <UserRound
+                              size={28}
+                              className="mx-auto text-slate-300"
+                            />
+                          )}
 
                           <p className="mt-2 text-sm font-bold text-slate-500">
-                            No hay conductores disponibles
+                            {buscandoConductores
+                              ? "Buscando..."
+                              : "No hay conductores disponibles"}
                           </p>
                         </div>
                       )}
                     </div>
                   )}
-
-                  <p className="mt-2 text-xs font-medium text-slate-500">
-                    Selecciona directamente el
-                    conductor de la lista.
-                  </p>
                 </>
               )}
             </div>
@@ -1143,34 +1140,18 @@ const UsuarioForm = ({
 
           <div className="md:col-span-2">
             <label
-              className={`flex items-center justify-between gap-4 rounded-2xl border px-4 py-4 transition ${
+              className={`flex items-center justify-between rounded-2xl border px-4 py-4 ${
                 form.is_active
                   ? "border-emerald-200 bg-emerald-50"
                   : "border-slate-200 bg-slate-50"
-              } ${
-                disabled
-                  ? "cursor-not-allowed opacity-70"
-                  : "cursor-pointer"
               }`}
             >
               <div>
-                <p
-                  className={`text-sm font-black ${
-                    form.is_active
-                      ? "text-emerald-800"
-                      : "text-slate-800"
-                  }`}
-                >
+                <p className="text-sm font-black text-slate-900">
                   Usuario activo
                 </p>
 
-                <p
-                  className={`mt-1 text-xs font-medium ${
-                    form.is_active
-                      ? "text-emerald-700"
-                      : "text-slate-500"
-                  }`}
-                >
+                <p className="mt-1 text-xs font-medium text-slate-500">
                   Permitir acceso al sistema.
                 </p>
               </div>
@@ -1181,7 +1162,7 @@ const UsuarioForm = ({
                 checked={form.is_active}
                 onChange={handleChange}
                 disabled={disabled}
-                className="h-5 w-5 shrink-0 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400"
+                className="h-5 w-5 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400"
               />
             </label>
           </div>
@@ -1193,7 +1174,7 @@ const UsuarioForm = ({
           type="button"
           onClick={onCancel}
           disabled={saving}
-          className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+          className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:bg-slate-100 disabled:opacity-60"
         >
           Cancelar
         </button>
@@ -1201,7 +1182,7 @@ const UsuarioForm = ({
         <button
           type="submit"
           disabled={disabled}
-          className="flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 hover:bg-yellow-500 disabled:opacity-60"
         >
           {saving && (
             <Loader2
@@ -1212,7 +1193,7 @@ const UsuarioForm = ({
 
           {saving
             ? "Guardando..."
-            : usuarioEditando
+            : esEdicion
               ? "Guardar cambios"
               : "Crear usuario"}
         </button>
