@@ -1,8 +1,8 @@
+
 // src/context/AuthContext.jsx
 
 import {
   createContext,
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -24,26 +24,20 @@ import {
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(() => getToken());
+  const [token, setToken] = useState(getToken());
+  const [user, setUser] = useState(getStoredUser());
+  const [rol, setRol] = useState(getStoredRol());
 
-  const [user, setUser] = useState(() =>
-    getStoredUser()
-  );
-
-  const [rol, setRol] = useState(() =>
-    getStoredRol()
-  );
-
-  const [sucursal, setSucursal] = useState(() =>
+  const [sucursal, setSucursal] = useState(
     getStoredSucursal()
   );
 
   const [sucursalNombre, setSucursalNombre] =
-    useState(() => getStoredSucursalNombre());
+    useState(getStoredSucursalNombre());
 
   const isAuthenticated = Boolean(token);
 
-  const login = useCallback((data) => {
+  const login = (data) => {
     saveSession(data);
 
     const newToken = getToken();
@@ -68,82 +62,42 @@ export const AuthProvider = ({ children }) => {
 
     if (newRol === "superadmin") {
       nombreRol = "Superadministrador";
-    } else if (newRol === "admin_sucursal") {
-      nombreRol = "Administrador de sucursal";
-    } else if (newRol === "taxista") {
-      nombreRol = "Taxista";
-    } else if (newRol === "usuario_sistema") {
-      nombreRol = "Usuario del sistema";
     }
 
-    /*
-     * Cierra cualquier alerta anterior que
-     * haya quedado abierta.
-     */
-    Swal.close();
+    if (newRol === "admin_sucursal") {
+      nombreRol = "Administrador de sucursal";
+    }
 
-    /*
-     * No se utiliza await.
-     * La alerta se cierra automáticamente.
-     */
-    void Swal.fire({
-      title: `¡Bienvenido, ${nombreUsuario}!`,
+    if (newRol === "taxista") {
+      nombreRol = "Taxista";
+    }
 
-      text: nombreRol
-        ? `Has iniciado sesión como ${nombreRol}.`
-        : "Has iniciado sesión correctamente.",
+    Swal.fire({
+  title: `¡Bienvenido, ${nombreUsuario}!`,
 
-      icon: "success",
+  text: nombreRol
+    ? `Has iniciado sesión como ${nombreRol}.`
+    : "Has iniciado sesión correctamente.",
 
-      toast: true,
-      position: "top-end",
+  icon: "success",
 
-      showConfirmButton: false,
-      showCancelButton: false,
+  showConfirmButton: false,
+  showCancelButton: false,
 
-      timer: 2000,
-      timerProgressBar: true,
+  timer: 2200,
+  timerProgressBar: true,
 
-      allowOutsideClick: true,
-      allowEscapeKey: true,
-      allowEnterKey: true,
+  allowOutsideClick: false,
+  allowEscapeKey: false,
 
-      didOpen: () => {
-        Swal.resumeTimer();
-      },
+  willClose: () => {
+    document.body.style.overflow = "";
+    document.body.style.paddingRight = "";
+  },
+});
+  };
 
-      willClose: () => {
-        /*
-         * Limpia clases y estilos que SweetAlert
-         * pueda dejar sobre la página.
-         */
-        document.body.classList.remove(
-          "swal2-shown",
-          "swal2-height-auto",
-          "swal2-no-backdrop"
-        );
-
-        document.documentElement.classList.remove(
-          "swal2-shown",
-          "swal2-height-auto",
-          "swal2-no-backdrop"
-        );
-
-        document.body.style.overflow = "";
-        document.body.style.paddingRight = "";
-      },
-    });
-
-    return {
-      token: newToken,
-      user: newUser,
-      rol: newRol,
-      sucursal: newSucursal,
-      sucursalNombre: newSucursalNombre,
-    };
-  }, []);
-
-  const logoutUser = useCallback(async () => {
+  const logoutUser = async () => {
     const result = await Swal.fire({
       title: "¿Estás seguro?",
 
@@ -159,29 +113,12 @@ export const AuthProvider = ({ children }) => {
 
       confirmButtonText: "Sí, cerrar sesión",
       cancelButtonText: "Cancelar",
-
-      reverseButtons: true,
-
-      allowOutsideClick: false,
-      allowEscapeKey: true,
     });
 
-    if (!result.isConfirmed) {
-      return false;
+    if (result.isConfirmed) {
+      logout();
     }
-
-    Swal.close();
-
-    logout();
-
-    setToken(null);
-    setUser(null);
-    setRol(null);
-    setSucursal(null);
-    setSucursalNombre("");
-
-    return true;
-  }, []);
+  };
 
   useEffect(() => {
     setToken(getToken());
@@ -203,8 +140,7 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated,
 
       isSuperAdmin:
-        rol === "superadmin" ||
-        rol === "super_admin",
+        rol === "superadmin",
 
       isAdminSucursal:
         rol === "admin_sucursal",
@@ -213,6 +149,7 @@ export const AuthProvider = ({ children }) => {
         rol === "taxista",
 
       login,
+
       logout: logoutUser,
     }),
     [
@@ -222,8 +159,6 @@ export const AuthProvider = ({ children }) => {
       sucursal,
       sucursalNombre,
       isAuthenticated,
-      login,
-      logoutUser,
     ]
   );
 
@@ -233,3 +168,4 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
