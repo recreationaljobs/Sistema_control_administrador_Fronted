@@ -113,16 +113,24 @@ const AsignacionesPage = () => {
         showCancelButton: false,
         timerProgressBar: true,
       
-        timer: 1800,
+        timer: 1500,
         timerProgressBar: true,
         allowOutsideClick: false,
         allowEscapeKey: false,
       });
     } catch (guardarError) {
-      console.error(
-        "Error al guardar la asignación:",
-        guardarError
-      );
+     const mensaje =
+             obtenerMensajeError(error);
+     
+           setFormError(mensaje);
+     
+           void Swal.fire({
+             title: "No se pudo guardar",
+             text: mensaje,
+             icon: "error",
+             confirmButtonText: "Entendido",
+             confirmButtonColor: "#dc2626",
+           });
     }
   };
 

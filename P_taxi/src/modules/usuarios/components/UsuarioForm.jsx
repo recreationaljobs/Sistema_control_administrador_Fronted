@@ -666,11 +666,14 @@ const UsuarioForm = ({
           : "La cuenta fue creada correctamente.",
 
         icon: "success",
-        toast: true,
-        position: "top-end",
+        showConfirmButton: false,
+        showCancelButton: false,
+        timerProgressBar: true,
         showConfirmButton: false,
         timer: 1500,
         timerProgressBar: true,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
       });
     } catch (error) {
       const mensaje =
