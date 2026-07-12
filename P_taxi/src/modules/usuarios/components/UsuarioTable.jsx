@@ -34,6 +34,31 @@ const normalizarUsuarios = (data) => {
   return [];
 };
 
+const obtenerTextoSeguro = (
+  valor,
+  valorDefault = ""
+) => {
+  if (
+    valor === null ||
+    valor === undefined ||
+    valor === ""
+  ) {
+    return valorDefault;
+  }
+
+  if (typeof valor === "object") {
+    return String(
+      valor.nombre ||
+        valor.nombre_completo ||
+        valor.codigo ||
+        valor.id ||
+        valorDefault
+    );
+  }
+
+  return String(valor);
+};
+
 const obtenerActivo = (usuario) => {
   const valor = usuario?.is_active;
 
@@ -88,22 +113,21 @@ const obtenerIniciales = (usuario) => {
 };
 
 const obtenerRol = (usuario) => {
-  return (
+  return obtenerTextoSeguro(
     usuario?.rol_nombre ||
-    usuario?.rol?.nombre ||
-    usuario?.rol_display ||
+      usuario?.rol?.nombre ||
+      usuario?.rol_display,
     "Sin rol"
   );
 };
 
 const obtenerSucursal = (usuario) => {
-  return (
+  return obtenerTextoSeguro(
     usuario?.sucursal_nombre ||
-    usuario?.sucursal?.nombre ||
+      usuario?.sucursal?.nombre,
     "Sin sucursal"
   );
 };
-
 const EstadoBadge = ({ activo }) => {
   return (
     <span

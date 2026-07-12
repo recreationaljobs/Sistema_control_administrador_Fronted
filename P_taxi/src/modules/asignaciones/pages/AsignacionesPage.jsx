@@ -82,12 +82,12 @@ const AsignacionesPage = () => {
     eliminarAsignacion,
   } = useAsignaciones();
 
-  const guardarConAlerta = async (
-    datos
-  ) => {
-    const esEdicion = Boolean(
-      asignacionEditando
-    );
+ const guardarConAlerta = async (datos) => {
+  const resultado =
+    await guardarAsignacion(datos);
+
+  return resultado;
+};
 
     try {
       const resultado =
@@ -128,8 +128,13 @@ const AsignacionesPage = () => {
     }
   };
 
-  const cantidadResultados =
-    asignacionesFiltradas.length;
+  const listaAsignaciones =
+  Array.isArray(asignacionesFiltradas)
+    ? asignacionesFiltradas.filter(Boolean)
+    : [];
+
+const cantidadResultados =
+  listaAsignaciones.length;
 
   return (
     <div className="space-y-6">
@@ -304,14 +309,10 @@ const AsignacionesPage = () => {
 
         <div className="mt-5">
           <AsignacionTable
-            asignaciones={
-              asignacionesFiltradas
-            }
+            asignaciones={listaAsignaciones}
             loading={loading}
             onEdit={abrirModalEditar}
-            onToggleStatus={
-              cambiarEstadoAsignacion
-            }
+            onToggle={cambiarEstadoAsignacion}
             onDelete={eliminarAsignacion}
           />
         </div>

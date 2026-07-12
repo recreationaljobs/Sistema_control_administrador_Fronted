@@ -201,37 +201,94 @@ export const useAsignaciones = () => {
   };
 
   const asignacionesFiltradas = useMemo(() => {
-    const value = search.trim().toLowerCase();
+  const lista = Array.isArray(asignaciones)
+    ? asignaciones.filter(Boolean)
+    : [];
 
-    if (!value) {
-      return asignaciones;
-    }
+  const value = String(search || "")
+    .trim()
+    .toLowerCase();
 
-    return asignaciones.filter((asignacion) => {
-      const conductor = asignacion.conductor_nombre?.toLowerCase() || "";
-      const placa = asignacion.vehiculo_placa?.toLowerCase() || "";
-      const numero = asignacion.vehiculo_numero?.toLowerCase() || "";
-      const vehiculo = asignacion.vehiculo_descripcion?.toLowerCase() || "";
-      const sucursal = asignacion.sucursal_nombre?.toLowerCase() || "";
+  if (!value) {
+    return lista;
+  }
 
-      return (
-        conductor.includes(value) ||
-        placa.includes(value) ||
-        numero.includes(value) ||
-        vehiculo.includes(value) ||
-        sucursal.includes(value)
-      );
-    });
-  }, [asignaciones, search]);
+  return lista.filter((asignacion) => {
+    const texto = [
+      asignacion?.conductor_nombre,
+      asignacion?.vehiculo_placa,
+      asignacion?.vehiculo_numero,
+      asignacion?.vehiculo_descripcion,
+      asignacion?.sucursal_nombre,
 
-  const totalAsignaciones = asignaciones.length;
-  const asignacionesActivas = asignaciones.filter((item) => item.activa).length;
-  const asignacionesInactivas = asignaciones.filter((item) => !item.activa).length;
+      asignacion?.conductor?.nombre,
+      asignacion?.conductor?.apellido,
 
-  useEffect(() => {
-    cargarAsignaciones();
-    cargarCatalogos();
-  }, []);
+      asignacion?.vehiculo?.numero,
+      asignacion?.vehiculo?.placa,
+      asignacion?.vehiculo?.marca,
+      asignacion?.vehiculo?.modelo,
+
+      asignacion?.sucursal?.nombre,
+    ]
+      .filter(
+        (valor) =>
+          valor !== null &&
+          valor !== undefined
+      )
+      .map((valor) => String(valor))
+      .join(" ")
+      .toLowerCase();
+
+    return texto.includes(value);
+  });
+}, [asignaciones, search]);
+
+  const listaUsuariosSegura =
+  Array.isArray(usuarios)
+    ? usuarios.filter(Boolean)
+    : [];
+
+const totalUsuarios =
+  listaUsuariosSegura.length;
+
+const usuariosActivos =
+  listaUsuariosSegura.filter(
+    (item) =>
+      item?.is_active === true ||
+      item?.is_active === 1 ||
+      item?.is_active === "1" ||
+      String(
+        item?.is_active
+      ).toLowerCase() === "true"
+  ).length;
+
+const administradores =
+  listaUsuariosSegura.filter((item) =>
+    [
+      "admin_sucursal",
+      "superadmin",
+      "super_admin",
+    ].includes(
+      normalizarCodigo(
+        item?.rol_codigo
+      )
+    )
+  ).length;
+
+const taxistas =
+  listaUsuariosSegura.filter(
+    (item) =>
+      normalizarCodigo(
+        item?.rol_codigo
+      ) === "taxista"
+  ).length;
+
+ useEffect(() => {
+  void cargarAsignaciones();
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
 
   return {
     asignaciones,
