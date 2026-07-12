@@ -403,14 +403,6 @@ export const useAdelantos = () => {
         "No se pudo guardar el registro."
       );
 
-      setError(mensaje);
-
-      await Swal.fire({
-        title: "No se pudo guardar",
-        text: mensaje,
-        icon: "error",
-        confirmButtonText: "Entendido",
-      });
     } finally {
       setSaving(false);
     }
