@@ -451,18 +451,27 @@ export const useUsuarios = () => {
 };
 
 
-const enviarDatosWhatsApp = async (
-  usuario
-) => {
-  const password =
-    passwordsUsuariosCreados[
-      usuario.id
-    ];
-
-  if (!password) {
+const enviarDatosWhatsApp = async (usuario) => {
+  if (!usuario?.id) {
     await Swal.fire({
-      title: "Contraseña no disponible",
-      text: "Por seguridad, la contraseña no se puede recuperar después de recargar la página. Los datos solo pueden reenviarse mientras permanezcas en esta sesión después de crear el usuario.",
+      title: "Usuario no válido",
+      text: "No se pudo identificar al usuario seleccionado.",
+      icon: "error",
+      confirmButtonText: "Entendido",
+      confirmButtonColor: "#dc2626",
+    });
+
+    return;
+  }
+
+  const telefono = normalizarTelefonoWhatsApp(
+    usuario.telefono
+  );
+
+  if (!telefono) {
+    await Swal.fire({
+      title: "Número no registrado",
+      text: "El usuario no tiene un número de teléfono registrado.",
       icon: "warning",
       confirmButtonText: "Entendido",
       confirmButtonColor: "#16a34a",
@@ -471,12 +480,163 @@ const enviarDatosWhatsApp = async (
     return;
   }
 
-  await abrirWhatsApp(
-    usuario,
-    password
-  );
-};
+  if (telefono.length < 10) {
+    await Swal.fire({
+      title: "Número no válido",
+      text: "Revisa el número telefónico del usuario. Debe incluir el código del país.",
+      icon: "warning",
+      confirmButtonText: "Entendido",
+      confirmButtonColor: "#16a34a",
+    });
 
+    return;
+  }
+
+  let password =
+    passwordsUsuariosCreados[usuario.id];
+
+  /*
+   * Si la contraseña todavía está disponible
+   * en memoria, se envía sin modificarla.
+   */
+  if (password) {
+    const mensaje = construirMensajeWhatsApp(
+      usuario,
+      password
+    );
+
+    const url = `https://wa.me/${telefono}?text=${encodeURIComponent(
+      mensaje
+    )}`;
+
+    window.open(
+      url,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    return;
+  }
+
+  /*
+   * Django no puede recuperar la contraseña
+   * actual. Se informa que se generará una nueva.
+   */
+  const confirmacion = await Swal.fire({
+    title: "Enviar credenciales",
+    html: `
+      <p>
+        La contraseña actual no puede recuperarse.
+      </p>
+
+      <p style="margin-top: 10px;">
+        Se generará una nueva contraseña para
+        <strong>${usuario.username}</strong>,
+        se guardará en su cuenta y se enviará por WhatsApp.
+      </p>
+
+      <p style="margin-top: 10px;">
+        La contraseña anterior dejará de funcionar.
+      </p>
+    `,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Generar y enviar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#16a34a",
+    cancelButtonColor: "#64748b",
+    reverseButtons: true,
+  });
+
+  if (!confirmacion.isConfirmed) {
+    return;
+  }
+
+  /*
+   * Se abre la pestaña inmediatamente para evitar
+   * que el navegador bloquee WhatsApp después del await.
+   */
+  const ventanaWhatsApp = window.open(
+    "about:blank",
+    "_blank"
+  );
+
+  if (!ventanaWhatsApp) {
+    await Swal.fire({
+      title: "Ventana bloqueada",
+      text: "El navegador bloqueó la apertura de WhatsApp. Permite las ventanas emergentes para este sitio e inténtalo nuevamente.",
+      icon: "warning",
+      confirmButtonText: "Entendido",
+      confirmButtonColor: "#16a34a",
+    });
+
+    return;
+  }
+
+  password = generarPassword();
+
+  try {
+    setSaving(true);
+    setError("");
+
+    const usuarioActualizado =
+      await updateUsuario(usuario.id, {
+        password,
+      });
+
+    /*
+     * Conserva la contraseña para permitir
+     * reenviarla mientras la página siga abierta.
+     */
+    setPasswordsUsuariosCreados(
+      (anteriores) => ({
+        ...anteriores,
+        [usuario.id]: password,
+      })
+    );
+
+    const usuarioCompleto = {
+      ...usuario,
+      ...usuarioActualizado,
+    };
+
+    const mensaje = construirMensajeWhatsApp(
+      usuarioCompleto,
+      password
+    );
+
+    const url = `https://wa.me/${telefono}?text=${encodeURIComponent(
+      mensaje
+    )}`;
+
+    /*
+     * Redirige la pestaña que se abrió antes
+     * hacia WhatsApp.
+     */
+    ventanaWhatsApp.location.href = url;
+
+    await cargarUsuarios();
+  } catch (err) {
+    ventanaWhatsApp.close();
+
+    const mensajeError = obtenerMensajeError(
+      err,
+      "No se pudo generar y guardar la nueva contraseña."
+    );
+
+    setError(mensajeError);
+
+    await Swal.fire({
+      title: "No se pudo enviar",
+      text: mensajeError,
+      icon: "error",
+      confirmButtonText: "Entendido",
+      confirmButtonColor: "#dc2626",
+    });
+  } finally {
+    setSaving(false);
+  }
+};
 
   const cambiarEstadoUsuario = async (usuario) => {
     try {
