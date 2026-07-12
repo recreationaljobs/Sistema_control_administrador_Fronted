@@ -548,6 +548,18 @@ const UsuarioForm = ({
     limpiarError();
   };
 
+  const generarNuevaPassword = () => {
+  const nuevaPassword = generarPassword();
+
+  setForm((anterior) => ({
+    ...anterior,
+    password: nuevaPassword,
+  }));
+
+  setShowPassword(true);
+  limpiarError();
+};
+
   const handleBusquedaConductor = (
     event
   ) => {
@@ -850,6 +862,8 @@ const UsuarioForm = ({
             />
           </div>
 
+
+
           <div>
             <label className="mb-2 block text-sm font-bold text-slate-700">
               Contraseña
@@ -877,27 +891,67 @@ const UsuarioForm = ({
                     ? "Vacío para conservarla"
                     : "Contraseña"
                 }
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-12 text-sm font-semibold text-slate-800 outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100"
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-24 text-sm font-semibold text-slate-800 outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100"
               />
 
-              <button
-                type="button"
-                onClick={() =>
-                  setShowPassword(
-                    (valor) => !valor
-                  )
-                }
-                disabled={disabled}
-                className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100"
-              >
-                {showPassword ? (
-                  <EyeOff size={18} />
-                ) : (
-                  <Eye size={18} />
-                )}
-              </button>
+              <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={generarNuevaPassword}
+                  disabled={disabled}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 disabled:opacity-50"
+                  title="Generar otra contraseña"
+                  aria-label="Generar otra contraseña"
+                >
+                  <RefreshCw size={17} />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setShowPassword(
+                      (valor) => !valor
+                    )
+                  }
+                  disabled={disabled}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 disabled:opacity-50"
+                  title={
+                    showPassword
+                      ? "Ocultar contraseña"
+                      : "Mostrar contraseña"
+                  }
+                  aria-label={
+                    showPassword
+                      ? "Ocultar contraseña"
+                      : "Mostrar contraseña"
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
+                </button>
+              </div>
             </div>
+
+            {!esEdicion && (
+              <p className="mt-2 text-xs font-medium text-slate-500">
+                La contraseña fue generada automáticamente.
+                Puedes verla o generar otra antes de crear
+                el usuario.
+              </p>
+            )}
+
+            {esEdicion && (
+              <p className="mt-2 text-xs font-medium text-slate-500">
+                Déjala vacía para conservar la contraseña
+                actual.
+              </p>
+            )}
           </div>
+
+
 
           <div>
             <label className="mb-2 block text-sm font-bold text-slate-700">
