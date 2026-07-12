@@ -182,6 +182,7 @@ const ConductoresPage = () => {
         : "El conductor fue registrado correctamente.",
       icon: "success",
       showConfirmButton: false,
+      timer: 1500,
       timerProgressBar: true,
     });
 
