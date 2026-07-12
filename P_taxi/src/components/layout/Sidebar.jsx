@@ -100,21 +100,38 @@ const menuItems = [
   },
 ];
 
-const obtenerRolNormalizado = (rol, user) => {
+const obtenerRolNormalizado = (
+  rol,
+  user
+) => {
+  let valorRol = rol;
+
+  if (
+    valorRol &&
+    typeof valorRol === "object"
+  ) {
+    valorRol =
+      valorRol.codigo ||
+      valorRol.nombre ||
+      "";
+  }
+
   const valor = String(
-    rol ||
+    valorRol ||
       user?.rol_codigo ||
       user?.rol?.codigo ||
-      user?.rol ||
+      user?.rol_nombre ||
       ""
   )
     .trim()
     .toLowerCase();
 
   if (
-    valor === "admin" ||
-    valor === "administrador" ||
-    valor === "administrador de sucursal"
+    [
+      "admin",
+      "administrador",
+      "administrador de sucursal",
+    ].includes(valor)
   ) {
     return "admin_sucursal";
   }
@@ -125,7 +142,6 @@ const obtenerRolNormalizado = (rol, user) => {
 
   return valor;
 };
-
 const Sidebar = () => {
   const { rol, user, sucursalNombre, logout } = useAuth();
 

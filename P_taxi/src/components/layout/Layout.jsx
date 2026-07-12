@@ -1,17 +1,44 @@
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
+// src/components/layout/Layout.jsx
+
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  Outlet,
+  useLocation,
+} from "react-router-dom";
+
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 import MobileMenu from "./MobileMenu";
 import TaxistaBottomNav from "./TaxistaBottomNav";
+
 import { useAuth } from "../../hooks/useAuth";
 
-const obtenerRolNormalizado = (rol, user) => {
+const obtenerRolNormalizado = (
+  rol,
+  user
+) => {
+  let valorRol = rol;
+
+  if (
+    valorRol &&
+    typeof valorRol === "object"
+  ) {
+    valorRol =
+      valorRol.codigo ||
+      valorRol.nombre ||
+      "";
+  }
+
   const valor = String(
-    rol ||
+    valorRol ||
       user?.rol_codigo ||
       user?.rol?.codigo ||
-      user?.rol ||
+      user?.rol_nombre ||
       ""
   )
     .trim()
@@ -22,9 +49,11 @@ const obtenerRolNormalizado = (rol, user) => {
   }
 
   if (
-    valor === "admin" ||
-    valor === "administrador" ||
-    valor === "administrador de sucursal"
+    [
+      "admin",
+      "administrador",
+      "administrador de sucursal",
+    ].includes(valor)
   ) {
     return "admin_sucursal";
   }
@@ -33,18 +62,29 @@ const obtenerRolNormalizado = (rol, user) => {
 };
 
 const Layout = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] =
-    useState(false);
+  const [
+    mobileMenuOpen,
+    setMobileMenuOpen,
+  ] = useState(false);
 
   const { rol, user } = useAuth();
+  const location = useLocation();
 
-  const rolNormalizado = obtenerRolNormalizado(
-    rol,
-    user
+  const rolNormalizado = useMemo(
+    () =>
+      obtenerRolNormalizado(
+        rol,
+        user
+      ),
+    [rol, user]
   );
 
   const esTaxista =
     rolNormalizado === "taxista";
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   const abrirMenuMovil = () => {
     if (!esTaxista) {
@@ -73,14 +113,16 @@ const Layout = () => {
         }
       >
         <Navbar
-          onOpenMobileMenu={abrirMenuMovil}
+          onOpenMobileMenu={
+            abrirMenuMovil
+          }
         />
 
         <main
           className={
             esTaxista
-              ? "px-4 py-4 md:px-6"
-              : "px-4 py-5 md:px-6 lg:px-7"
+              ? "min-w-0 overflow-x-hidden px-4 py-4 md:px-6"
+              : "min-w-0 overflow-x-hidden px-4 py-5 md:px-6 lg:px-7"
           }
         >
           <Outlet />

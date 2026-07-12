@@ -1,5 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+// src/components/layout/Navbar.jsx
+
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
 import {
   AlertTriangle,
   Bell,
@@ -9,29 +16,100 @@ import {
   Wrench,
   X,
 } from "lucide-react";
+
+import {
+  useNavigate,
+} from "react-router-dom";
+
 import { useAuth } from "../../hooks/useAuth";
 import api from "../../api/axios";
 
-const DESCARTADAS_KEY = "notif_descartadas";
-const LAST_COUNT_KEY = "taxiadmin_last_alert_count";
+const DESCARTADAS_KEY =
+  "notif_descartadas";
 
-// Estilos por severidad de la alerta.
+const LAST_COUNT_KEY =
+  "taxiadmin_last_alert_count";
+
 const SEVERIDAD = {
   info: {
     color: "#38BDF8",
     chip: "bg-sky-100 text-sky-700",
-    label: "Info",
+    label: "Información",
   },
+
   warning: {
     color: "#F5C518",
     chip: "bg-amber-100 text-amber-700",
     label: "Advertencia",
   },
+
   critical: {
     color: "#EF4444",
     chip: "bg-red-100 text-red-700",
     label: "Crítico",
   },
+};
+
+const normalizarLista = (data) => {
+  if (Array.isArray(data)) {
+    return data.filter(Boolean);
+  }
+
+  if (Array.isArray(data?.results)) {
+    return data.results.filter(Boolean);
+  }
+
+  if (Array.isArray(data?.data)) {
+    return data.data.filter(Boolean);
+  }
+
+  if (Array.isArray(data?.data?.results)) {
+    return data.data.results.filter(
+      Boolean
+    );
+  }
+
+  return [];
+};
+
+const normalizarRol = (rol, user) => {
+  let valorRol = rol;
+
+  if (
+    valorRol &&
+    typeof valorRol === "object"
+  ) {
+    valorRol =
+      valorRol.codigo ||
+      valorRol.nombre ||
+      "";
+  }
+
+  const valor = String(
+    valorRol ||
+      user?.rol_codigo ||
+      user?.rol?.codigo ||
+      user?.rol_nombre ||
+      ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (
+    [
+      "admin",
+      "administrador",
+      "administrador de sucursal",
+    ].includes(valor)
+  ) {
+    return "admin_sucursal";
+  }
+
+  if (valor === "super_admin") {
+    return "superadmin";
+  }
+
+  return valor;
 };
 
 const iconoPorTipo = (tipo) => {
@@ -46,313 +124,540 @@ const iconoPorTipo = (tipo) => {
   return AlertTriangle;
 };
 
-const leerDescartadas = () => {
+const leerLocalStorage = (
+  key,
+  valorDefault
+) => {
   try {
-    const raw = localStorage.getItem(DESCARTADAS_KEY);
-    const lista = raw ? JSON.parse(raw) : [];
+    const raw =
+      window.localStorage.getItem(key);
 
-    return Array.isArray(lista) ? lista : [];
+    if (!raw) {
+      return valorDefault;
+    }
+
+    return JSON.parse(raw);
   } catch {
-    return [];
+    return valorDefault;
   }
 };
 
-const guardarDescartadas = (ids) => {
-  localStorage.setItem(DESCARTADAS_KEY, JSON.stringify(ids));
+const guardarLocalStorage = (
+  key,
+  value
+) => {
+  try {
+    window.localStorage.setItem(
+      key,
+      JSON.stringify(value)
+    );
+  } catch (error) {
+    console.warn(
+      "No se pudo guardar en localStorage:",
+      error
+    );
+  }
 };
 
-const obtenerRolNormalizado = (rol, user) => {
-  const valor = String(
-    rol ||
-      user?.rol_codigo ||
-      user?.rol?.codigo ||
-      user?.rol ||
-      ""
-  )
-    .trim()
-    .toLowerCase();
+const leerDescartadas = () => {
+  const resultado = leerLocalStorage(
+    DESCARTADAS_KEY,
+    []
+  );
 
-  if (
-    valor === "admin" ||
-    valor === "administrador" ||
-    valor === "administrador de sucursal"
-  ) {
-    return "admin_sucursal";
+  return Array.isArray(resultado)
+    ? resultado.map(String)
+    : [];
+};
+
+const obtenerUltimoConteo = () => {
+  try {
+    const valor =
+      window.localStorage.getItem(
+        LAST_COUNT_KEY
+      );
+
+    const numero = Number(valor);
+
+    return Number.isFinite(numero)
+      ? numero
+      : 0;
+  } catch {
+    return 0;
   }
+};
 
-  if (valor === "super_admin") {
-    return "superadmin";
+const guardarUltimoConteo = (
+  cantidad
+) => {
+  try {
+    window.localStorage.setItem(
+      LAST_COUNT_KEY,
+      String(cantidad)
+    );
+  } catch (error) {
+    console.warn(
+      "No se pudo guardar el conteo:",
+      error
+    );
   }
-
-  return valor;
 };
 
 const obtenerFechaTexto = () => {
-  return new Intl.DateTimeFormat("es-NI", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  }).format(new Date());
+  try {
+    return new Intl.DateTimeFormat(
+      "es-NI",
+      {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      }
+    ).format(new Date());
+  } catch {
+    return new Date().toLocaleDateString();
+  }
 };
 
-const Navbar = ({ onOpenMobileMenu }) => {
+const Navbar = ({
+  onOpenMobileMenu,
+}) => {
   const { rol, user } = useAuth();
   const navigate = useNavigate();
 
-  const rolNormalizado = obtenerRolNormalizado(rol, user);
-  const esTaxista = rolNormalizado === "taxista";
+  const rolNormalizado = useMemo(
+    () => normalizarRol(rol, user),
+    [rol, user]
+  );
 
-  const [alertas, setAlertas] = useState([]);
-  const [descartadas, setDescartadas] = useState(() => leerDescartadas());
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [swinging, setSwinging] = useState(false);
+  const esTaxista =
+    rolNormalizado === "taxista";
+
+  const fechaActual = useMemo(
+    () => obtenerFechaTexto(),
+    []
+  );
+
+  const [alertas, setAlertas] =
+    useState([]);
+
+  const [
+    descartadas,
+    setDescartadas,
+  ] = useState(leerDescartadas);
+
+  const [panelOpen, setPanelOpen] =
+    useState(false);
+
+  const [swinging, setSwinging] =
+    useState(false);
 
   const panelRef = useRef(null);
+  const timerAnimacionRef =
+    useRef(null);
 
   useEffect(() => {
     if (esTaxista) {
       setAlertas([]);
       setPanelOpen(false);
+
       return undefined;
     }
 
-    let activo = true;
+    let componenteActivo = true;
 
     const cargarAlertas = async () => {
       try {
-        const { data } = await api.get("mantenimiento/alertas/");
+        const response = await api.get(
+          "/mantenimiento/alertas/"
+        );
 
-        if (!activo) return;
+        if (!componenteActivo) {
+          return;
+        }
 
-        const lista = Array.isArray(data) ? data : data?.results ?? [];
+        const lista = normalizarLista(
+          response?.data
+        );
 
         setAlertas(lista);
 
-        // Dispara la animación cuando el total crece respecto al último visto.
-        const previo = Number(
-          localStorage.getItem(LAST_COUNT_KEY) || 0
-        );
+        const conteoAnterior =
+          obtenerUltimoConteo();
 
-        if (lista.length > previo) {
+        if (
+          lista.length >
+          conteoAnterior
+        ) {
           setSwinging(true);
-          setTimeout(() => {
-            if (activo) setSwinging(false);
-          }, 1000);
+
+          if (
+            timerAnimacionRef.current
+          ) {
+            window.clearTimeout(
+              timerAnimacionRef.current
+            );
+          }
+
+          timerAnimacionRef.current =
+            window.setTimeout(() => {
+              if (componenteActivo) {
+                setSwinging(false);
+              }
+            }, 1000);
         }
 
-        localStorage.setItem(LAST_COUNT_KEY, String(lista.length));
-      } catch {
-        if (activo) {
+        guardarUltimoConteo(
+          lista.length
+        );
+      } catch (error) {
+        console.error(
+          "Error al cargar alertas:",
+          error
+        );
+
+        if (componenteActivo) {
           setAlertas([]);
         }
       }
     };
 
-    cargarAlertas();
+    void cargarAlertas();
 
     return () => {
-      activo = false;
+      componenteActivo = false;
+
+      if (timerAnimacionRef.current) {
+        window.clearTimeout(
+          timerAnimacionRef.current
+        );
+      }
     };
   }, [esTaxista]);
 
   useEffect(() => {
-    if (!panelOpen) return undefined;
+    if (!panelOpen) {
+      return undefined;
+    }
 
-    const handleClickFuera = (event) => {
+    const handleClickFuera = (
+      event
+    ) => {
       if (
         panelRef.current &&
-        !panelRef.current.contains(event.target)
+        !panelRef.current.contains(
+          event.target
+        )
       ) {
         setPanelOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handleClickFuera);
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setPanelOpen(false);
+      }
+    };
+
+    document.addEventListener(
+      "mousedown",
+      handleClickFuera
+    );
+
+    document.addEventListener(
+      "keydown",
+      handleEscape
+    );
 
     return () => {
-      document.removeEventListener("mousedown", handleClickFuera);
+      document.removeEventListener(
+        "mousedown",
+        handleClickFuera
+      );
+
+      document.removeEventListener(
+        "keydown",
+        handleEscape
+      );
     };
   }, [panelOpen]);
 
-  const idAlerta = (alerta, index) => String(alerta?.id ?? index);
+  const listaAlertas = Array.isArray(
+    alertas
+  )
+    ? alertas
+    : [];
 
-  const alertasVisibles = alertas.filter(
-    (alerta, index) => !descartadas.includes(idAlerta(alerta, index))
-  );
+  const idAlerta = (
+    alerta,
+    index
+  ) => {
+    return String(
+      alerta?.id ??
+        alerta?.codigo ??
+        `${alerta?.tipo || "alerta"}-${index}`
+    );
+  };
 
-  const notifCount = alertasVisibles.length;
+  const alertasVisibles =
+    listaAlertas.filter(
+      (alerta, index) => {
+        const id = idAlerta(
+          alerta,
+          index
+        );
+
+        return !descartadas.includes(id);
+      }
+    );
+
+  const notifCount =
+    alertasVisibles.length;
 
   const descartar = (id) => {
-    setDescartadas((prev) => {
-      if (prev.includes(id)) {
-        return prev;
+    const idNormalizado = String(id);
+
+    setDescartadas(
+      (descartadasAnteriores) => {
+        if (
+          descartadasAnteriores.includes(
+            idNormalizado
+          )
+        ) {
+          return descartadasAnteriores;
+        }
+
+        const actualizadas = [
+          ...descartadasAnteriores,
+          idNormalizado,
+        ];
+
+        guardarLocalStorage(
+          DESCARTADAS_KEY,
+          actualizadas
+        );
+
+        return actualizadas;
       }
-
-      const actualizadas = [...prev, id];
-      guardarDescartadas(actualizadas);
-
-      return actualizadas;
-    });
+    );
   };
 
   const irAAlerta = (alerta) => {
-    const destino = String(alerta?.link || "")
-      .split("/")
-      .filter(Boolean)[0];
+    const link = String(
+      alerta?.link || ""
+    ).trim();
 
     setPanelOpen(false);
 
-    if (destino) {
-      navigate(`/${destino}`);
+    if (!link) {
+      return;
     }
+
+    if (link.startsWith("/")) {
+      navigate(link);
+      return;
+    }
+
+    navigate(`/${link}`);
   };
 
   return (
     <header className="sticky top-0 z-30 flex h-[92px] items-center justify-between bg-[#F8FAFC] px-4 md:px-6 lg:px-7">
       <div className="flex min-w-0 items-center gap-3">
-        <button
-          type="button"
-          onClick={onOpenMobileMenu}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm lg:hidden"
-          aria-label="Abrir menú"
-        >
-          <Menu size={23} />
-        </button>
+        {!esTaxista && (
+          <button
+            type="button"
+            onClick={
+              onOpenMobileMenu
+            }
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm lg:hidden"
+            aria-label="Abrir menú"
+          >
+            <Menu size={23} />
+          </button>
+        )}
 
         <div className="min-w-0">
           <h2 className="truncate text-xl font-black text-slate-950 md:text-[28px]">
             ¡Bienvenido,{" "}
-            {user?.first_name || user?.username || "Usuario"}!
+            {user?.first_name ||
+              user?.username ||
+              "Usuario"}
+            !
           </h2>
-
-          {/* <p className="mt-1 truncate text-sm font-medium text-slate-500 md:text-base">
-            {esTaxista
-              ? "Control de tu jornada diaria"
-              : "Resumen general del sistema"}
-          </p> */}
         </div>
       </div>
 
       {!esTaxista && (
-        <div className="flex items-center gap-4">
+        <div className="flex shrink-0 items-center gap-3 md:gap-4">
           <div className="hidden h-12 items-center gap-4 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm md:flex">
-            <span>{obtenerFechaTexto()}</span>
-            <CalendarDays size={18} className="text-slate-600" />
+            <span>{fechaActual}</span>
+
+            <CalendarDays
+              size={18}
+              className="text-slate-600"
+            />
           </div>
 
-          <div ref={panelRef} className="relative">
+          <div
+            ref={panelRef}
+            className="relative"
+          >
             <button
               type="button"
-              onClick={() => setPanelOpen((prev) => !prev)}
+              onClick={() =>
+                setPanelOpen(
+                  (estado) => !estado
+                )
+              }
               className="relative flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
               aria-label="Notificaciones"
+              aria-expanded={panelOpen}
             >
               <Bell
                 size={21}
-                className={swinging ? "animate-swing" : ""}
+                className={
+                  swinging
+                    ? "animate-swing"
+                    : ""
+                }
               />
 
               {notifCount > 0 && (
-                <span
-                  className="absolute -right-1 -top-1 flex h-6 min-w-6 animate-pulse items-center justify-center rounded-full px-1 text-xs font-black text-white"
-                  style={{ backgroundColor: "#38BDF8" }}
-                >
-                  {notifCount > 9 ? "9+" : notifCount}
+                <span className="absolute -right-1 -top-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-sky-500 px-1 text-xs font-black text-white">
+                  {notifCount > 9
+                    ? "9+"
+                    : notifCount}
                 </span>
               )}
             </button>
 
             {panelOpen && (
-              <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 flex max-h-[70vh] w-[min(92vw,24rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-                <div
-                  className="px-5 py-4 text-white"
-                  style={{ backgroundColor: "#38BDF8" }}
-                >
-                  <h3 className="text-base font-black">
-                    Notificaciones
-                  </h3>
+              <section className="absolute right-0 top-[calc(100%+0.5rem)] z-50 flex max-h-[70vh] w-[min(92vw,24rem)] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+                <header className="bg-sky-500 px-5 py-4 text-white">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-black">
+                        Notificaciones
+                      </h3>
 
-                  <p className="mt-0.5 text-xs font-semibold text-sky-50">
-                    Mantenimiento y vencimiento de licencias
-                  </p>
-                </div>
+                      <p className="mt-0.5 text-xs font-semibold text-sky-50">
+                        Alertas pendientes
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setPanelOpen(false)
+                      }
+                      className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-white transition hover:bg-white/25"
+                      aria-label="Cerrar notificaciones"
+                    >
+                      <X size={17} />
+                    </button>
+                  </div>
+                </header>
 
                 <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
-                  {alertasVisibles.length === 0 ? (
+                  {!alertasVisibles.length ? (
                     <p className="py-6 text-center text-sm font-semibold text-slate-400">
-                      No hay notificaciones pendientes
+                      No hay notificaciones
                     </p>
                   ) : (
-                    alertasVisibles.map((alerta, index) => {
-                      const id = idAlerta(alerta, index);
-                      const estilo =
-                        SEVERIDAD[alerta.severidad] || SEVERIDAD.info;
-                      const Icono = iconoPorTipo(alerta.tipo);
+                    alertasVisibles.map(
+                      (alerta, index) => {
+                        const id =
+                          idAlerta(
+                            alerta,
+                            index
+                          );
 
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={() => irAAlerta(alerta)}
-                          className="w-full rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:bg-slate-50"
-                          style={{
-                            borderLeft: `4px solid ${estilo.color}`,
-                          }}
-                        >
-                          <div className="flex items-start gap-3">
-                            <div
-                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                              style={{
-                                backgroundColor: `${estilo.color}22`,
-                                color: estilo.color,
-                              }}
-                            >
-                              <Icono size={20} />
-                            </div>
+                        const estilo =
+                          SEVERIDAD[
+                            alerta?.severidad
+                          ] ||
+                          SEVERIDAD.info;
 
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span
-                                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-black ${estilo.chip}`}
-                                >
-                                  {estilo.label}
-                                </span>
+                        const Icono =
+                          iconoPorTipo(
+                            alerta?.tipo
+                          );
 
-                                <span
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    descartar(id);
-                                  }}
-                                  onKeyDown={(event) => {
-                                    if (
-                                      event.key === "Enter" ||
-                                      event.key === " "
-                                    ) {
-                                      event.stopPropagation();
-                                      descartar(id);
-                                    }
-                                  }}
-                                  className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-                                  aria-label="Descartar notificación"
-                                >
-                                  <X size={15} />
-                                </span>
+                        return (
+                          <article
+                            key={id}
+                            className="rounded-2xl border border-slate-200 bg-white p-4"
+                            style={{
+                              borderLeft: `4px solid ${estilo.color}`,
+                            }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+                                style={{
+                                  backgroundColor: `${estilo.color}22`,
+                                  color:
+                                    estilo.color,
+                                }}
+                              >
+                                <Icono
+                                  size={20}
+                                />
                               </div>
 
-                              <p className="mt-2 text-sm font-semibold text-slate-700">
-                                {alerta.mensaje ||
-                                  "Tienes una notificación pendiente."}
-                              </p>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span
+                                    className={`rounded-full px-2.5 py-0.5 text-[11px] font-black ${estilo.chip}`}
+                                  >
+                                    {
+                                      estilo.label
+                                    }
+                                  </span>
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      descartar(
+                                        id
+                                      )
+                                    }
+                                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                                    aria-label="Descartar notificación"
+                                  >
+                                    <X
+                                      size={15}
+                                    />
+                                  </button>
+                                </div>
+
+                                <p className="mt-2 text-sm font-semibold text-slate-700">
+                                  {alerta?.mensaje ||
+                                    "Notificación pendiente."}
+                                </p>
+
+                                {alerta?.link && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      irAAlerta(
+                                        alerta
+                                      )
+                                    }
+                                    className="mt-3 text-xs font-black text-sky-600 transition hover:text-sky-700"
+                                  >
+                                    Ver detalle
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </button>
-                      );
-                    })
+                          </article>
+                        );
+                      }
+                    )
                   )}
                 </div>
-              </div>
+              </section>
             )}
           </div>
         </div>
