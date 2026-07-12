@@ -109,14 +109,8 @@ const AsignacionesPage = () => {
           ? ""
           : "El vehículo fue asignado correctamente al conductor.",
         icon: "success",
-        showConfirmButton: false,
-        showCancelButton: false,
-        timerProgressBar: true,
-      
-        timer: 1500,
-        timerProgressBar: true,
-        allowOutsideClick: false,
-        allowEscapeKey: false,
+        confirmButtonColor: "#F5B800",
+        confirmButtonText: "Aceptar",
       });
     } catch (guardarError) {
      const mensaje =

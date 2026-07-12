@@ -666,14 +666,8 @@ const UsuarioForm = ({
           : "La cuenta fue creada correctamente.",
 
         icon: "success",
-        showConfirmButton: false,
-        showCancelButton: false,
-        timerProgressBar: true,
-        showConfirmButton: false,
-        timer: 1500,
-        timerProgressBar: true,
-        allowOutsideClick: false,
-        allowEscapeKey: false,
+         confirmButtonColor: "#F5B800",
+        confirmButtonText: "Aceptar",
       });
     } catch (error) {
       const mensaje =
