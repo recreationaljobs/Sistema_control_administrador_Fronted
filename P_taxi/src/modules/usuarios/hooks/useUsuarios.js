@@ -108,6 +108,106 @@ const construirMensajeWhatsApp = (
   ].join("\n");
 };
 
+
+const obtenerEnteroSeguroWhatsApp = (maximo) => {
+  if (
+    typeof window !== "undefined" &&
+    window.crypto?.getRandomValues
+  ) {
+    const valores = new Uint32Array(1);
+
+    window.crypto.getRandomValues(valores);
+
+    return valores[0] % maximo;
+  }
+
+  return Math.floor(Math.random() * maximo);
+};
+
+const mezclarPasswordWhatsApp = (texto) => {
+  const caracteres = [...texto];
+
+  for (
+    let posicion = caracteres.length - 1;
+    posicion > 0;
+    posicion -= 1
+  ) {
+    const nuevaPosicion =
+      obtenerEnteroSeguroWhatsApp(
+        posicion + 1
+      );
+
+    [
+      caracteres[posicion],
+      caracteres[nuevaPosicion],
+    ] = [
+      caracteres[nuevaPosicion],
+      caracteres[posicion],
+    ];
+  }
+
+  return caracteres.join("");
+};
+
+const generarPasswordWhatsApp = (
+  longitud = 14
+) => {
+  const mayusculas =
+    "ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+  const minusculas =
+    "abcdefghijkmnopqrstuvwxyz";
+
+  const numeros = "23456789";
+
+  const simbolos = "!@#$%&*_-";
+
+  const todos =
+    mayusculas +
+    minusculas +
+    numeros +
+    simbolos;
+
+  const caracteres = [
+    mayusculas[
+      obtenerEnteroSeguroWhatsApp(
+        mayusculas.length
+      )
+    ],
+
+    minusculas[
+      obtenerEnteroSeguroWhatsApp(
+        minusculas.length
+      )
+    ],
+
+    numeros[
+      obtenerEnteroSeguroWhatsApp(
+        numeros.length
+      )
+    ],
+
+    simbolos[
+      obtenerEnteroSeguroWhatsApp(
+        simbolos.length
+      )
+    ],
+  ];
+
+  while (caracteres.length < longitud) {
+    caracteres.push(
+      todos[
+        obtenerEnteroSeguroWhatsApp(
+          todos.length
+        )
+      ]
+    );
+  }
+
+  return mezclarPasswordWhatsApp(
+    caracteres.join("")
+  );
+};
 export const useUsuarios = () => {
   const { rol } = useAuth();
 
@@ -573,7 +673,8 @@ const enviarDatosWhatsApp = async (usuario) => {
     return;
   }
 
-  password = generarPassword();
+password =
+  generarPasswordWhatsApp();
 
   try {
     setSaving(true);
