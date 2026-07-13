@@ -87,8 +87,8 @@ const JornadasPage = () => {
           </p>
         </div>
 
-        {esTaxista && (
-          <div className="relative w-full min-w-0">
+       {esTaxista && (
+        <div className="w-full min-w-0 space-y-3">
             <button
               type="button"
               onClick={handleBotonTaxista}
@@ -116,6 +116,7 @@ const JornadasPage = () => {
                   : "Iniciar jornada"}
               </span>
             </button>
+            <ActivarNotificaciones />
           </div>
         )}
       </section>
