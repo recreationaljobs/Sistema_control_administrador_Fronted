@@ -17,6 +17,7 @@ import {
   reproducirSonidoNotificacion,
 } from "../services/notificacionesService";
 
+
 const ActivarNotificaciones = () => {
   const [estado, setEstado] = useState(
     "verificando"
@@ -25,112 +26,125 @@ const ActivarNotificaciones = () => {
   const [activando, setActivando] =
     useState(false);
 
+
   useEffect(() => {
     let cancelarEscucha = null;
     let componenteActivo = true;
 
-    const iniciar = async () => {
-      if (
-        typeof window === "undefined" ||
-        !("Notification" in window) ||
-        !("serviceWorker" in navigator)
-      ) {
-        if (componenteActivo) {
-          setEstado("no-soportado");
-        }
-
-        return;
-      }
-
-      if (
-        Notification.permission ===
-        "denied"
-      ) {
-        if (componenteActivo) {
-          setEstado("bloqueado");
-        }
-
-        return;
-      }
-
-      if (
-        Notification.permission ===
-        "granted"
-      ) {
-        try {
-          await registrarDispositivoNotificacion();
-
+    const configurarEscucha = async () => {
+      try {
+        if (
+          typeof window === "undefined" ||
+          typeof navigator === "undefined" ||
+          !("Notification" in window) ||
+          !("serviceWorker" in navigator)
+        ) {
           if (componenteActivo) {
-            setEstado("activo");
+            setEstado("no-soportado");
           }
-        } catch (error) {
-          console.error(
-            "No se pudo registrar el dispositivo:",
-            error
-          );
 
-          localStorage.removeItem(
+          return;
+        }
+
+        if (
+          Notification.permission ===
+          "denied"
+        ) {
+          if (componenteActivo) {
+            setEstado("bloqueado");
+          }
+
+          return;
+        }
+
+        const tokenGuardado =
+          localStorage.getItem(
             "taxi_notification_token"
           );
 
+        if (
+          Notification.permission ===
+            "granted" &&
+          tokenGuardado
+        ) {
           if (componenteActivo) {
-            setEstado("inactivo");
+            setEstado("activo");
           }
-        }
-      } else if (componenteActivo) {
-        setEstado("inactivo");
-      }
 
-      try {
-        cancelarEscucha =
-          await escucharNotificaciones(
-            async (payload) => {
-              const data =
-                payload?.data || {};
+          try {
+            cancelarEscucha =
+              await escucharNotificaciones(
+                async (payload) => {
+                  try {
+                    const data =
+                      payload?.data || {};
 
-              await reproducirSonidoNotificacion();
+                    await reproducirSonidoNotificacion();
 
-              const registro =
-                await navigator
-                  .serviceWorker
-                  .ready;
+                    const registro =
+                      await navigator
+                        .serviceWorker
+                        .ready;
 
-              await registro.showNotification(
-                data.title ||
-                  "Recordatorio de jornada",
-                {
-                  body:
-                    data.body ||
-                    "Tienes un nuevo recordatorio.",
+                    await registro.showNotification(
+                      data.title ||
+                        "Recordatorio de jornada",
+                      {
+                        body:
+                          data.body ||
+                          "Tienes un nuevo recordatorio.",
 
-                  icon: "/favicon.ico",
-                  badge: "/favicon.ico",
+                        icon: "/favicon.ico",
+                        badge: "/favicon.ico",
 
-                  tag:
-                    data.tag ||
-                    "recordatorio-jornada",
+                        tag:
+                          data.tag ||
+                          "recordatorio-jornada",
 
-                  data: {
-                    url:
-                      data.url ||
-                      "/jornadas",
-                  },
+                        data: {
+                          url:
+                            data.url ||
+                            "/jornadas",
+                        },
 
-                  requireInteraction: true,
-                  silent: false,
+                        requireInteraction: true,
+                        silent: false,
+                      }
+                    );
+                  } catch (error) {
+                    console.error(
+                      "Error mostrando la notificación:",
+                      error
+                    );
+                  }
                 }
               );
-            }
-          );
+          } catch (error) {
+            console.error(
+              "Error iniciando la escucha de Firebase:",
+              error
+            );
+          }
+
+          return;
+        }
+
+        if (componenteActivo) {
+          setEstado("inactivo");
+        }
       } catch (error) {
         console.error(
-          "No se pudo iniciar la escucha:",
+          "Error verificando notificaciones:",
           error
         );
+
+        if (componenteActivo) {
+          setEstado("inactivo");
+        }
       }
     };
 
-    iniciar();
+    configurarEscucha();
 
     return () => {
       componenteActivo = false;
@@ -144,13 +158,25 @@ const ActivarNotificaciones = () => {
     };
   }, []);
 
+
   const activar = async () => {
+    if (activando) {
+      return;
+    }
+
     setActivando(true);
 
     try {
       await registrarDispositivoNotificacion();
 
-      await reproducirSonidoNotificacion();
+      try {
+        await reproducirSonidoNotificacion();
+      } catch (error) {
+        console.error(
+          "No se pudo reproducir el sonido:",
+          error
+        );
+      }
 
       setEstado("activo");
 
@@ -164,12 +190,17 @@ const ActivarNotificaciones = () => {
         icon: "success",
 
         showConfirmButton: false,
+        showCancelButton: false,
+
         timer: 2200,
         timerProgressBar: true,
+
+        allowOutsideClick: false,
+        allowEscapeKey: false,
       });
     } catch (error) {
       console.error(
-        "Error al activar notificaciones:",
+        "Error activando notificaciones:",
         error
       );
 
@@ -177,9 +208,15 @@ const ActivarNotificaciones = () => {
         "taxi_notification_token"
       );
 
+      localStorage.removeItem(
+        "taxi_notifications_enabled"
+      );
+
       if (
+        typeof Notification !==
+          "undefined" &&
         Notification.permission ===
-        "denied"
+          "denied"
       ) {
         setEstado("bloqueado");
       } else {
@@ -206,17 +243,19 @@ const ActivarNotificaciones = () => {
     }
   };
 
+
   const verificando =
     estado === "verificando";
-
-  const bloqueado =
-    estado === "bloqueado";
 
   const activo =
     estado === "activo";
 
+  const bloqueado =
+    estado === "bloqueado";
+
   const noSoportado =
     estado === "no-soportado";
+
 
   return (
     <button
@@ -234,6 +273,8 @@ const ActivarNotificaciones = () => {
           ? "cursor-default border-green-200 bg-green-50 text-green-700"
           : bloqueado || noSoportado
           ? "cursor-not-allowed border-red-200 bg-red-50 text-red-700"
+          : verificando
+          ? "cursor-wait border-slate-200 bg-slate-50 text-slate-500"
           : "border-[#F5B800] bg-white text-[#B98200] hover:bg-[#FFF8E1]"
       }`}
     >
@@ -251,7 +292,7 @@ const ActivarNotificaciones = () => {
       {activando
         ? "Activando..."
         : verificando
-        ? "Verificando notificaciones..."
+        ? "Verificando..."
         : activo
         ? "Notificaciones activadas"
         : bloqueado
