@@ -17,31 +17,9 @@ import {
   reproducirSonidoNotificacion,
 } from "../services/notificacionesService";
 
-const obtenerEstadoInicial = () => {
-  if (
-    typeof Notification === "undefined"
-  ) {
-    return "no-soportado";
-  }
-
-  if (
-    Notification.permission === "granted"
-  ) {
-    return "activo";
-  }
-
-  if (
-    Notification.permission === "denied"
-  ) {
-    return "bloqueado";
-  }
-
-  return "inactivo";
-};
-
 const ActivarNotificaciones = () => {
   const [estado, setEstado] = useState(
-    obtenerEstadoInicial
+    "verificando"
   );
 
   const [activando, setActivando] =
@@ -49,22 +27,66 @@ const ActivarNotificaciones = () => {
 
   useEffect(() => {
     let cancelarEscucha = null;
+    let componenteActivo = true;
 
     const iniciar = async () => {
-      try {
-        if (
-          Notification.permission ===
-          "granted"
-        ) {
-          await registrarDispositivoNotificacion();
-          setEstado("activo");
+      if (
+        typeof window === "undefined" ||
+        !("Notification" in window) ||
+        !("serviceWorker" in navigator)
+      ) {
+        if (componenteActivo) {
+          setEstado("no-soportado");
         }
 
+        return;
+      }
+
+      if (
+        Notification.permission ===
+        "denied"
+      ) {
+        if (componenteActivo) {
+          setEstado("bloqueado");
+        }
+
+        return;
+      }
+
+      if (
+        Notification.permission ===
+        "granted"
+      ) {
+        try {
+          await registrarDispositivoNotificacion();
+
+          if (componenteActivo) {
+            setEstado("activo");
+          }
+        } catch (error) {
+          console.error(
+            "No se pudo registrar el dispositivo:",
+            error
+          );
+
+          localStorage.removeItem(
+            "taxi_notification_token"
+          );
+
+          if (componenteActivo) {
+            setEstado("inactivo");
+          }
+        }
+      } else if (componenteActivo) {
+        setEstado("inactivo");
+      }
+
+      try {
         cancelarEscucha =
           await escucharNotificaciones(
             async (payload) => {
               const data =
-                payload.data || {};
+                payload?.data || {};
 
               await reproducirSonidoNotificacion();
 
@@ -102,7 +124,7 @@ const ActivarNotificaciones = () => {
           );
       } catch (error) {
         console.error(
-          "Error al iniciar notificaciones:",
+          "No se pudo iniciar la escucha:",
           error
         );
       }
@@ -111,6 +133,8 @@ const ActivarNotificaciones = () => {
     iniciar();
 
     return () => {
+      componenteActivo = false;
+
       if (
         typeof cancelarEscucha ===
         "function"
@@ -132,6 +156,7 @@ const ActivarNotificaciones = () => {
 
       await Swal.fire({
         title: "Notificaciones activadas",
+
         text:
           "Recibirás recordatorios para abrir "
           + "y cerrar tu jornada.",
@@ -143,17 +168,32 @@ const ActivarNotificaciones = () => {
         timerProgressBar: true,
       });
     } catch (error) {
-      const mensaje =
-        error?.response?.data?.detail ||
-        error?.message ||
-        "No se pudieron activar las notificaciones.";
+      console.error(
+        "Error al activar notificaciones:",
+        error
+      );
+
+      localStorage.removeItem(
+        "taxi_notification_token"
+      );
 
       if (
         Notification.permission ===
         "denied"
       ) {
         setEstado("bloqueado");
+      } else {
+        setEstado("inactivo");
       }
+
+      const datos =
+        error?.response?.data;
+
+      const mensaje =
+        datos?.detail ||
+        datos?.token ||
+        error?.message ||
+        "No se pudieron activar las notificaciones.";
 
       await Swal.fire({
         title: "No se pudieron activar",
@@ -166,11 +206,17 @@ const ActivarNotificaciones = () => {
     }
   };
 
+  const verificando =
+    estado === "verificando";
+
   const bloqueado =
     estado === "bloqueado";
 
   const activo =
     estado === "activo";
+
+  const noSoportado =
+    estado === "no-soportado";
 
   return (
     <button
@@ -178,19 +224,20 @@ const ActivarNotificaciones = () => {
       onClick={activar}
       disabled={
         activando ||
+        verificando ||
         activo ||
         bloqueado ||
-        estado === "no-soportado"
+        noSoportado
       }
       className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-black transition ${
         activo
           ? "cursor-default border-green-200 bg-green-50 text-green-700"
-          : bloqueado
+          : bloqueado || noSoportado
           ? "cursor-not-allowed border-red-200 bg-red-50 text-red-700"
           : "border-[#F5B800] bg-white text-[#B98200] hover:bg-[#FFF8E1]"
       }`}
     >
-      {activando ? (
+      {activando || verificando ? (
         <LoaderCircle
           size={21}
           className="animate-spin"
@@ -203,10 +250,14 @@ const ActivarNotificaciones = () => {
 
       {activando
         ? "Activando..."
+        : verificando
+        ? "Verificando notificaciones..."
         : activo
         ? "Notificaciones activadas"
         : bloqueado
         ? "Notificaciones bloqueadas"
+        : noSoportado
+        ? "Navegador no compatible"
         : "Activar notificaciones"}
     </button>
   );
