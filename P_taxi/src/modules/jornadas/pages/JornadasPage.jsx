@@ -8,7 +8,7 @@ import {
 import JornadaModal from "../components/JornadaModal";
 import JornadaTable from "../components/JornadaTable";
 import { useJornadas } from "../hooks/useJornadas";
-
+import ActivarNotificaciones from "../components/ActivarNotificaciones";
 const formatoDinero = (valor) => {
   return `C$ ${Number(valor || 0).toLocaleString("es-NI", {
     minimumFractionDigits: 2,
