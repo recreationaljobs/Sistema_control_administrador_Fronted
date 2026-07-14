@@ -2,6 +2,7 @@
 
 import {
   AlertTriangle,
+  BellRing,
   Database,
   KeyRound,
   ListChecks,
@@ -13,15 +14,26 @@ import {
   Tags,
   X,
 } from "lucide-react";
-import { useEffect, useMemo } from "react";
+
+import {
+  useEffect,
+  useMemo,
+} from "react";
+
 import Swal from "sweetalert2";
 
 import "sweetalert2/dist/sweetalert2.min.css";
 
+import ActivarNotificaciones from "../../jornadas/components/ActivarNotificaciones";
+
 import CatalogoModal from "../components/CatalogoModal";
 import CatalogoTable from "../components/CatalogoTable";
 import ConfiguracionGeneralForm from "../components/ConfiguracionGeneralForm";
-import { useConfiguracion } from "../hooks/useConfiguracion";
+
+import {
+  useConfiguracion,
+} from "../hooks/useConfiguracion";
+
 
 const tabs = [
   {
@@ -50,40 +62,60 @@ const tabs = [
   },
 ];
 
+
 const ConfiguracionPage = () => {
   const {
     esSuperAdmin,
     esAdminSucursal,
     esTaxista,
+
     tabActiva,
     setTabActiva,
+
     configuracion,
     catalogos,
     catalogosVisibles,
+
     loading,
     saving,
+
     error,
     success,
+
     search,
     setSearch,
+
     modalOpen,
     catalogoActivo,
     registroEditando,
+
     cargarTodo,
     guardarConfiguracionGeneral,
+
     abrirModalCrear,
     abrirModalEditar,
     cerrarModal,
     guardarCatalogo,
     eliminarCatalogo,
+
     filtrarRegistros,
   } = useConfiguracion();
 
+
   const puedeEditarGeneral =
-    esSuperAdmin || esAdminSucursal;
+    esSuperAdmin ||
+    esAdminSucursal;
+
 
   const puedeAdministrarCatalogos =
-    esSuperAdmin || esAdminSucursal;
+    esSuperAdmin ||
+    esAdminSucursal;
+
+
+  const puedeActivarNotificaciones =
+    esSuperAdmin ||
+    esAdminSucursal;
+
 
   const tabsVisibles = esAdminSucursal
     ? tabs.filter(
@@ -93,26 +125,32 @@ const ConfiguracionPage = () => {
       )
     : tabs;
 
+
   const tabSeleccionada =
     tabsVisibles.find(
-      (tab) => tab.key === tabActiva
-    ) || tabsVisibles[0];
+      (tab) =>
+        tab.key === tabActiva
+    ) ||
+    tabsVisibles[0];
 
-  const totalRegistros = useMemo(() => {
-    return catalogosVisibles.reduce(
-      (total, meta) =>
-        total +
-        filtrarRegistros(
-          catalogos[meta.key] || []
-        ).length,
-      0
-    );
-  }, [
-    catalogos,
-    catalogosVisibles,
-    filtrarRegistros,
-    search,
-  ]);
+
+  const totalRegistros =
+    useMemo(() => {
+      return catalogosVisibles.reduce(
+        (total, meta) =>
+          total +
+          filtrarRegistros(
+            catalogos[meta.key] || []
+          ).length,
+        0
+      );
+    }, [
+      catalogos,
+      catalogosVisibles,
+      filtrarRegistros,
+      search,
+    ]);
+
 
   useEffect(() => {
     if (!success) {
@@ -130,32 +168,55 @@ const ConfiguracionPage = () => {
     });
   }, [success]);
 
-  const eliminarConConfirmacion = async (
-    meta,
-    item
-  ) => {
-    const confirmacion = await Swal.fire({
-      title: "¿Eliminar registro?",
-      html: `
-        <p style="margin:0;color:#475569">
-          Se eliminará <strong>${item.nombre}</strong>.
-        </p>
-      `,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Eliminar",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#dc2626",
-      cancelButtonColor: "#64748b",
-      reverseButtons: true,
-    });
 
-    if (!confirmacion.isConfirmed) {
-      return;
-    }
+  const eliminarConConfirmacion =
+    async (
+      meta,
+      item
+    ) => {
+      const confirmacion =
+        await Swal.fire({
+          title:
+            "¿Eliminar registro?",
 
-    await eliminarCatalogo(meta, item);
-  };
+          html: `
+            <p style="margin:0;color:#475569">
+              Se eliminará
+              <strong>${item.nombre}</strong>.
+            </p>
+          `,
+
+          icon: "warning",
+
+          showCancelButton: true,
+
+          confirmButtonText:
+            "Eliminar",
+
+          cancelButtonText:
+            "Cancelar",
+
+          confirmButtonColor:
+            "#dc2626",
+
+          cancelButtonColor:
+            "#64748b",
+
+          reverseButtons: true,
+        });
+
+      if (
+        !confirmacion.isConfirmed
+      ) {
+        return;
+      }
+
+      await eliminarCatalogo(
+        meta,
+        item
+      );
+    };
+
 
   if (esTaxista) {
     return (
@@ -177,9 +238,10 @@ const ConfiguracionPage = () => {
     );
   }
 
+
   return (
     <div className="space-y-6">
-      {/* Encabezado */}
+      {/* Encabezado principal */}
       <section className="overflow-hidden rounded-[30px] bg-slate-950 shadow-lg">
         <div className="h-1.5 bg-yellow-400" />
 
@@ -202,7 +264,7 @@ const ConfiguracionPage = () => {
                 </h1>
 
                 <p className="mt-1 text-sm font-medium text-slate-400">
-                  Parámetros y catálogos del sistema.
+                  Parámetros, notificaciones y catálogos del sistema.
                 </p>
               </div>
             </div>
@@ -215,7 +277,11 @@ const ConfiguracionPage = () => {
             >
               <RefreshCcw
                 size={18}
-                className={loading ? "animate-spin" : ""}
+                className={
+                  loading
+                    ? "animate-spin"
+                    : ""
+                }
               />
 
               Actualizar
@@ -224,6 +290,8 @@ const ConfiguracionPage = () => {
         </div>
       </section>
 
+
+      {/* Mensaje de error */}
       {error && (
         <div
           role="alert"
@@ -246,57 +314,72 @@ const ConfiguracionPage = () => {
         </div>
       )}
 
-      {/* Pestañas */}
+
+      {/* Navegación por pestañas */}
       <section className="overflow-x-auto rounded-[24px] border border-slate-200 bg-white p-2 shadow-sm">
         <div className="flex min-w-max gap-2 md:grid md:min-w-0 md:grid-cols-4">
-          {tabsVisibles.map((tab) => {
-            const Icono = tab.icon;
-            const activa = tabActiva === tab.key;
+          {tabsVisibles.map(
+            (tab) => {
+              const Icono =
+                tab.icon;
 
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => {
-                  setTabActiva(tab.key);
-                  setSearch("");
-                }}
-                className={`flex min-w-[145px] items-center gap-3 rounded-2xl px-4 py-3 text-left transition md:min-w-0 ${
-                  activa
-                    ? "bg-yellow-400 text-slate-950 shadow-md shadow-yellow-100"
-                    : "bg-white text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                <div
-                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+              const activa =
+                tabActiva ===
+                tab.key;
+
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => {
+                    setTabActiva(
+                      tab.key
+                    );
+
+                    setSearch("");
+                  }}
+                  className={`flex min-w-[145px] items-center gap-3 rounded-2xl px-4 py-3 text-left transition md:min-w-0 ${
                     activa
-                      ? "bg-slate-950/10"
-                      : "bg-slate-100"
+                      ? "bg-yellow-400 text-slate-950 shadow-md shadow-yellow-100"
+                      : "bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
-                  <Icono size={18} />
-                </div>
-
-                <div>
-                  <p className="text-sm font-black">
-                    {tab.label}
-                  </p>
-
-                  <p
-                    className={`text-xs font-medium ${
+                  <div
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
                       activa
-                        ? "text-slate-700"
-                        : "text-slate-400"
+                        ? "bg-slate-950/10"
+                        : "bg-slate-100"
                     }`}
                   >
-                    {tab.descripcion}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
+                    <Icono
+                      size={18}
+                    />
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-black">
+                      {tab.label}
+                    </p>
+
+                    <p
+                      className={`text-xs font-medium ${
+                        activa
+                          ? "text-slate-700"
+                          : "text-slate-400"
+                      }`}
+                    >
+                      {
+                        tab.descripcion
+                      }
+                    </p>
+                  </div>
+                </button>
+              );
+            }
+          )}
         </div>
       </section>
+
 
       {loading ? (
         <div className="rounded-[28px] border border-slate-200 bg-white p-12 text-center shadow-sm">
@@ -311,35 +394,123 @@ const ConfiguracionPage = () => {
         </div>
       ) : (
         <>
-          {tabActiva === "general" && (
-            <ConfiguracionGeneralForm
-              configuracion={configuracion}
-              onSave={guardarConfiguracionGeneral}
-              saving={saving}
-              puedeEditar={puedeEditarGeneral}
-            />
+          {/* Configuración general */}
+          {tabActiva ===
+            "general" && (
+            <div className="space-y-6">
+              <ConfiguracionGeneralForm
+                configuracion={
+                  configuracion
+                }
+                onSave={
+                  guardarConfiguracionGeneral
+                }
+                saving={saving}
+                puedeEditar={
+                  puedeEditarGeneral
+                }
+              />
+
+
+              {/* Configuración de notificaciones */}
+              {puedeActivarNotificaciones && (
+                <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+                  <div className="h-1.5 w-full bg-blue-500" />
+
+                  <div className="flex flex-col gap-6 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex min-w-0 items-start gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+                        <BellRing
+                          size={24}
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <h2 className="text-lg font-black text-slate-950">
+                          Notificaciones del sistema
+                        </h2>
+
+                        <p className="mt-1 max-w-2xl text-sm font-medium leading-6 text-slate-500">
+                          Activa las notificaciones en este dispositivo
+                          para recibir alertas relacionadas con los
+                          vehículos que pertenecen a tu panel.
+                        </p>
+
+
+                        {esAdminSucursal && (
+                          <div className="mt-4 rounded-2xl border border-green-200 bg-green-50 px-4 py-3">
+                            <p className="text-sm font-semibold leading-6 text-green-700">
+                              Recibirás alertas de mantenimiento y
+                              cambio de aceite únicamente de los
+                              vehículos registrados en tu sucursal.
+                              No recibirás notificaciones de vehículos
+                              pertenecientes a otras sucursales ni del
+                              panel del superadministrador.
+                            </p>
+                          </div>
+                        )}
+
+
+                        {esSuperAdmin && (
+                          <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
+                            <p className="text-sm font-semibold leading-6 text-blue-700">
+                              Recibirás alertas de mantenimiento y
+                              cambio de aceite únicamente de los
+                              vehículos registrados sin sucursal, es
+                              decir, los vehículos que pertenecen al
+                              panel del superadministrador.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+
+                    <div className="w-full shrink-0 lg:w-[330px]">
+                      <ActivarNotificaciones />
+                    </div>
+                  </div>
+                </section>
+              )}
+            </div>
           )}
 
-          {tabActiva !== "general" && (
+
+          {/* Catálogos */}
+          {tabActiva !==
+            "general" && (
             <section className="space-y-5">
               <div className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex items-center gap-4">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
-                      <Database size={23} />
+                      <Database
+                        size={23}
+                      />
                     </div>
 
                     <div>
                       <h2 className="text-lg font-black text-slate-950">
-                        {tabSeleccionada?.label}
+                        {
+                          tabSeleccionada
+                            ?.label
+                        }
                       </h2>
 
                       <p className="mt-1 text-sm font-medium text-slate-500">
-                        {catalogosVisibles.length} catálogo(s) ·{" "}
-                        {totalRegistros} registro(s)
+                        {
+                          catalogosVisibles
+                            .length
+                        }{" "}
+                        catálogo(s) ·{" "}
+                        {
+                          totalRegistros
+                        }{" "}
+                        registro(s)
                       </p>
                     </div>
                   </div>
+
 
                   <div className="relative w-full lg:w-96">
                     <Search
@@ -350,8 +521,13 @@ const ConfiguracionPage = () => {
                     <input
                       type="text"
                       value={search}
-                      onChange={(event) =>
-                        setSearch(event.target.value)
+                      onChange={(
+                        event
+                      ) =>
+                        setSearch(
+                          event.target
+                            .value
+                        )
                       }
                       placeholder="Buscar nombre o código..."
                       className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-11 pr-11 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
@@ -360,49 +536,72 @@ const ConfiguracionPage = () => {
                     {search && (
                       <button
                         type="button"
-                        onClick={() => setSearch("")}
+                        onClick={() =>
+                          setSearch("")
+                        }
                         className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
                         aria-label="Limpiar búsqueda"
                       >
-                        <X size={16} />
+                        <X
+                          size={16}
+                        />
                       </button>
                     )}
                   </div>
                 </div>
               </div>
 
+
               <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-                {catalogosVisibles.map((meta) => (
-                  <CatalogoTable
-                    key={meta.key}
-                    meta={meta}
-                    registros={filtrarRegistros(
-                      catalogos[meta.key] || []
-                    )}
-                    puedeAdministrar={
-                      puedeAdministrarCatalogos
-                    }
-                    onCreate={abrirModalCrear}
-                    onEdit={abrirModalEditar}
-                    onDelete={eliminarConConfirmacion}
-                  />
-                ))}
+                {catalogosVisibles.map(
+                  (meta) => (
+                    <CatalogoTable
+                      key={
+                        meta.key
+                      }
+                      meta={meta}
+                      registros={filtrarRegistros(
+                        catalogos[
+                          meta.key
+                        ] || []
+                      )}
+                      puedeAdministrar={
+                        puedeAdministrarCatalogos
+                      }
+                      onCreate={
+                        abrirModalCrear
+                      }
+                      onEdit={
+                        abrirModalEditar
+                      }
+                      onDelete={
+                        eliminarConConfirmacion
+                      }
+                    />
+                  )
+                )}
               </div>
             </section>
           )}
         </>
       )}
 
+
       <CatalogoModal
         open={modalOpen}
         onClose={cerrarModal}
         onSave={guardarCatalogo}
-        catalogoActivo={catalogoActivo}
-        registroEditando={registroEditando}
+        catalogoActivo={
+          catalogoActivo
+        }
+        registroEditando={
+          registroEditando
+        }
         saving={saving}
       />
     </div>
   );
 };
+
 
 export default ConfiguracionPage;
