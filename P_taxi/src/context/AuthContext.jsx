@@ -40,6 +40,10 @@ export const AuthProvider = ({ children }) => {
   const login = (data) => {
     saveSession(data);
 
+    sessionStorage.removeItem(
+      "taxi_cierre_sesion_en_proceso"
+    );
+
     const newToken = getToken();
     const newUser = getStoredUser();
     const newRol = getStoredRol();
