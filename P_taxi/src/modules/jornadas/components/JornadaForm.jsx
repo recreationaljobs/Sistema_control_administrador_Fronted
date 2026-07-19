@@ -79,11 +79,10 @@ const JornadaForm = ({
     !esTaxista && !jornadaEditando;
 
   const mostrarKilometrajeInicial =
-    !mostrarLiquidacion;
+    !modoCierre;
 
   const mostrarKilometrajeFinal =
-    !mostrarLiquidacion &&
-    (modoCierre || modoEdicion);
+    modoCierre || modoEdicion;
 
   const asignacionesActivas = useMemo(() => {
     return asignaciones.filter(
@@ -508,7 +507,7 @@ const JornadaForm = ({
               30
           );
 
-    if (!mostrarLiquidacion) {
+    if (!mostrarLiquidacion || modoEdicion) {
       if (
         Number.isNaN(kmInicial) ||
         kmInicial < 0
@@ -861,7 +860,7 @@ const JornadaForm = ({
               {modoCierre
                 ? "Cerrar jornada diaria"
                 : mostrarLiquidacion
-                ? "Liquidar jornada"
+                ? "Editar jornada completa"
                 : "Datos operativos del día"}
             </h3>
 
@@ -869,24 +868,43 @@ const JornadaForm = ({
               {modoCierre
                 ? "Ingresa el kilometraje final y selecciona si la jornada se cobrará por porcentaje o alquiler."
                 : mostrarLiquidacion
-                ? "Selecciona si la jornada se cobra por porcentaje o alquiler."
+                ? ""
                 : "La fecha y el vehículo se asignan automáticamente por el sistema."}
             </p>
           </div>
 
           <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-            <p className="text-xs font-bold text-slate-500">
-              Fecha interna
-            </p>
+            {mostrarLiquidacion ? (
+              <>
+                <label className="block text-xs font-bold text-slate-500">
+                  Fecha
+                </label>
 
-            <p className="mt-1 text-sm font-black text-slate-900">
-              {form.fecha || hoy}
-            </p>
+                <input
+                  type="date"
+                  name="fecha"
+                  value={form.fecha}
+                  onChange={handleChange}
+                  disabled={saving}
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-900 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100"
+                />
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-bold text-slate-500">
+                  Fecha interna
+                </p>
+
+                <p className="mt-1 text-sm font-black text-slate-900">
+                  {form.fecha || hoy}
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {esSuperAdmin && (
+      {/* {esSuperAdmin && (
         <div className="mb-5 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
           Esta jornada quedará
           registrada en el panel
@@ -901,7 +919,7 @@ const JornadaForm = ({
           registrada automáticamente
           en tu sucursal.
         </div>
-      )}
+      )} */}
 
       {esTaxista && (
         <div className="mb-5 rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 text-sm font-semibold text-purple-700">
@@ -1039,7 +1057,7 @@ const JornadaForm = ({
         )}
 
         <section className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm md:col-span-2">
+          {/* <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm md:col-span-2">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#FFF4CF] text-[#DFA600]">
                 <CarTaxiFront
@@ -1083,7 +1101,7 @@ const JornadaForm = ({
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {mostrarKilometrajeInicial && (
             <div
@@ -1105,10 +1123,7 @@ const JornadaForm = ({
                     Kilometraje inicial
                   </h4>
 
-                  <p className="text-sm font-medium text-slate-500">
-                    Valor al iniciar la
-                    jornada.
-                  </p>
+                  
                 </div>
               </div>
 
@@ -1141,10 +1156,7 @@ const JornadaForm = ({
                     Kilometraje final
                   </h4>
 
-                  <p className="text-sm font-medium text-slate-500">
-                    Valor al finalizar la
-                    jornada.
-                  </p>
+                  
                 </div>
               </div>
 
@@ -1281,14 +1293,7 @@ const JornadaForm = ({
                       className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
                     />
 
-                    <p className="mt-2 text-xs font-semibold text-slate-500">
-                      En alquiler no se
-                      calcula porcentaje
-                      para el conductor.
-                      Se registrará
-                      solamente el monto
-                      acordado.
-                    </p>
+                    
                   </div>
                 )}
               </div>
@@ -1306,14 +1311,10 @@ const JornadaForm = ({
 
                 <div>
                   <h4 className="text-base font-black text-slate-950">
-                    Liquidación de jornada
+                    Datos económicos de la jornada
                   </h4>
 
-                  <p className="text-sm font-medium text-slate-500">
-                    Selecciona el tipo de
-                    cobro para calcular el
-                    resultado.
-                  </p>
+                 
                 </div>
               </div>
 
@@ -1365,13 +1366,7 @@ const JornadaForm = ({
                       className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
                     />
 
-                    <p className="mt-2 text-xs font-semibold text-slate-500">
-                      El sistema calcula
-                      el pago del
-                      conductor según el
-                      porcentaje
-                      configurado.
-                    </p>
+                  
                   </div>
                 )}
 
@@ -1397,15 +1392,7 @@ const JornadaForm = ({
                       className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
                     />
 
-                    <p className="mt-2 text-xs font-semibold text-slate-500">
-                      En alquiler no se
-                      calcula pago al
-                      conductor. La
-                      ganancia del dueño
-                      se calcula con el
-                      monto de alquiler
-                      menos gastos.
-                    </p>
+                  
                   </div>
                 )}
               </div>
@@ -1413,6 +1400,7 @@ const JornadaForm = ({
           )}
 
           {mostrarLiquidacion && (
+
             <div className="md:col-span-2">
               <CalculoJornada
                 tipoCobro={
@@ -1480,7 +1468,7 @@ const JornadaForm = ({
             : modoCierre
             ? "Cerrar jornada"
             : mostrarLiquidacion
-            ? "Guardar liquidación"
+            ? "Guardar cambios"
             : jornadaEditando
             ? "Guardar cambios"
             : "Iniciar jornada"}

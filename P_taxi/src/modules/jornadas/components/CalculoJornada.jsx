@@ -52,7 +52,7 @@ const CalculoJornada = ({
         <p className="mt-1 text-sm font-medium text-slate-500">
           {tipoCobro === "alquiler"
             ? "En alquiler no se registra cuánto hizo el conductor. Solo se toma el monto del alquiler como ingreso del dueño."
-            : "En porcentaje se calcula el pago del conductor según el ingreso del día."}
+            : ""}
         </p>
       </div>
 

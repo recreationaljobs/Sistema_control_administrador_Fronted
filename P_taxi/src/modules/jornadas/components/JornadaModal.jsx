@@ -1,5 +1,3 @@
-// src/modules/jornadas/components/JornadaModal.jsx
-
 import { CalendarDays, X } from "lucide-react";
 import JornadaForm from "./JornadaForm";
 
@@ -22,12 +20,10 @@ const JornadaModal = ({
   }
 
   const modoCierre =
-    jornadaEditando?.modoFormulario ===
-    "cerrar";
+    jornadaEditando?.modoFormulario === "cerrar";
 
   const modoEdicion =
-    Boolean(jornadaEditando) &&
-    !modoCierre;
+    Boolean(jornadaEditando) && !modoCierre;
 
   const tituloModal = modoCierre
     ? "Cerrar jornada"
@@ -36,15 +32,21 @@ const JornadaModal = ({
     : "Nueva jornada";
 
   const descripcionModal = modoCierre
-    ? "Ingresa el kilometraje final para terminar la jornada diaria."
-    : esTaxista
-    ? "Registra el kilometraje inicial para comenzar tu jornada."
+    ? "Completa los datos para cerrar la jornada."
     : modoEdicion
-    ? "Actualiza la información de la jornada."
-    : "Registra los datos operativos de la jornada.";
+    ? "Corrige los datos necesarios."
+    : esTaxista
+    ? "Registra el kilometraje inicial."
+    : "Registra la jornada.";
+
+  const anchoModal = esTaxista
+    ? "max-w-md"
+    : modoEdicion
+    ? "max-w-2xl"
+    : "max-w-4xl";
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto overflow-x-hidden bg-slate-950/40 px-4 py-5 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center overflow-y-auto bg-slate-950/40 px-3 py-4 backdrop-blur-sm">
       <button
         type="button"
         onClick={onClose}
@@ -56,26 +58,22 @@ const JornadaModal = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="jornada-modal-title"
-        className={`relative z-10 flex max-h-[calc(100dvh-2.5rem)] w-full min-w-0 flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl ${
-          esTaxista
-            ? "max-w-md"
-            : "max-w-4xl"
-        }`}
+        className={`relative z-10 flex max-h-[calc(100dvh-2rem)] w-full min-w-0 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ${anchoModal}`}
       >
-        <div className="flex min-w-0 shrink-0 items-start gap-3 border-b border-slate-100 px-4 py-4 sm:gap-4 sm:px-5 sm:py-5">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#FFF4CF] text-[#E7A900]">
-            <CalendarDays size={25} />
+        <div className="flex shrink-0 items-center gap-3 border-b border-slate-100 px-4 py-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FFF4CF] text-[#E7A900]">
+            <CalendarDays size={20} />
           </div>
 
           <div className="min-w-0 flex-1">
             <h2
               id="jornada-modal-title"
-              className="break-words text-xl font-black leading-tight text-slate-950"
+              className="text-lg font-black leading-tight text-slate-950"
             >
               {tituloModal}
             </h2>
 
-            <p className="mt-1 break-words text-sm font-medium leading-5 text-slate-500">
+            <p className="mt-0.5 text-xs font-medium text-slate-500">
               {descripcionModal}
             </p>
           </div>
@@ -84,14 +82,14 @@ const JornadaModal = ({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-800 disabled:opacity-50"
             aria-label="Cerrar"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
-        <div className="min-h-0 w-full min-w-0 flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <JornadaForm
             jornadaEditando={jornadaEditando}
             conductores={conductores}

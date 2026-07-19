@@ -101,10 +101,7 @@ const estaEnRango = (fecha, inicio, fin) => {
 };
 
 const jornadaEstaLiquidada = (jornada) => {
-  return (
-    Number(jornada.ingreso_bruto || 0) > 0 ||
-    Number(jornada.monto_alquiler || 0) > 0
-  );
+  return Boolean(jornada?.liquidada);
 };
 
 const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
@@ -366,17 +363,46 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
                     <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() => onEdit(jornada)}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition active:scale-95"
-                        title={liquidada ? "Editar ingreso" : "Registrar ingreso"}
+                        onClick={() => {
+                          if (!liquidada) {
+                            onEdit(jornada);
+                          }
+                        }}
+                        disabled={liquidada}
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl transition active:scale-95 ${
+                          liquidada
+                            ? "cursor-not-allowed bg-slate-100 text-slate-400"
+                            : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                        }`}
+                        title={
+                          liquidada
+                            ? `Incluida en liquidación #${
+                                jornada.liquidacion_id || ""
+                              }`
+                            : "Editar jornada completa"
+                        }
                       >
                         <Edit3 size={18} />
                       </button>
+
                       <button
                         type="button"
-                        onClick={() => onDelete(jornada)}
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition active:scale-95"
-                        title="Eliminar"
+                        onClick={() => {
+                          if (!liquidada) {
+                            onDelete(jornada);
+                          }
+                        }}
+                        disabled={liquidada}
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl transition active:scale-95 ${
+                          liquidada
+                            ? "cursor-not-allowed bg-slate-100 text-slate-400"
+                            : "bg-red-50 text-red-600 hover:bg-red-100"
+                        }`}
+                        title={
+                          liquidada
+                            ? "No se puede eliminar una jornada liquidada"
+                            : "Eliminar jornada"
+                        }
                       >
                         <Trash2 size={18} />
                       </button>
@@ -668,12 +694,23 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
                           <div className="flex justify-end gap-2">
                             <button
                               type="button"
-                              onClick={() => onEdit(jornada)}
-                              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+                              onClick={() => {
+                                if (!liquidada) {
+                                  onEdit(jornada);
+                                }
+                              }}
+                              disabled={liquidada}
+                              className={`flex h-10 w-10 items-center justify-center rounded-xl transition active:scale-95 ${
+                                liquidada
+                                  ? "cursor-not-allowed bg-slate-100 text-slate-400"
+                                  : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                              }`}
                               title={
                                 liquidada
-                                  ? "Editar ingreso"
-                                  : "Registrar ingreso"
+                                  ? `Incluida en liquidación #${
+                                      jornada.liquidacion_id || ""
+                                    }`
+                                  : "Editar jornada completa"
                               }
                             >
                               <Edit3 size={18} />
@@ -681,9 +718,22 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
 
                             <button
                               type="button"
-                              onClick={() => onDelete(jornada)}
-                              className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
-                              title="Eliminar"
+                              onClick={() => {
+                                if (!liquidada) {
+                                  onDelete(jornada);
+                                }
+                              }}
+                              disabled={liquidada}
+                              className={`flex h-10 w-10 items-center justify-center rounded-xl transition active:scale-95 ${
+                                liquidada
+                                  ? "cursor-not-allowed bg-slate-100 text-slate-400"
+                                  : "bg-red-50 text-red-600 hover:bg-red-100"
+                              }`}
+                              title={
+                                liquidada
+                                  ? "No se puede eliminar una jornada liquidada"
+                                  : "Eliminar jornada"
+                              }
                             >
                               <Trash2 size={18} />
                             </button>

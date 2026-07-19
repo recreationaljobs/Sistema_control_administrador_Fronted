@@ -68,6 +68,8 @@ messaging.onBackgroundMessage(
         data.tag ||
         "notificacion-sistema-taxi",
 
+      renotify: true,
+
       data: {
         url: destino,
       },

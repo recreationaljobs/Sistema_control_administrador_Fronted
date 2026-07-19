@@ -8,7 +8,7 @@ import {
   getConductores,
   getJornadas,
   getVehiculos,
-  registrarIngresoJornada,
+  updateJornada,
 } from "../services/jornadasService";
 
 const normalizarLista = (data) => {
@@ -323,9 +323,23 @@ export const useJornadas = () => {
       return;
     }
 
+    if (esTaxista) {
+      return;
+    }
+
+    if (jornada?.liquidada) {
+      setError(
+        `Esta jornada ya fue incluida en la liquidación #${
+          jornada.liquidacion_id || ""
+        } y no puede modificarse.`
+      );
+
+      return;
+    }
+
     setJornadaEditando({
       ...jornada,
-      modoFormulario: "ingreso",
+      modoFormulario: "editar",
     });
 
     setModalOpen(true);
@@ -423,56 +437,124 @@ export const useJornadas = () => {
       return;
     }
 
-      if (jornadaEditando) {
+      if (modoFormulario === "editar") {
+        if (jornadaEditando?.liquidada) {
+          setError(
+            "Esta jornada ya fue incluida en una liquidación y no puede modificarse."
+          );
+
+          return;
+        }
+
+        const fecha =
+          normalizarFecha(form.fecha);
+
+        const kilometrajeInicial =
+          Number(form.kilometraje_inicial);
+
+        const kilometrajeFinal =
+          Number(form.kilometraje_final);
+
         const tipoCobro =
           form.tipo_cobro || "porcentaje";
 
-        if (tipoCobro === "alquiler") {
-          await registrarIngresoJornada(
-            jornadaEditando.id,
-            {
-              tipo_cobro: "alquiler",
+        const ingresoBruto =
+          Number(form.ingreso_bruto || 0);
 
-              ingreso_bruto: 0,
+        const montoAlquiler =
+          Number(form.monto_alquiler || 0);
 
-              monto_alquiler: Number(
-                form.monto_alquiler ||
-                  form.ingreso_bruto ||
-                  0
-              ),
-
-              porcentaje_pago_conductor: 0,
-
-              observaciones:
-                form.observaciones || "",
-            }
+        if (!fecha) {
+          setError(
+            "Debes ingresar la fecha de la jornada."
           );
-        } else {
-          await registrarIngresoJornada(
-            jornadaEditando.id,
-            {
-              tipo_cobro: "porcentaje",
 
-              ingreso_bruto: Number(
-                form.ingreso_bruto || 0
-              ),
-
-              monto_alquiler: 0,
-
-              porcentaje_pago_conductor:
-                Number(
-                  form.porcentaje_pago_conductor ||
-                    30
-                ),
-
-              observaciones:
-                form.observaciones || "",
-            }
-          );
+          return;
         }
 
-        await cargarJornadas();
-        await cargarCatalogos();
+        if (
+          Number.isNaN(kilometrajeInicial) ||
+          kilometrajeInicial < 0
+        ) {
+          setError(
+            "El kilometraje inicial debe ser válido."
+          );
+
+          return;
+        }
+
+        if (
+          Number.isNaN(kilometrajeFinal) ||
+          kilometrajeFinal < kilometrajeInicial
+        ) {
+          setError(
+            "El kilometraje final debe ser mayor o igual que el inicial."
+          );
+
+          return;
+        }
+
+        if (
+          tipoCobro === "porcentaje" &&
+          (
+            Number.isNaN(ingresoBruto) ||
+            ingresoBruto < 0
+          )
+        ) {
+          setError(
+            "El ingreso bruto debe ser un monto válido."
+          );
+
+          return;
+        }
+
+        if (
+          tipoCobro === "alquiler" &&
+          (
+            Number.isNaN(montoAlquiler) ||
+            montoAlquiler < 0
+          )
+        ) {
+          setError(
+            "El monto de alquiler debe ser válido."
+          );
+
+          return;
+        }
+
+        await updateJornada(
+          jornadaEditando.id,
+          {
+            fecha,
+
+            kilometraje_inicial:
+              kilometrajeInicial,
+
+            kilometraje_final:
+              kilometrajeFinal,
+
+            tipo_cobro:
+              tipoCobro,
+
+            ingreso_bruto:
+              tipoCobro === "porcentaje"
+                ? ingresoBruto
+                : 0,
+
+            monto_alquiler:
+              tipoCobro === "alquiler"
+                ? montoAlquiler
+                : 0,
+
+            observaciones:
+              form.observaciones || "",
+          }
+        );
+
+        await Promise.all([
+          cargarJornadas(),
+          cargarCatalogos(),
+        ]);
 
         cerrarModal();
         return;
@@ -661,6 +743,16 @@ export const useJornadas = () => {
   };
 
   const eliminarJornada = async (jornada) => {
+    if (jornada?.liquidada) {
+      setError(
+        `Esta jornada pertenece a la liquidación #${
+          jornada.liquidacion_id || ""
+        } y no puede eliminarse.`
+      );
+
+      return;
+    }
+
     const confirmar = window.confirm(
       `¿Seguro que deseas eliminar la jornada de ${
         jornada.conductor_nombre ||
