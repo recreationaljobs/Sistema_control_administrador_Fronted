@@ -12,7 +12,7 @@ import {
   Eye,
   EyeOff,
   KeyRound,
-  Loader2,
+  LoaderCircle,
   Lock,
   Mail,
   Phone,
@@ -805,33 +805,43 @@ const UsuarioForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 p-5 sm:p-6"
+      className="notranslate space-y-5 p-5 sm:p-6"
       noValidate
+      translate="no"
+      aria-busy={disabled}
     >
-      {formError && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
-          <p className="text-sm font-black text-red-700">
-            Revisa la información
-          </p>
+      <div
+        role="alert"
+        aria-hidden={!formError}
+        className={`rounded-2xl border border-red-200 bg-red-50 px-4 py-3 ${
+          formError ? "block" : "hidden"
+        }`}
+      >
+        <p className="text-sm font-black text-red-700">
+          Revisa la información
+        </p>
 
-          <p className="mt-1 text-sm font-medium text-red-600">
-            {formError}
-          </p>
-        </div>
-      )}
+        <p className="mt-1 text-sm font-medium text-red-600">
+          {formError}
+        </p>
+      </div>
 
-      {loadingCatalogos && (
-        <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-          <Loader2
-            size={18}
-            className="animate-spin text-yellow-600"
-          />
+      <div
+        aria-hidden={!loadingCatalogos}
+        className={`items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 ${
+          loadingCatalogos ? "flex" : "hidden"
+        }`}
+      >
+        <LoaderCircle
+          size={18}
+          className="animate-spin text-yellow-600"
+          aria-hidden="true"
+        />
 
-          <p className="text-sm font-bold text-slate-600">
-            Cargando catálogos...
-          </p>
-        </div>
-      )}
+        <p className="text-sm font-bold text-slate-600">
+          Cargando catálogos...
+        </p>
+      </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
         <div className="mb-5 flex items-center gap-3">
@@ -926,29 +936,49 @@ const UsuarioForm = ({
                       : "Mostrar contraseña"
                   }
                 >
-                  {showPassword ? (
-                    <EyeOff size={18} />
-                  ) : (
-                    <Eye size={18} />
-                  )}
+                  <EyeOff
+                    size={18}
+                    aria-hidden="true"
+                    className={
+                      showPassword
+                        ? "block"
+                        : "hidden"
+                    }
+                  />
+
+                  <Eye
+                    size={18}
+                    aria-hidden="true"
+                    className={
+                      showPassword
+                        ? "hidden"
+                        : "block"
+                    }
+                  />
                 </button>
               </div>
             </div>
 
-            {!esEdicion && (
-              <p className="mt-2 text-xs font-medium text-slate-500">
-                La contraseña fue generada automáticamente.
-                Puedes verla o generar otra antes de crear
-                el usuario.
-              </p>
-            )}
+            <p
+              aria-hidden={esEdicion}
+              className={`mt-2 text-xs font-medium text-slate-500 ${
+                esEdicion ? "hidden" : "block"
+              }`}
+            >
+              La contraseña fue generada automáticamente.
+              Puedes verla o generar otra antes de crear
+              el usuario.
+            </p>
 
-            {esEdicion && (
-              <p className="mt-2 text-xs font-medium text-slate-500">
-                Déjala vacía para conservar la contraseña
-                actual.
-              </p>
-            )}
+            <p
+              aria-hidden={!esEdicion}
+              className={`mt-2 text-xs font-medium text-slate-500 ${
+                esEdicion ? "block" : "hidden"
+              }`}
+            >
+              Déjala vacía para conservar la contraseña
+              actual.
+            </p>
           </div>
 
 
@@ -1208,12 +1238,20 @@ const UsuarioForm = ({
                       className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-11 text-sm font-semibold text-slate-800 outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
                     />
 
-                    {buscandoConductores && (
-                      <Loader2
+                    <span
+                      aria-hidden={!buscandoConductores}
+                      className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${
+                        buscandoConductores
+                          ? "block"
+                          : "hidden"
+                      }`}
+                    >
+                      <LoaderCircle
                         size={18}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-yellow-600"
+                        className="animate-spin text-yellow-600"
+                        aria-hidden="true"
                       />
-                    )}
+                    </span>
                   </div>
 
                   {mostrarConductores && (
@@ -1265,17 +1303,25 @@ const UsuarioForm = ({
                         )
                       ) : (
                         <div className="px-4 py-7 text-center">
-                          {buscandoConductores ? (
-                            <Loader2
-                              size={25}
-                              className="mx-auto animate-spin text-yellow-500"
-                            />
-                          ) : (
-                            <UserRound
-                              size={28}
-                              className="mx-auto text-slate-300"
-                            />
-                          )}
+                          <LoaderCircle
+                            size={25}
+                            aria-hidden={!buscandoConductores}
+                            className={`mx-auto animate-spin text-yellow-500 ${
+                              buscandoConductores
+                                ? "block"
+                                : "hidden"
+                            }`}
+                          />
+
+                          <UserRound
+                            size={28}
+                            aria-hidden={buscandoConductores}
+                            className={`mx-auto text-slate-300 ${
+                              buscandoConductores
+                                ? "hidden"
+                                : "block"
+                            }`}
+                          />
 
                           <p className="mt-2 text-sm font-bold text-slate-500">
                             {buscandoConductores
@@ -1326,7 +1372,7 @@ const UsuarioForm = ({
         <button
           type="button"
           onClick={onCancel}
-          disabled={saving}
+          disabled={disabled}
           className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:bg-slate-100 disabled:opacity-60"
         >
           Cancelar
@@ -1335,20 +1381,42 @@ const UsuarioForm = ({
         <button
           type="submit"
           disabled={disabled}
-          className="flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 hover:bg-yellow-500 disabled:opacity-60"
+          aria-busy={saving}
+          translate="no"
+          className="notranslate flex min-w-[165px] items-center justify-center rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {saving && (
-            <Loader2
+          <span
+            aria-hidden={!saving}
+            className={`items-center gap-2 ${
+              saving ? "flex" : "hidden"
+            }`}
+          >
+            <LoaderCircle
               size={18}
               className="animate-spin"
+              aria-hidden="true"
             />
-          )}
 
-          {saving
-            ? "Guardando..."
-            : esEdicion
-              ? "Guardar cambios"
-              : "Crear usuario"}
+            <span>Guardando...</span>
+          </span>
+
+          <span
+            aria-hidden={saving}
+            className={`items-center gap-2 ${
+              saving ? "hidden" : "flex"
+            }`}
+          >
+            <CheckCircle2
+              size={18}
+              aria-hidden="true"
+            />
+
+            <span>
+              {esEdicion
+                ? "Guardar cambios"
+                : "Crear usuario"}
+            </span>
+          </span>
         </button>
       </div>
     </form>

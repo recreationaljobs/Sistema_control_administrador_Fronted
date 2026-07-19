@@ -17,6 +17,8 @@ import {
 
 import Swal from "sweetalert2";
 
+import "sweetalert2/dist/sweetalert2.min.css";
+
 import { useConductores } from "../hooks/useConductores";
 import { useAuth } from "../../../hooks/useAuth";
 
@@ -41,6 +43,38 @@ const diasHastaVencimiento = (fecha) => {
     (vencimiento.getTime() -
       hoy.getTime()) /
       86_400_000
+  );
+};
+
+const obtenerMensajeError = (error) => {
+  const data = error?.response?.data;
+
+  if (typeof data?.detail === "string") {
+    return data.detail;
+  }
+
+  if (typeof data?.message === "string") {
+    return data.message;
+  }
+
+  if (data && typeof data === "object") {
+    const primerValor = Object.values(data)[0];
+
+    if (Array.isArray(primerValor)) {
+      return (
+        primerValor[0] ||
+        "No se pudo completar la operación."
+      );
+    }
+
+    if (typeof primerValor === "string") {
+      return primerValor;
+    }
+  }
+
+  return (
+    error?.message ||
+    "No se pudo completar la operación."
   );
 };
 
@@ -165,62 +199,110 @@ const ConductoresPage = () => {
       selectedConductor
     );
 
-    const resultado = esEdicion
-      ? await handleUpdate(payload)
-      : await handleCreate(payload);
+    try {
+      const resultado = esEdicion
+        ? await handleUpdate(payload)
+        : await handleCreate(payload);
 
-    if (resultado === false) {
+      if (resultado === false) {
+        return false;
+      }
+
+      await Swal.fire({
+        title: esEdicion
+          ? "¡Conductor actualizado!"
+          : "¡Conductor registrado!",
+        text: esEdicion
+          ? "Los cambios del conductor se guardaron correctamente."
+          : "El conductor fue registrado correctamente.",
+        icon: "success",
+        showConfirmButton: false,
+        showCancelButton: false,
+        timer: 2200,
+        timerProgressBar: true,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+      });
+
+      return true;
+    } catch (errorGuardar) {
+      console.error(
+        "Error al guardar el conductor:",
+        errorGuardar
+      );
+
+      const mensaje =
+        obtenerMensajeError(errorGuardar);
+
+      await Swal.fire({
+        title: esEdicion
+          ? "No se pudo actualizar"
+          : "No se pudo registrar",
+        text: mensaje,
+        icon: "error",
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#eab308",
+      });
+
       return false;
     }
-
-    void Swal.fire({
-      title: esEdicion
-        ? "Conductor actualizado"
-        : "Conductor registrado",
-      text: esEdicion
-        ? "Los cambios se guardaron correctamente."
-        : "El conductor fue registrado correctamente.",
-      icon: "success",
-      showConfirmButton: false,
-      timer: 1500,
-      timerProgressBar: true,
-    });
-
-    return true;
   };
 
   const despedirConConfirmacion = async (
     conductor
   ) => {
     const confirmacion = await Swal.fire({
-      title: "¿Despedir conductor?",
-      text: `${conductor.nombre} ${conductor.apellido} quedará inactivo.`,
+      title: "¿Desactivar conductor?",
+      text: `${conductor.nombre} ${conductor.apellido} quedará inactivo y no aparecerá en las selecciones disponibles.`,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Despedir",
+      confirmButtonText: "Desactivar",
       cancelButtonText: "Cancelar",
       confirmButtonColor: "#dc2626",
       cancelButtonColor: "#64748b",
       reverseButtons: true,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
     });
 
     if (!confirmacion.isConfirmed) {
       return;
     }
 
-    const resultado =
-      await handleDespedir(conductor);
+    try {
+      const resultado =
+        await handleDespedir(conductor);
 
-    if (resultado === false) {
-      return;
+      if (resultado === false) {
+        return;
+      }
+
+      await Swal.fire({
+        title: "¡Conductor desactivado!",
+        text: "El conductor quedó inactivo correctamente.",
+        icon: "success",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+      });
+    } catch (errorDesactivar) {
+      console.error(
+        "Error al desactivar el conductor:",
+        errorDesactivar
+      );
+
+      await Swal.fire({
+        title: "No se pudo desactivar",
+        text: obtenerMensajeError(
+          errorDesactivar
+        ),
+        icon: "error",
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#eab308",
+      });
     }
-
-    void Swal.fire({
-      title: "Conductor despedido",
-      icon: "success",
-      showConfirmButton: false,
-      timerProgressBar: true,
-    });
   };
 
   const reactivarConConfirmacion = async (
@@ -236,29 +318,96 @@ const ConductoresPage = () => {
       confirmButtonColor: "#059669",
       cancelButtonColor: "#64748b",
       reverseButtons: true,
+      allowOutsideClick: false,
+      allowEscapeKey: false,
     });
 
     if (!confirmacion.isConfirmed) {
       return;
     }
 
-    const resultado =
-      await handleReactivar(conductor);
+    try {
+      const resultado =
+        await handleReactivar(conductor);
 
-    if (resultado === false) {
-      return;
+      if (resultado === false) {
+        return;
+      }
+
+      await Swal.fire({
+        title: "¡Conductor reactivado!",
+        text: "El conductor volvió a estar activo correctamente.",
+        icon: "success",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+      });
+    } catch (errorReactivar) {
+      console.error(
+        "Error al reactivar el conductor:",
+        errorReactivar
+      );
+
+      await Swal.fire({
+        title: "No se pudo reactivar",
+        text: obtenerMensajeError(
+          errorReactivar
+        ),
+        icon: "error",
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#eab308",
+      });
     }
+  };
 
-    void Swal.fire({
-      title: "Conductor reactivado",
-      icon: "success",
-      showConfirmButton: false,
-      timerProgressBar: true,
-    });
+  const eliminarConductor = async () => {
+    try {
+      const resultado =
+        await handleDelete();
+
+      if (resultado === false) {
+        return false;
+      }
+
+      await Swal.fire({
+        title: "¡Conductor eliminado!",
+        text: "El registro del conductor fue eliminado correctamente.",
+        icon: "success",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+      });
+
+      return true;
+    } catch (errorEliminar) {
+      console.error(
+        "Error al eliminar el conductor:",
+        errorEliminar
+      );
+
+      await Swal.fire({
+        title: "No se pudo eliminar",
+        text: obtenerMensajeError(
+          errorEliminar
+        ),
+        icon: "error",
+        confirmButtonText: "Entendido",
+        confirmButtonColor: "#eab308",
+      });
+
+      return false;
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div
+      className="notranslate space-y-6"
+      translate="no"
+    >
       <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
         <div className="h-1.5 bg-yellow-400" />
 
@@ -322,7 +471,7 @@ const ConductoresPage = () => {
         />
 
         <ConductorCard
-          title="Despedidos"
+          title="Inactivos"
           value={conductoresInactivos}
           icon={UserX}
           tone="red"
@@ -384,7 +533,7 @@ const ConductoresPage = () => {
               </option>
 
               <option value="INACTIVOS">
-                Despedidos
+                Inactivos
               </option>
             </select>
           </div>
@@ -427,7 +576,7 @@ const ConductoresPage = () => {
             : ""
         }
         confirmLabel="Eliminar"
-        onConfirm={handleDelete}
+        onConfirm={eliminarConductor}
         onCancel={closeDelete}
         loading={deleting}
         danger

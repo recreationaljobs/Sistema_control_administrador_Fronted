@@ -77,28 +77,19 @@ export const AuthProvider = ({ children }) => {
     }
 
     Swal.fire({
-  title: `¡Bienvenido, ${nombreUsuario}!`,
+      title: "Inicio de sesión exitoso",
+      icon: "success",
+      confirmButtonText: "Aceptar",
+      confirmButtonColor: "#eab308",
 
-  text: nombreRol
-    ? `Has iniciado sesión como ${nombreRol}.`
-    : "Has iniciado sesión correctamente.",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
 
-  icon: "success",
-
-  showConfirmButton: false,
-  showCancelButton: false,
-
-  timer: 2200,
-  timerProgressBar: true,
-
-  allowOutsideClick: false,
-  allowEscapeKey: false,
-
-  willClose: () => {
-    document.body.style.overflow = "";
-    document.body.style.paddingRight = "";
-  },
-});
+      willClose: () => {
+        document.body.style.overflow = "";
+        document.body.style.paddingRight = "";
+      },
+    });
   };
 
   const logoutUser = async () => {

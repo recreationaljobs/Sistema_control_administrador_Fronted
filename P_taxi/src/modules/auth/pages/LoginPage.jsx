@@ -255,15 +255,7 @@ const LoginPage = () => {
                 </button>
               </form>
 
-              <div className="mt-7 border-t border-slate-200 pt-5">
-                <div className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-                  <ShieldCheck
-                    size={20}
-                    className="mt-0.5 shrink-0 text-slate-500"
-                  />
-
-                </div>
-              </div>
+              
             </div>
 
             <p className="mt-5 text-center text-xs text-slate-500">

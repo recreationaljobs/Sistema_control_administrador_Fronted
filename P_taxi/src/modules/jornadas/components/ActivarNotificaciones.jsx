@@ -1,3 +1,5 @@
+
+
 import {
   Bell,
   BellRing,
@@ -7,10 +9,12 @@ import {
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
 import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 
 import { useAuth } from "../../../hooks/useAuth";
 
@@ -19,7 +23,6 @@ import {
   reproducirSonidoNotificacion,
 } from "../services/notificacionesService";
 
-
 const ESTADO = {
   VERIFICANDO: "verificando",
   INACTIVO: "inactivo",
@@ -27,7 +30,6 @@ const ESTADO = {
   BLOQUEADO: "bloqueado",
   NO_SOPORTADO: "no-soportado",
 };
-
 
 const obtenerCodigoRol = (auth) => {
   const codigo = String(
@@ -55,69 +57,129 @@ const obtenerCodigoRol = (auth) => {
   return codigo;
 };
 
+const obtenerMensajeError = (error) => {
+  const datos = error?.response?.data;
+
+  if (
+    typeof datos?.detail === "string"
+  ) {
+    return datos.detail;
+  }
+
+  if (
+    typeof datos?.token === "string"
+  ) {
+    return datos.token;
+  }
+
+  if (
+    datos &&
+    typeof datos === "object"
+  ) {
+    const primerValor =
+      Object.values(datos)[0];
+
+    if (
+      Array.isArray(primerValor) &&
+      primerValor.length > 0
+    ) {
+      return String(
+        primerValor[0]
+      );
+    }
+
+    if (
+      typeof primerValor === "string"
+    ) {
+      return primerValor;
+    }
+  }
+
+  return (
+    error?.message ||
+    "No se pudieron activar las notificaciones."
+  );
+};
 
 const ActivarNotificaciones = () => {
   const auth = useAuth();
+
+  const componenteMontado =
+    useRef(true);
 
   const rol = useMemo(
     () => obtenerCodigoRol(auth),
     [auth]
   );
 
-  const [estado, setEstado] = useState(
-    ESTADO.VERIFICANDO
-  );
+  const [estado, setEstado] =
+    useState(
+      ESTADO.VERIFICANDO
+    );
 
   const [activando, setActivando] =
     useState(false);
-
 
   const descripcionNotificaciones =
     useMemo(() => {
       if (rol === "taxista") {
         return (
-          "Recibirás recordatorios para abrir "
-          + "y cerrar tu jornada."
+          "Recibirás recordatorios para abrir " +
+          "y cerrar tu jornada."
         );
       }
 
-      if (rol === "admin_sucursal") {
+      if (
+        rol === "admin_sucursal"
+      ) {
         return (
-          "Recibirás alertas de mantenimiento "
-          + "y cambio de aceite de los vehículos "
-          + "de tu sucursal."
+          "Recibirás alertas de mantenimiento " +
+          "y cambio de aceite de los vehículos " +
+          "de tu sucursal."
         );
       }
 
       if (rol === "superadmin") {
         return (
-            "Recibirás alertas de mantenimiento "
-            + "y cambio de aceite únicamente de los "
-            + "vehículos registrados en el panel "
-            + "del superadministrador."
+          "Recibirás alertas de mantenimiento " +
+          "y cambio de aceite únicamente de los " +
+          "vehículos registrados en el panel " +
+          "del superadministrador."
         );
-        }
+      }
 
       return (
-        "Recibirás las notificaciones "
-        + "correspondientes a tu usuario."
+        "Recibirás las notificaciones " +
+        "correspondientes a tu usuario."
       );
     }, [rol]);
 
-
   useEffect(() => {
+    componenteMontado.current = true;
+
     try {
       if (
-        typeof window === "undefined" ||
-        typeof navigator === "undefined" ||
-        !("Notification" in window) ||
-        !("serviceWorker" in navigator)
+        typeof window ===
+          "undefined" ||
+        typeof navigator ===
+          "undefined" ||
+        !(
+          "Notification" in
+          window
+        ) ||
+        !(
+          "serviceWorker" in
+          navigator
+        )
       ) {
         setEstado(
           ESTADO.NO_SOPORTADO
         );
 
-        return;
+        return () => {
+          componenteMontado.current =
+            false;
+        };
       }
 
       if (
@@ -128,7 +190,10 @@ const ActivarNotificaciones = () => {
           ESTADO.BLOQUEADO
         );
 
-        return;
+        return () => {
+          componenteMontado.current =
+            false;
+        };
       }
 
       const tokenGuardado =
@@ -144,13 +209,11 @@ const ActivarNotificaciones = () => {
         setEstado(
           ESTADO.ACTIVO
         );
-
-        return;
+      } else {
+        setEstado(
+          ESTADO.INACTIVO
+        );
       }
-
-      setEstado(
-        ESTADO.INACTIVO
-      );
     } catch (error) {
       console.error(
         "Error verificando las notificaciones:",
@@ -161,11 +224,22 @@ const ActivarNotificaciones = () => {
         ESTADO.INACTIVO
       );
     }
+
+    return () => {
+      componenteMontado.current =
+        false;
+    };
   }, []);
 
-
   const activar = async () => {
-    if (activando) {
+    if (
+      activando ||
+      estado === ESTADO.ACTIVO ||
+      estado ===
+        ESTADO.BLOQUEADO ||
+      estado ===
+        ESTADO.NO_SOPORTADO
+    ) {
       return;
     }
 
@@ -175,16 +249,20 @@ const ActivarNotificaciones = () => {
       const resultado =
         await registrarDispositivoNotificacion();
 
-      setEstado(
-        ESTADO.ACTIVO
-      );
+      if (
+        componenteMontado.current
+      ) {
+        setEstado(
+          ESTADO.ACTIVO
+        );
+      }
 
       try {
         await reproducirSonidoNotificacion();
-      } catch (error) {
+      } catch (errorSonido) {
         console.error(
           "No se pudo reproducir el sonido:",
-          error
+          errorSonido
         );
       }
 
@@ -193,7 +271,8 @@ const ActivarNotificaciones = () => {
           ?.tipo_notificaciones;
 
       await Swal.fire({
-        title: "Notificaciones activadas",
+        title:
+          "Notificaciones activadas",
 
         text:
           mensajeBackend ||
@@ -201,11 +280,17 @@ const ActivarNotificaciones = () => {
 
         icon: "success",
 
-        showConfirmButton: false,
-        showCancelButton: false,
+        confirmButtonText:
+          "Aceptar",
 
-        timer: 2600,
-        timerProgressBar: true,
+        confirmButtonColor:
+          "#eab308",
+
+        allowOutsideClick:
+          false,
+
+        allowEscapeKey:
+          false,
       });
     } catch (error) {
       console.error(
@@ -222,28 +307,28 @@ const ActivarNotificaciones = () => {
       );
 
       if (
-        typeof Notification !==
-          "undefined" &&
-        Notification.permission ===
-          "denied"
+        componenteMontado.current
       ) {
-        setEstado(
-          ESTADO.BLOQUEADO
-        );
-      } else {
-        setEstado(
-          ESTADO.INACTIVO
-        );
+        if (
+          typeof Notification !==
+            "undefined" &&
+          Notification.permission ===
+            "denied"
+        ) {
+          setEstado(
+            ESTADO.BLOQUEADO
+          );
+        } else {
+          setEstado(
+            ESTADO.INACTIVO
+          );
+        }
       }
 
-      const datos =
-        error?.response?.data;
-
       const mensaje =
-        datos?.detail ||
-        datos?.token ||
-        error?.message ||
-        "No se pudieron activar las notificaciones.";
+        obtenerMensajeError(
+          error
+        );
 
       await Swal.fire({
         title:
@@ -255,80 +340,213 @@ const ActivarNotificaciones = () => {
 
         confirmButtonText:
           "Aceptar",
+
+        confirmButtonColor:
+          "#dc2626",
       });
     } finally {
-      setActivando(false);
+      if (
+        componenteMontado.current
+      ) {
+        setActivando(false);
+      }
     }
   };
 
-
   const verificando =
-    estado === ESTADO.VERIFICANDO;
+    estado ===
+    ESTADO.VERIFICANDO;
 
   const activo =
-    estado === ESTADO.ACTIVO;
+    estado ===
+    ESTADO.ACTIVO;
 
   const bloqueado =
-    estado === ESTADO.BLOQUEADO;
+    estado ===
+    ESTADO.BLOQUEADO;
 
   const noSoportado =
-    estado === ESTADO.NO_SOPORTADO;
+    estado ===
+    ESTADO.NO_SOPORTADO;
 
+  const mostrarDescripcion =
+    !verificando &&
+    !bloqueado &&
+    !noSoportado;
+
+  const botonDeshabilitado =
+    activando ||
+    verificando ||
+    activo ||
+    bloqueado ||
+    noSoportado;
 
   return (
-    <div className="w-full">
+    <div
+      className="notranslate w-full"
+      translate="no"
+    >
       <button
         type="button"
         onClick={activar}
         disabled={
-          activando ||
-          verificando ||
-          bloqueado ||
-          noSoportado
+          botonDeshabilitado
         }
-        className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-black transition ${
+        aria-busy={
+          activando ||
+          verificando
+        }
+        className={`notranslate inline-flex w-full items-center justify-center rounded-2xl border px-4 py-3 text-sm font-black transition ${
           activo
             ? "border-green-200 bg-green-50 text-green-700"
-            : bloqueado || noSoportado
-            ? "cursor-not-allowed border-red-200 bg-red-50 text-red-700"
-            : verificando
-            ? "cursor-wait border-slate-200 bg-slate-50 text-slate-500"
-            : "border-[#F5B800] bg-white text-[#B98200] hover:bg-[#FFF8E1]"
+            : bloqueado ||
+                noSoportado
+              ? "cursor-not-allowed border-red-200 bg-red-50 text-red-700"
+              : verificando
+                ? "cursor-wait border-slate-200 bg-slate-50 text-slate-500"
+                : "border-[#F5B800] bg-white text-[#B98200] hover:bg-[#FFF8E1]"
         }`}
+        translate="no"
       >
-        {activando || verificando ? (
+        <span className="relative mr-2 flex h-[21px] w-[21px] shrink-0 items-center justify-center">
           <LoaderCircle
             size={21}
-            className="animate-spin"
+            aria-hidden={
+              !(
+                activando ||
+                verificando
+              )
+            }
+            className={`absolute animate-spin ${
+              activando ||
+              verificando
+                ? "block"
+                : "hidden"
+            }`}
           />
-        ) : activo ? (
-          <BellRing size={21} />
-        ) : (
-          <Bell size={21} />
-        )}
 
-        {activando
-          ? "Activando..."
-          : verificando
-          ? "Verificando..."
-          : activo
-          ? "Notificaciones activadas"
-          : bloqueado
-          ? "Notificaciones bloqueadas"
-          : noSoportado
-          ? "Navegador no compatible"
-          : "Activar notificaciones"}
+          <BellRing
+            size={21}
+            aria-hidden={!activo}
+            className={`absolute ${
+              activo
+                ? "block"
+                : "hidden"
+            }`}
+          />
+
+          <Bell
+            size={21}
+            aria-hidden={
+              activo ||
+              activando ||
+              verificando
+            }
+            className={`absolute ${
+              !activo &&
+              !activando &&
+              !verificando
+                ? "block"
+                : "hidden"
+            }`}
+          />
+        </span>
+
+        <span
+          aria-hidden={!activando}
+          className={
+            activando
+              ? "inline"
+              : "hidden"
+          }
+        >
+          Activando...
+        </span>
+
+        <span
+          aria-hidden={!verificando}
+          className={
+            verificando &&
+            !activando
+              ? "inline"
+              : "hidden"
+          }
+        >
+          Verificando...
+        </span>
+
+        <span
+          aria-hidden={!activo}
+          className={
+            activo
+              ? "inline"
+              : "hidden"
+          }
+        >
+          Notificaciones activadas
+        </span>
+
+        <span
+          aria-hidden={!bloqueado}
+          className={
+            bloqueado
+              ? "inline"
+              : "hidden"
+          }
+        >
+          Notificaciones bloqueadas
+        </span>
+
+        <span
+          aria-hidden={!noSoportado}
+          className={
+            noSoportado
+              ? "inline"
+              : "hidden"
+          }
+        >
+          Navegador no compatible
+        </span>
+
+        <span
+          aria-hidden={
+            activando ||
+            verificando ||
+            activo ||
+            bloqueado ||
+            noSoportado
+          }
+          className={
+            !activando &&
+            !verificando &&
+            !activo &&
+            !bloqueado &&
+            !noSoportado
+              ? "inline"
+              : "hidden"
+          }
+        >
+          Activar notificaciones
+        </span>
       </button>
 
-      {!verificando &&
-        !bloqueado &&
-        !noSoportado && (
-          <p className="mt-2 text-center text-xs font-semibold text-slate-500">
-            {descripcionNotificaciones}
-          </p>
-        )}
+      <p
+        aria-hidden={
+          !mostrarDescripcion
+        }
+        className={`mt-2 text-center text-xs font-semibold text-slate-500 ${
+          mostrarDescripcion
+            ? "block"
+            : "hidden"
+        }`}
+      >
+        {
+          descripcionNotificaciones
+        }
+      </p>
     </div>
   );
 };
 
 export default ActivarNotificaciones;
+

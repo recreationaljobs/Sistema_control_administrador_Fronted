@@ -660,11 +660,11 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
                           {formatoDinero(jornada.pago_conductor)}
                         </p>
 
-                        <p className="mt-1 text-xs font-medium text-slate-500">
+                        {/* <p className="mt-1 text-xs font-medium text-slate-500">
                           {liquidada
                             ? "Ganancia del día"
                             : "Pendiente de liquidación"}
-                        </p>
+                        </p> */}
                       </td>
                     ) : (
                       <>

@@ -6,7 +6,7 @@ import {
   Building2,
   CalendarDays,
   IdCard,
-  Loader2,
+  LoaderCircle,
   Pencil,
   Percent,
   Trash2,
@@ -115,7 +115,7 @@ const EstadoBadge = ({ activo }) => {
         }`}
       />
 
-      {activo ? "Activo" : "Despedido"}
+      {activo ? "Activo" : "Inactivo"}
     </span>
   );
 };
@@ -134,7 +134,10 @@ const Acciones = ({
   }
 
   return (
-    <div className="flex justify-end gap-2">
+    <div
+      className="notranslate flex justify-end gap-2"
+      translate="no"
+    >
       <button
         type="button"
         onClick={() => onEdit?.(conductor)}
@@ -142,34 +145,55 @@ const Acciones = ({
         title="Editar"
         aria-label="Editar conductor"
       >
-        <Pencil size={17} />
+        <Pencil
+          size={17}
+          aria-hidden="true"
+        />
       </button>
 
-      {activo ? (
-        <button
-          type="button"
-          onClick={() =>
-            onDespedir?.(conductor)
-          }
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600 transition hover:bg-orange-100"
-          title="Despedir"
-          aria-label="Despedir conductor"
-        >
-          <UserX size={18} />
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={() =>
-            onReactivar?.(conductor)
-          }
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100"
-          title="Reactivar"
-          aria-label="Reactivar conductor"
-        >
-          <UserCheck size={18} />
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() =>
+          onDespedir?.(conductor)
+        }
+        disabled={!activo}
+        aria-hidden={!activo}
+        tabIndex={activo ? 0 : -1}
+        className={`h-10 w-10 items-center justify-center rounded-xl transition ${
+          activo
+            ? "flex bg-orange-50 text-orange-600 hover:bg-orange-100"
+            : "hidden"
+        }`}
+        title="Desactivar"
+        aria-label="Desactivar conductor"
+      >
+        <UserX
+          size={18}
+          aria-hidden="true"
+        />
+      </button>
+
+      <button
+        type="button"
+        onClick={() =>
+          onReactivar?.(conductor)
+        }
+        disabled={activo}
+        aria-hidden={activo}
+        tabIndex={activo ? -1 : 0}
+        className={`h-10 w-10 items-center justify-center rounded-xl transition ${
+          activo
+            ? "hidden"
+            : "flex bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+        }`}
+        title="Reactivar"
+        aria-label="Reactivar conductor"
+      >
+        <UserCheck
+          size={18}
+          aria-hidden="true"
+        />
+      </button>
 
       <button
         type="button"
@@ -180,7 +204,10 @@ const Acciones = ({
         title="Eliminar"
         aria-label="Eliminar conductor"
       >
-        <Trash2 size={17} />
+        <Trash2
+          size={17}
+          aria-hidden="true"
+        />
       </button>
     </div>
   );
@@ -197,8 +224,8 @@ const ConductorTable = ({
 }) => {
   if (loading) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-        <Loader2
+      <div className="notranslate rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-sm" translate="no">
+        <LoaderCircle
           size={30}
           className="mx-auto animate-spin text-yellow-500"
         />
@@ -212,7 +239,7 @@ const ConductorTable = ({
 
   if (!conductores.length) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
+      <div className="notranslate rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm" translate="no">
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-yellow-50 text-yellow-600">
           <UserRound size={34} />
         </div>

@@ -1,21 +1,25 @@
-// src/modules/asignaciones/components/AsignacionForm.jsx
+
 
 import { useEffect, useMemo, useState } from "react";
+
 import {
   Building2,
   CalendarDays,
   CarTaxiFront,
   CheckCircle2,
-  Loader2,
+  LoaderCircle,
   Route,
   UserRound,
 } from "lucide-react";
 
 const obtenerFechaLocal = () => {
   const ahora = new Date();
-  const diferenciaZona = ahora.getTimezoneOffset() * 60_000;
+  const diferenciaZona =
+    ahora.getTimezoneOffset() * 60_000;
 
-  return new Date(ahora.getTime() - diferenciaZona)
+  return new Date(
+    ahora.getTime() - diferenciaZona
+  )
     .toISOString()
     .split("T")[0];
 };
@@ -34,25 +38,33 @@ const obtenerId = (valor) => {
   }
 
   if (typeof valor === "object") {
-    return valor.id ? String(valor.id) : "";
+    return valor.id
+      ? String(valor.id)
+      : "";
   }
 
   return String(valor);
 };
 
-const obtenerNombreConductor = (conductor) => {
+const obtenerNombreConductor = (
+  conductor
+) => {
   if (!conductor) {
     return "Conductor sin nombre";
   }
 
   return (
     conductor.nombre_completo ||
-    `${conductor.nombre || ""} ${conductor.apellido || ""}`.trim() ||
+    `${conductor.nombre || ""} ${
+      conductor.apellido || ""
+    }`.trim() ||
     "Conductor sin nombre"
   );
 };
 
-const obtenerNombreVehiculo = (vehiculo) => {
+const obtenerNombreVehiculo = (
+  vehiculo
+) => {
   if (!vehiculo) {
     return "Vehículo sin información";
   }
@@ -71,7 +83,10 @@ const obtenerNombreVehiculo = (vehiculo) => {
     .filter(Boolean)
     .join(" ");
 
-  return [identificacion, descripcion]
+  return [
+    identificacion,
+    descripcion,
+  ]
     .filter(Boolean)
     .join(" - ");
 };
@@ -112,7 +127,9 @@ const AsignacionForm = ({
   const [formError, setFormError] =
     useState("");
 
-  const esEdicion = Boolean(asignacionEditando);
+  const esEdicion = Boolean(
+    asignacionEditando
+  );
 
   useEffect(() => {
     if (asignacionEditando) {
@@ -135,57 +152,67 @@ const AsignacionForm = ({
             : true,
       });
     } else {
-      setForm(crearFormularioInicial());
+      setForm(
+        crearFormularioInicial()
+      );
     }
 
     setFormError("");
   }, [asignacionEditando]);
 
-  const conductoresDisponibles = useMemo(() => {
-    return conductores.filter((conductor) => {
-      const esSeleccionado =
-        String(conductor.id) ===
-        String(form.conductor);
+  const conductoresDisponibles =
+    useMemo(() => {
+      return conductores.filter(
+        (conductor) => {
+          const esSeleccionado =
+            String(conductor.id) ===
+            String(form.conductor);
 
-      return (
-        esSeleccionado ||
-        estaDisponible(conductor)
+          return (
+            esSeleccionado ||
+            estaDisponible(conductor)
+          );
+        }
       );
-    });
-  }, [conductores, form.conductor]);
+    }, [conductores, form.conductor]);
 
-  const vehiculosDisponibles = useMemo(() => {
-    return vehiculos.filter((vehiculo) => {
-      const esSeleccionado =
-        String(vehiculo.id) ===
-        String(form.vehiculo);
+  const vehiculosDisponibles =
+    useMemo(() => {
+      return vehiculos.filter(
+        (vehiculo) => {
+          const esSeleccionado =
+            String(vehiculo.id) ===
+            String(form.vehiculo);
 
-      return (
-        esSeleccionado ||
-        estaDisponible(vehiculo)
+          return (
+            esSeleccionado ||
+            estaDisponible(vehiculo)
+          );
+        }
       );
-    });
-  }, [vehiculos, form.vehiculo]);
+    }, [vehiculos, form.vehiculo]);
 
-  const conductorSeleccionado = useMemo(() => {
-    return (
-      conductores.find(
-        (conductor) =>
-          String(conductor.id) ===
-          String(form.conductor)
-      ) || null
-    );
-  }, [conductores, form.conductor]);
+  const conductorSeleccionado =
+    useMemo(() => {
+      return (
+        conductores.find(
+          (conductor) =>
+            String(conductor.id) ===
+            String(form.conductor)
+        ) || null
+      );
+    }, [conductores, form.conductor]);
 
-  const vehiculoSeleccionado = useMemo(() => {
-    return (
-      vehiculos.find(
-        (vehiculo) =>
-          String(vehiculo.id) ===
-          String(form.vehiculo)
-      ) || null
-    );
-  }, [vehiculos, form.vehiculo]);
+  const vehiculoSeleccionado =
+    useMemo(() => {
+      return (
+        vehiculos.find(
+          (vehiculo) =>
+            String(vehiculo.id) ===
+            String(form.vehiculo)
+        ) || null
+      );
+    }, [vehiculos, form.vehiculo]);
 
   const handleChange = (event) => {
     const {
@@ -208,10 +235,30 @@ const AsignacionForm = ({
     }
   };
 
-  const handleSubmit = async (event) => {
+  const handleCancel = () => {
+    if (
+      saving ||
+      loadingCatalogos
+    ) {
+      return;
+    }
+
+    if (
+      typeof onCancel === "function"
+    ) {
+      onCancel();
+    }
+  };
+
+  const handleSubmit = async (
+    event
+  ) => {
     event.preventDefault();
 
-    if (saving || loadingCatalogos) {
+    if (
+      saving ||
+      loadingCatalogos
+    ) {
       return;
     }
 
@@ -219,6 +266,7 @@ const AsignacionForm = ({
       setFormError(
         "Debes seleccionar un conductor."
       );
+
       return;
     }
 
@@ -226,6 +274,7 @@ const AsignacionForm = ({
       setFormError(
         "Debes seleccionar un vehículo."
       );
+
       return;
     }
 
@@ -233,43 +282,59 @@ const AsignacionForm = ({
       setFormError(
         "La fecha de inicio es obligatoria."
       );
+
       return;
     }
 
     if (
       form.fecha_fin &&
-      form.fecha_fin < form.fecha_inicio
+      form.fecha_fin <
+        form.fecha_inicio
     ) {
       setFormError(
         "La fecha final no puede ser menor que la fecha de inicio."
       );
+
       return;
     }
 
     if (
       form.activa &&
       form.fecha_fin &&
-      form.fecha_fin < obtenerFechaLocal()
+      form.fecha_fin <
+        obtenerFechaLocal()
     ) {
       setFormError(
         "Una asignación activa no puede tener una fecha final anterior a la fecha actual."
       );
+
       return;
     }
 
-    if (typeof onSave !== "function") {
+    if (
+      typeof onSave !== "function"
+    ) {
       setFormError(
         "No se encontró la función para guardar la asignación."
       );
+
       return;
     }
 
     await onSave({
-      conductor: Number(form.conductor),
-      vehiculo: Number(form.vehiculo),
-      fecha_inicio: form.fecha_inicio,
-      fecha_fin: form.fecha_fin || null,
-      activa: Boolean(form.activa),
+      conductor: Number(
+        form.conductor
+      ),
+      vehiculo: Number(
+        form.vehiculo
+      ),
+      fecha_inicio:
+        form.fecha_inicio,
+      fecha_fin:
+        form.fecha_fin || null,
+      activa: Boolean(
+        form.activa
+      ),
     });
   };
 
@@ -279,64 +344,82 @@ const AsignacionForm = ({
   return (
     <form
       onSubmit={handleSubmit}
-      className="p-5 sm:p-6"
+      className="notranslate p-5 sm:p-6"
       noValidate
+      translate="no"
+      aria-busy={deshabilitado}
     >
-      {formError && (
-        <div
-          role="alert"
-          className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3"
-        >
-          <p className="text-sm font-black text-red-700">
-            Revisa la información
+      <div
+        role="alert"
+        aria-hidden={!formError}
+        className={`mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 ${
+          formError
+            ? "block"
+            : "hidden"
+        }`}
+      >
+        <p className="text-sm font-black text-red-700">
+          Revisa la información
+        </p>
+
+        <p className="mt-1 text-sm font-medium text-red-600">
+          {formError}
+        </p>
+      </div>
+
+      <div
+        aria-hidden={!esSuperAdmin}
+        className={`mb-5 items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 ${
+          esSuperAdmin
+            ? "flex"
+            : "hidden"
+        }`}
+      >
+        <Building2
+          size={20}
+          className="mt-0.5 shrink-0 text-blue-600"
+          aria-hidden="true"
+        />
+
+        <div>
+          <p className="text-sm font-black text-blue-800">
+            Panel general
           </p>
 
-          <p className="mt-1 text-sm font-medium text-red-600">
-            {formError}
+          <p className="mt-1 text-sm font-medium text-blue-700">
+            La asignación quedará
+            registrada desde el panel
+            del superadministrador.
           </p>
         </div>
-      )}
+      </div>
 
-      {esSuperAdmin && (
-        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
-          <Building2
-            size={20}
-            className="mt-0.5 shrink-0 text-blue-600"
-          />
+      <div
+        aria-hidden={!esAdminSucursal}
+        className={`mb-5 items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 ${
+          esAdminSucursal
+            ? "flex"
+            : "hidden"
+        }`}
+      >
+        <CheckCircle2
+          size={20}
+          className="mt-0.5 shrink-0 text-emerald-600"
+          aria-hidden="true"
+        />
 
-          <div>
-            <p className="text-sm font-black text-blue-800">
-              Panel general
-            </p>
+        <div>
+          <p className="text-sm font-black text-emerald-800">
+            Sucursal asignada
+          </p>
 
-            <p className="mt-1 text-sm font-medium text-blue-700">
-              La asignación quedará registrada
-              desde el panel del
-              superadministrador.
-            </p>
-          </div>
+          <p className="mt-1 text-sm font-medium text-emerald-700">
+            La asignación quedará
+            asociada automáticamente
+            a tu sucursal.
+          </p>
         </div>
-      )}
-
-      {esAdminSucursal && (
-        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-          <CheckCircle2
-            size={20}
-            className="mt-0.5 shrink-0 text-emerald-600"
-          />
-
-          <div>
-            <p className="text-sm font-black text-emerald-800">
-              Sucursal asignada
-            </p>
-
-            <p className="mt-1 text-sm font-medium text-emerald-700">
-              La asignación quedará asociada
-              automáticamente a tu sucursal.
-            </p>
-          </div>
-        </div>
-      )}
+      </div>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div className="md:col-span-2">
@@ -351,6 +434,7 @@ const AsignacionForm = ({
             <UserRound
               size={18}
               className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
             />
 
             <select
@@ -389,47 +473,82 @@ const AsignacionForm = ({
               )}
             </select>
 
-            {loadingCatalogos && (
-              <Loader2
+            <span
+              aria-hidden={!loadingCatalogos}
+              className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${
+                loadingCatalogos
+                  ? "block"
+                  : "hidden"
+              }`}
+            >
+              <LoaderCircle
                 size={18}
-                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-yellow-600"
+                className="animate-spin text-yellow-600"
+                aria-hidden="true"
               />
-            )}
+            </span>
           </div>
 
-          {!conductoresDisponibles.length &&
-            !loadingCatalogos && (
-              <p className="mt-2 text-xs font-semibold text-red-600">
-                No hay conductores activos
-                disponibles. Primero registra o
-                reactiva un conductor.
-              </p>
-            )}
+          <p
+            aria-hidden={
+              Boolean(
+                conductoresDisponibles.length
+              ) ||
+              loadingCatalogos
+            }
+            className={`mt-2 text-xs font-semibold text-red-600 ${
+              !conductoresDisponibles.length &&
+              !loadingCatalogos
+                ? "block"
+                : "hidden"
+            }`}
+          >
+            No hay conductores activos
+            disponibles. Primero registra
+            o reactiva un conductor.
+          </p>
 
-          {conductorSeleccionado && (
-            <div className="mt-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
-              <p className="text-sm font-black text-blue-800">
-                {obtenerNombreConductor(
-                  conductorSeleccionado
-                )}
-              </p>
+          <div
+            aria-hidden={
+              !conductorSeleccionado
+            }
+            className={`mt-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 ${
+              conductorSeleccionado
+                ? "block"
+                : "hidden"
+            }`}
+          >
+            <p className="text-sm font-black text-blue-800">
+              {conductorSeleccionado
+                ? obtenerNombreConductor(
+                    conductorSeleccionado
+                  )
+                : ""}
+            </p>
 
-              <p className="mt-1 text-xs font-semibold text-blue-700">
-                {conductorSeleccionado.cedula
+            <p className="mt-1 text-xs font-semibold text-blue-700">
+              {conductorSeleccionado
+                ? conductorSeleccionado.cedula
                   ? `Cédula: ${conductorSeleccionado.cedula}`
-                  : "Conductor sin cédula registrada"}
-              </p>
+                  : "Conductor sin cédula registrada"
+                : ""}
+            </p>
 
-              {conductorSeleccionado.sucursal_nombre && (
-                <p className="mt-1 text-xs font-semibold text-blue-700">
-                  Sucursal:{" "}
-                  {
-                    conductorSeleccionado.sucursal_nombre
-                  }
-                </p>
-              )}
-            </div>
-          )}
+            <p
+              aria-hidden={
+                !conductorSeleccionado?.sucursal_nombre
+              }
+              className={`mt-1 text-xs font-semibold text-blue-700 ${
+                conductorSeleccionado?.sucursal_nombre
+                  ? "block"
+                  : "hidden"
+              }`}
+            >
+              Sucursal:{" "}
+              {conductorSeleccionado?.sucursal_nombre ||
+                ""}
+            </p>
+          </div>
         </div>
 
         <div className="md:col-span-2">
@@ -444,6 +563,7 @@ const AsignacionForm = ({
             <CarTaxiFront
               size={18}
               className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
             />
 
             <select
@@ -479,41 +599,74 @@ const AsignacionForm = ({
               )}
             </select>
 
-            {loadingCatalogos && (
-              <Loader2
+            <span
+              aria-hidden={!loadingCatalogos}
+              className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${
+                loadingCatalogos
+                  ? "block"
+                  : "hidden"
+              }`}
+            >
+              <LoaderCircle
                 size={18}
-                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-yellow-600"
+                className="animate-spin text-yellow-600"
+                aria-hidden="true"
               />
-            )}
+            </span>
           </div>
 
-          {!vehiculosDisponibles.length &&
-            !loadingCatalogos && (
-              <p className="mt-2 text-xs font-semibold text-red-600">
-                No hay vehículos activos
-                disponibles. Primero registra o
-                habilita un vehículo.
-              </p>
-            )}
+          <p
+            aria-hidden={
+              Boolean(
+                vehiculosDisponibles.length
+              ) ||
+              loadingCatalogos
+            }
+            className={`mt-2 text-xs font-semibold text-red-600 ${
+              !vehiculosDisponibles.length &&
+              !loadingCatalogos
+                ? "block"
+                : "hidden"
+            }`}
+          >
+            No hay vehículos activos
+            disponibles. Primero registra
+            o habilita un vehículo.
+          </p>
 
-          {vehiculoSeleccionado && (
-            <div className="mt-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3">
-              <p className="text-sm font-black text-yellow-800">
-                {obtenerNombreVehiculo(
-                  vehiculoSeleccionado
-                )}
-              </p>
+          <div
+            aria-hidden={
+              !vehiculoSeleccionado
+            }
+            className={`mt-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 ${
+              vehiculoSeleccionado
+                ? "block"
+                : "hidden"
+            }`}
+          >
+            <p className="text-sm font-black text-yellow-800">
+              {vehiculoSeleccionado
+                ? obtenerNombreVehiculo(
+                    vehiculoSeleccionado
+                  )
+                : ""}
+            </p>
 
-              {vehiculoSeleccionado.sucursal_nombre && (
-                <p className="mt-1 text-xs font-semibold text-yellow-700">
-                  Sucursal:{" "}
-                  {
-                    vehiculoSeleccionado.sucursal_nombre
-                  }
-                </p>
-              )}
-            </div>
-          )}
+            <p
+              aria-hidden={
+                !vehiculoSeleccionado?.sucursal_nombre
+              }
+              className={`mt-1 text-xs font-semibold text-yellow-700 ${
+                vehiculoSeleccionado?.sucursal_nombre
+                  ? "block"
+                  : "hidden"
+              }`}
+            >
+              Sucursal:{" "}
+              {vehiculoSeleccionado?.sucursal_nombre ||
+                ""}
+            </p>
+          </div>
         </div>
 
         <div>
@@ -528,6 +681,7 @@ const AsignacionForm = ({
             <CalendarDays
               size={18}
               className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
             />
 
             <input
@@ -554,6 +708,7 @@ const AsignacionForm = ({
             <CalendarDays
               size={18}
               className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
             />
 
             <input
@@ -561,7 +716,10 @@ const AsignacionForm = ({
               type="date"
               name="fecha_fin"
               value={form.fecha_fin}
-              min={form.fecha_inicio || undefined}
+              min={
+                form.fecha_inicio ||
+                undefined
+              }
               onChange={handleChange}
               disabled={deshabilitado}
               className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
@@ -594,6 +752,7 @@ const AsignacionForm = ({
                     ? "mt-0.5 shrink-0 text-emerald-600"
                     : "mt-0.5 shrink-0 text-slate-500"
                 }
+                aria-hidden="true"
               />
 
               <div>
@@ -614,9 +773,9 @@ const AsignacionForm = ({
                       : "text-slate-500"
                   }`}
                 >
-                  El conductor podrá registrar
-                  jornadas con el vehículo
-                  seleccionado.
+                  El conductor podrá
+                  registrar jornadas con
+                  el vehículo seleccionado.
                 </p>
               </div>
             </div>
@@ -636,8 +795,8 @@ const AsignacionForm = ({
       <div className="mt-7 flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">
         <button
           type="button"
-          onClick={onCancel}
-          disabled={saving}
+          onClick={handleCancel}
+          disabled={deshabilitado}
           className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Cancelar
@@ -650,20 +809,46 @@ const AsignacionForm = ({
             !conductoresDisponibles.length ||
             !vehiculosDisponibles.length
           }
-          className="flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60"
+          aria-busy={saving}
+          translate="no"
+          className="notranslate flex min-w-[175px] items-center justify-center rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {saving && (
-            <Loader2
+          <span
+            aria-hidden={!saving}
+            className={`items-center gap-2 ${
+              saving
+                ? "flex"
+                : "hidden"
+            }`}
+          >
+            <LoaderCircle
               size={18}
               className="animate-spin"
+              aria-hidden="true"
             />
-          )}
 
-          {saving
-            ? "Guardando..."
-            : esEdicion
-              ? "Guardar cambios"
-              : "Crear asignación"}
+            <span>Guardando...</span>
+          </span>
+
+          <span
+            aria-hidden={saving}
+            className={`items-center gap-2 ${
+              saving
+                ? "hidden"
+                : "flex"
+            }`}
+          >
+            <CheckCircle2
+              size={18}
+              aria-hidden="true"
+            />
+
+            <span>
+              {esEdicion
+                ? "Guardar cambios"
+                : "Crear asignación"}
+            </span>
+          </span>
         </button>
       </div>
     </form>

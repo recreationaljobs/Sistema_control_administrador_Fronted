@@ -1,625 +1,1028 @@
-// src/modules/conductores/components/ConductorForm.jsx
+// src/modules/asignaciones/components/AsignacionForm.jsx
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Swal from "sweetalert2";
 
 import {
-  BadgeCheck,
+  Building2,
   CalendarDays,
-  IdCard,
-  Loader2,
-  MapPin,
-  Percent,
-  Phone,
-  Save,
+  CarTaxiFront,
+  CheckCircle2,
+  LoaderCircle,
+  Route,
   UserRound,
 } from "lucide-react";
 
 import "sweetalert2/dist/sweetalert2.min.css";
 
-const EMPTY_FORM = {
-  nombre: "",
-  apellido: "",
-  cedula: "",
-  telefono: "",
-  direccion: "",
-  numero_licencia: "",
-  fecha_inicio_licencia: "",
-  fecha_vencimiento_licencia: "",
-  porcentaje_pago: "",
+const obtenerFechaLocal = () => {
+  const ahora = new Date();
+  const diferenciaZona =
+    ahora.getTimezoneOffset() * 60_000;
+
+  return new Date(
+    ahora.getTime() - diferenciaZona
+  )
+    .toISOString()
+    .split("T")[0];
 };
 
-const obtenerFechaActual = () => {
-  const fecha = new Date();
+const crearFormularioInicial = () => ({
+  conductor: "",
+  vehiculo: "",
+  fecha_inicio: obtenerFechaLocal(),
+  fecha_fin: "",
+  activa: true,
+});
 
-  const year = fecha.getFullYear();
-  const month = String(
-    fecha.getMonth() + 1
-  ).padStart(2, "0");
+const obtenerId = (valor) => {
+  if (!valor) {
+    return "";
+  }
 
-  const day = String(
-    fecha.getDate()
-  ).padStart(2, "0");
+  if (typeof valor === "object") {
+    return valor.id
+      ? String(valor.id)
+      : "";
+  }
 
-  return `${year}-${month}-${day}`;
+  return String(valor);
 };
 
-const obtenerFormularioInicial = (
-  initialData
+const obtenerNombreConductor = (
+  conductor
 ) => {
-  if (!initialData) {
-    return { ...EMPTY_FORM };
+  if (!conductor) {
+    return "Conductor sin nombre";
   }
 
-  return {
-    nombre: initialData.nombre || "",
-    apellido: initialData.apellido || "",
-    cedula: initialData.cedula || "",
-    telefono: initialData.telefono || "",
-    direccion: initialData.direccion || "",
-    numero_licencia:
-      initialData.numero_licencia || "",
-    fecha_inicio_licencia:
-      initialData.fecha_inicio_licencia || "",
-    fecha_vencimiento_licencia:
-      initialData.fecha_vencimiento_licencia ||
-      "",
-    porcentaje_pago:
-      initialData.porcentaje_pago ?? "",
-  };
+  return (
+    conductor.nombre_completo ||
+    `${conductor.nombre || ""} ${
+      conductor.apellido || ""
+    }`.trim() ||
+    "Conductor sin nombre"
+  );
 };
 
-const validarFormulario = (form) => {
-  const errors = {};
-
-  if (!form.nombre.trim()) {
-    errors.nombre =
-      "El nombre es obligatorio.";
+const obtenerNombreVehiculo = (
+  vehiculo
+) => {
+  if (!vehiculo) {
+    return "Vehículo sin información";
   }
 
-  if (!form.apellido.trim()) {
-    errors.apellido =
-      "El apellido es obligatorio.";
-  }
+  const identificacion = [
+    vehiculo.numero,
+    vehiculo.placa,
+  ]
+    .filter(Boolean)
+    .join(" - ");
 
-  if (!form.cedula.trim()) {
-    errors.cedula =
-      "La cédula es obligatoria.";
-  }
+  const descripcion = [
+    vehiculo.marca,
+    vehiculo.modelo,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-  if (!form.numero_licencia.trim()) {
-    errors.numero_licencia =
-      "La licencia es obligatoria.";
-  }
+  return [
+    identificacion,
+    descripcion,
+  ]
+    .filter(Boolean)
+    .join(" - ");
+};
 
-  if (!form.fecha_inicio_licencia) {
-    errors.fecha_inicio_licencia =
-      "La fecha de emisión es obligatoria.";
-  }
+const obtenerMensajeError = (
+  error
+) => {
+  const data =
+    error?.response?.data;
 
-  if (!form.fecha_vencimiento_licencia) {
-    errors.fecha_vencimiento_licencia =
-      "La fecha de vencimiento es obligatoria.";
+  if (
+    typeof data?.detail === "string"
+  ) {
+    return data.detail;
   }
 
   if (
-    form.fecha_inicio_licencia &&
-    form.fecha_vencimiento_licencia &&
-    form.fecha_vencimiento_licencia <=
-      form.fecha_inicio_licencia
+    typeof data?.message === "string"
   ) {
-    errors.fecha_vencimiento_licencia =
-      "El vencimiento debe ser posterior a la emisión.";
+    return data.message;
   }
 
   if (
-    String(form.porcentaje_pago).trim() ===
-    ""
+    data &&
+    typeof data === "object"
   ) {
-    errors.porcentaje_pago =
-      "El porcentaje es obligatorio.";
-  } else {
-    const porcentaje = Number(
-      form.porcentaje_pago
-    );
+    const primerValor =
+      Object.values(data)[0];
 
     if (
-      !Number.isFinite(porcentaje) ||
-      porcentaje < 1 ||
-      porcentaje > 100
+      Array.isArray(primerValor)
     ) {
-      errors.porcentaje_pago =
-        "El porcentaje debe estar entre 1 y 100.";
+      return (
+        primerValor[0] ||
+        "No se pudo guardar la asignación."
+      );
+    }
+
+    if (
+      typeof primerValor === "string"
+    ) {
+      return primerValor;
     }
   }
 
-  return errors;
-};
-
-const ErrorCampo = ({ mensaje }) => {
-  if (!mensaje) {
-    return null;
-  }
-
   return (
-    <p className="mt-1.5 text-xs font-semibold text-red-600">
-      {mensaje}
-    </p>
+    error?.message ||
+    "No se pudo guardar la asignación."
   );
 };
 
-const CampoIcono = ({
-  icono: Icono,
-  children,
-}) => {
-  return (
-    <div className="relative">
-      <Icono
-        size={18}
-        className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-      />
+const estaDisponible = (
+  registro
+) => {
+  const estado = String(
+    registro.estado_codigo ||
+      registro.estado ||
+      ""
+  )
+    .trim()
+    .toUpperCase();
 
-      {children}
-    </div>
+  return (
+    registro.activo !== false &&
+    registro.activa !== false &&
+    estado !== "INACTIVO" &&
+    estado !== "DESPEDIDO" &&
+    estado !== "FUERA_SERVICIO"
   );
 };
 
-const ConductorForm = ({
-  initialData = null,
-  onSubmit,
+const AsignacionForm = ({
+  asignacionEditando = null,
+  conductores = [],
+  vehiculos = [],
+  onSave,
   onCancel,
-  submitting = false,
-  submitError = "",
+  saving = false,
+  loadingCatalogos = false,
+  esSuperAdmin = false,
+  esAdminSucursal = false,
 }) => {
-  const [form, setForm] = useState({
-    ...EMPTY_FORM,
-  });
-
-  const [errors, setErrors] = useState({});
-
-  const hoy = obtenerFechaActual();
-  const esEdicion = Boolean(initialData);
-
-  useEffect(() => {
-    setForm(
-      obtenerFormularioInicial(initialData)
+  const [form, setForm] =
+    useState(
+      crearFormularioInicial
     );
 
-    setErrors({});
-  }, [initialData]);
+  const [
+    formError,
+    setFormError,
+  ] = useState("");
+
+  const esEdicion = Boolean(
+    asignacionEditando
+  );
 
   useEffect(() => {
-    if (!submitError) {
-      return;
+    if (asignacionEditando) {
+      setForm({
+        conductor: obtenerId(
+          asignacionEditando.conductor
+        ),
+
+        vehiculo: obtenerId(
+          asignacionEditando.vehiculo
+        ),
+
+        fecha_inicio:
+          asignacionEditando.fecha_inicio ||
+          obtenerFechaLocal(),
+
+        fecha_fin:
+          asignacionEditando.fecha_fin ||
+          "",
+
+        activa:
+          typeof asignacionEditando.activa ===
+          "boolean"
+            ? asignacionEditando.activa
+            : true,
+      });
+    } else {
+      setForm(
+        crearFormularioInicial()
+      );
     }
 
-    void Swal.fire({
-      title: "No se pudo guardar",
-      text: submitError,
-      icon: "error",
-      confirmButtonText: "Entendido",
-      confirmButtonColor: "#eab308",
-    });
-  }, [submitError]);
+    setFormError("");
+  }, [asignacionEditando]);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
+  const conductoresDisponibles =
+    useMemo(() => {
+      return conductores.filter(
+        (conductor) => {
+          const esSeleccionado =
+            String(
+              conductor.id
+            ) ===
+            String(
+              form.conductor
+            );
 
-    setForm((formAnterior) => ({
-      ...formAnterior,
-      [name]: value,
-    }));
+          return (
+            esSeleccionado ||
+            estaDisponible(
+              conductor
+            )
+          );
+        }
+      );
+    }, [
+      conductores,
+      form.conductor,
+    ]);
 
-    if (errors[name]) {
-      setErrors((erroresAnteriores) => ({
-        ...erroresAnteriores,
-        [name]: "",
-      }));
+  const vehiculosDisponibles =
+    useMemo(() => {
+      return vehiculos.filter(
+        (vehiculo) => {
+          const esSeleccionado =
+            String(
+              vehiculo.id
+            ) ===
+            String(
+              form.vehiculo
+            );
+
+          return (
+            esSeleccionado ||
+            estaDisponible(
+              vehiculo
+            )
+          );
+        }
+      );
+    }, [
+      vehiculos,
+      form.vehiculo,
+    ]);
+
+  const conductorSeleccionado =
+    useMemo(() => {
+      return (
+        conductores.find(
+          (conductor) =>
+            String(
+              conductor.id
+            ) ===
+            String(
+              form.conductor
+            )
+        ) || null
+      );
+    }, [
+      conductores,
+      form.conductor,
+    ]);
+
+  const vehiculoSeleccionado =
+    useMemo(() => {
+      return (
+        vehiculos.find(
+          (vehiculo) =>
+            String(
+              vehiculo.id
+            ) ===
+            String(
+              form.vehiculo
+            )
+        ) || null
+      );
+    }, [
+      vehiculos,
+      form.vehiculo,
+    ]);
+
+  const handleChange = (
+    event
+  ) => {
+    const {
+      name,
+      value,
+      type,
+      checked,
+    } = event.target;
+
+    setForm(
+      (formAnterior) => ({
+        ...formAnterior,
+
+        [name]:
+          type === "checkbox"
+            ? checked
+            : value,
+      })
+    );
+
+    if (formError) {
+      setFormError("");
     }
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (
+    event
+  ) => {
     event.preventDefault();
 
-    if (submitting) {
+    if (
+      saving ||
+      loadingCatalogos
+    ) {
       return;
     }
 
-    const nuevosErrores =
-      validarFormulario(form);
+    if (!form.conductor) {
+      setFormError(
+        "Debes seleccionar un conductor."
+      );
+
+      return;
+    }
+
+    if (!form.vehiculo) {
+      setFormError(
+        "Debes seleccionar un vehículo."
+      );
+
+      return;
+    }
+
+    if (!form.fecha_inicio) {
+      setFormError(
+        "La fecha de inicio es obligatoria."
+      );
+
+      return;
+    }
 
     if (
-      Object.keys(nuevosErrores).length > 0
+      form.fecha_fin &&
+      form.fecha_fin <
+        form.fecha_inicio
     ) {
-      setErrors(nuevosErrores);
+      setFormError(
+        "La fecha final no puede ser menor que la fecha de inicio."
+      );
 
-      const primerError =
-        Object.values(nuevosErrores)[0];
+      return;
+    }
 
-      void Swal.fire({
-        title: "Revisa los datos",
-        text: primerError,
-        icon: "warning",
-        confirmButtonText: "Entendido",
-        confirmButtonColor: "#eab308",
+    if (
+      form.activa &&
+      form.fecha_fin &&
+      form.fecha_fin <
+        obtenerFechaLocal()
+    ) {
+      setFormError(
+        "Una asignación activa no puede tener una fecha final anterior a la fecha actual."
+      );
+
+      return;
+    }
+
+    if (
+      typeof onSave !==
+      "function"
+    ) {
+      setFormError(
+        "No se encontró la función para guardar la asignación."
+      );
+
+      return;
+    }
+
+    let resultado;
+
+    try {
+      resultado =
+        await onSave({
+          conductor: Number(
+            form.conductor
+          ),
+
+          vehiculo: Number(
+            form.vehiculo
+          ),
+
+          fecha_inicio:
+            form.fecha_inicio,
+
+          fecha_fin:
+            form.fecha_fin ||
+            null,
+
+          activa: Boolean(
+            form.activa
+          ),
+        });
+    } catch (error) {
+      console.error(
+        "Error al guardar la asignación:",
+        error
+      );
+
+      const mensajeError =
+        obtenerMensajeError(
+          error
+        );
+
+      setFormError(
+        mensajeError
+      );
+
+      await Swal.fire({
+        title: esEdicion
+          ? "No se pudo actualizar"
+          : "No se pudo registrar",
+
+        text: mensajeError,
+
+        icon: "error",
+
+        confirmButtonText:
+          "Entendido",
+
+        confirmButtonColor:
+          "#eab308",
       });
 
       return;
     }
 
-    const confirmacion = await Swal.fire({
-      title: esEdicion
-        ? "¿Actualizar conductor?"
-        : "¿Registrar conductor?",
-      text: esEdicion
-        ? "Se guardarán los cambios realizados."
-        : "El conductor será agregado al sistema.",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: esEdicion
-        ? "Actualizar"
-        : "Registrar",
-      cancelButtonText: "Cancelar",
-      confirmButtonColor: "#eab308",
-      cancelButtonColor: "#64748b",
-      reverseButtons: true,
-    });
-
-    if (!confirmacion.isConfirmed) {
+    if (
+      resultado === false
+    ) {
       return;
     }
 
-    const payload = {
-      nombre: form.nombre.trim(),
-      apellido: form.apellido.trim(),
-      cedula: form.cedula.trim(),
-      telefono:
-        form.telefono.trim() || null,
-      direccion:
-        form.direccion.trim() || null,
-      numero_licencia:
-        form.numero_licencia.trim(),
-      fecha_inicio_licencia:
-        form.fecha_inicio_licencia,
-      fecha_vencimiento_licencia:
-        form.fecha_vencimiento_licencia,
-      porcentaje_pago: Number(
-        form.porcentaje_pago
-      ),
-      activo:
-        initialData?.activo ?? true,
-    };
+    await Swal.fire({
+      title: esEdicion
+        ? "¡Asignación actualizada!"
+        : "¡Asignación registrada!",
 
-    await onSubmit(payload);
+      text: esEdicion
+        ? "Los cambios se guardaron correctamente."
+        : "La asignación se registró correctamente.",
+
+      icon: "success",
+
+      showConfirmButton:
+        false,
+
+      showCancelButton:
+        false,
+
+      timer: 2200,
+
+      timerProgressBar:
+        true,
+
+      allowOutsideClick:
+        false,
+
+      allowEscapeKey:
+        false,
+    });
   };
 
-  const inputClass = (campo) => {
-    return `w-full rounded-2xl border bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 ${
-      errors[campo]
-        ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100"
-        : "border-slate-300 hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
-    }`;
-  };
-
-  const textareaClass = (campo) => {
-    return `w-full resize-none rounded-2xl border bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 ${
-      errors[campo]
-        ? "border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100"
-        : "border-slate-300 hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
-    }`;
-  };
+  const deshabilitado =
+    saving ||
+    loadingCatalogos;
 
   return (
     <form
-      onSubmit={handleSubmit}
-      className="space-y-5 p-5 sm:p-6"
+      onSubmit={
+        handleSubmit
+      }
+      className="notranslate p-5 sm:p-6"
       noValidate
+      translate="no"
+      aria-busy={
+        deshabilitado
+      }
     >
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-            <UserRound size={20} />
-          </div>
+      {formError && (
+        <div
+          role="alert"
+          className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3"
+        >
+          <p className="text-sm font-black text-red-700">
+            Revisa la
+            información
+          </p>
 
-          <h3 className="font-black text-slate-900">
-            Datos personales
-          </h3>
+          <p className="mt-1 text-sm font-medium text-red-600">
+            {formError}
+          </p>
         </div>
+      )}
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-bold text-slate-700">
-              Nombre *
-            </label>
-
-            <CampoIcono icono={UserRound}>
-              <input
-                type="text"
-                name="nombre"
-                value={form.nombre}
-                onChange={handleChange}
-                placeholder="Nombre"
-                disabled={submitting}
-                autoComplete="given-name"
-                className={inputClass("nombre")}
-              />
-            </CampoIcono>
-
-            <ErrorCampo
-              mensaje={errors.nombre}
-            />
-          </div>
+      {esSuperAdmin && (
+        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
+          <Building2
+            size={20}
+            className="mt-0.5 shrink-0 text-blue-600"
+            aria-hidden="true"
+          />
 
           <div>
-            <label className="mb-2 block text-sm font-bold text-slate-700">
-              Apellido *
-            </label>
+            <p className="text-sm font-black text-blue-800">
+              Panel general
+            </p>
 
-            <CampoIcono icono={UserRound}>
-              <input
-                type="text"
-                name="apellido"
-                value={form.apellido}
-                onChange={handleChange}
-                placeholder="Apellido"
-                disabled={submitting}
-                autoComplete="family-name"
-                className={inputClass(
-                  "apellido"
-                )}
-              />
-            </CampoIcono>
-
-            <ErrorCampo
-              mensaje={errors.apellido}
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-bold text-slate-700">
-              Cédula *
-            </label>
-
-            <CampoIcono icono={IdCard}>
-              <input
-                type="text"
-                name="cedula"
-                value={form.cedula}
-                onChange={handleChange}
-                placeholder="001-010190-0000A"
-                disabled={submitting}
-                className={inputClass("cedula")}
-              />
-            </CampoIcono>
-
-            <ErrorCampo
-              mensaje={errors.cedula}
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-bold text-slate-700">
-              Teléfono
-            </label>
-
-            <CampoIcono icono={Phone}>
-              <input
-                type="tel"
-                name="telefono"
-                value={form.telefono}
-                onChange={handleChange}
-                placeholder="8888-8888"
-                disabled={submitting}
-                autoComplete="tel"
-                className={inputClass(
-                  "telefono"
-                )}
-              />
-            </CampoIcono>
-
-            <ErrorCampo
-              mensaje={errors.telefono}
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="mb-2 block text-sm font-bold text-slate-700">
-              Dirección
-            </label>
-
-            <div className="relative">
-              <MapPin
-                size={18}
-                className="pointer-events-none absolute left-4 top-4 text-slate-400"
-              />
-
-              <textarea
-                name="direccion"
-                value={form.direccion}
-                onChange={handleChange}
-                placeholder="Dirección"
-                disabled={submitting}
-                rows={2}
-                className={`${textareaClass(
-                  "direccion"
-                )} pl-11`}
-              />
-            </div>
+            <p className="mt-1 text-sm font-medium text-blue-700">
+              La asignación
+              quedará registrada
+              desde el panel del
+              superadministrador.
+            </p>
           </div>
         </div>
-      </section>
+      )}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-100 text-yellow-700">
-            <BadgeCheck size={20} />
-          </div>
-
-          <h3 className="font-black text-slate-900">
-            Licencia
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div>
-            <label className="mb-2 block text-sm font-bold text-slate-700">
-              Número *
-            </label>
-
-            <CampoIcono icono={BadgeCheck}>
-              <input
-                type="text"
-                name="numero_licencia"
-                value={form.numero_licencia}
-                onChange={handleChange}
-                placeholder="L-987654"
-                disabled={submitting}
-                className={inputClass(
-                  "numero_licencia"
-                )}
-              />
-            </CampoIcono>
-
-            <ErrorCampo
-              mensaje={
-                errors.numero_licencia
-              }
-            />
-          </div>
+      {esAdminSucursal && (
+        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <CheckCircle2
+            size={20}
+            className="mt-0.5 shrink-0 text-emerald-600"
+            aria-hidden="true"
+          />
 
           <div>
-            <label className="mb-2 block text-sm font-bold text-slate-700">
-              Emisión *
-            </label>
+            <p className="text-sm font-black text-emerald-800">
+              Sucursal asignada
+            </p>
 
-            <CampoIcono icono={CalendarDays}>
-              <input
-                type="date"
-                name="fecha_inicio_licencia"
-                value={
-                  form.fecha_inicio_licencia
-                }
-                onChange={handleChange}
-                max={hoy}
-                disabled={submitting}
-                className={inputClass(
-                  "fecha_inicio_licencia"
-                )}
-              />
-            </CampoIcono>
-
-            <ErrorCampo
-              mensaje={
-                errors.fecha_inicio_licencia
-              }
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-bold text-slate-700">
-              Vencimiento *
-            </label>
-
-            <CampoIcono icono={CalendarDays}>
-              <input
-                type="date"
-                name="fecha_vencimiento_licencia"
-                value={
-                  form.fecha_vencimiento_licencia
-                }
-                onChange={handleChange}
-                min={
-                  form.fecha_inicio_licencia ||
-                  undefined
-                }
-                disabled={submitting}
-                className={inputClass(
-                  "fecha_vencimiento_licencia"
-                )}
-              />
-            </CampoIcono>
-
-            <ErrorCampo
-              mensaje={
-                errors.fecha_vencimiento_licencia
-              }
-            />
+            <p className="mt-1 text-sm font-medium text-emerald-700">
+              La asignación
+              quedará asociada
+              automáticamente a
+              tu sucursal.
+            </p>
           </div>
         </div>
-      </section>
+      )}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-            <Percent size={20} />
-          </div>
-
-          <h3 className="font-black text-slate-900">
-            Porcentaje de pago
-          </h3>
-        </div>
-
-        <div className="max-w-sm">
-          <label className="mb-2 block text-sm font-bold text-slate-700">
-            Porcentaje *
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="md:col-span-2">
+          <label
+            htmlFor="asignacion-conductor"
+            className="mb-2 block text-sm font-bold text-slate-700"
+          >
+            Conductor
           </label>
 
-          <CampoIcono icono={Percent}>
-            <input
-              type="number"
-              name="porcentaje_pago"
-              value={form.porcentaje_pago}
-              onChange={handleChange}
-              min={1}
-              max={100}
-              step={0.5}
-              placeholder="30"
-              disabled={submitting}
-              className={inputClass(
-                "porcentaje_pago"
-              )}
+          <div className="relative">
+            <UserRound
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
             />
-          </CampoIcono>
 
-          <ErrorCampo
-            mensaje={errors.porcentaje_pago}
-          />
+            <select
+              id="asignacion-conductor"
+              name="conductor"
+              value={
+                form.conductor
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                deshabilitado
+              }
+              className="w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+            >
+              <option value="">
+                {loadingCatalogos
+                  ? "Cargando conductores..."
+                  : "Selecciona un conductor"}
+              </option>
+
+              {conductoresDisponibles.map(
+                (conductor) => (
+                  <option
+                    key={
+                      conductor.id
+                    }
+                    value={
+                      conductor.id
+                    }
+                  >
+                    {obtenerNombreConductor(
+                      conductor
+                    )}
+
+                    {conductor.cedula
+                      ? ` - ${conductor.cedula}`
+                      : ""}
+
+                    {conductor.sucursal_nombre
+                      ? ` - ${conductor.sucursal_nombre}`
+                      : esSuperAdmin
+                        ? " - Panel general"
+                        : ""}
+                  </option>
+                )
+              )}
+            </select>
+
+            <span
+              aria-hidden={
+                !loadingCatalogos
+              }
+              className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${
+                loadingCatalogos
+                  ? "block"
+                  : "hidden"
+              }`}
+            >
+              <LoaderCircle
+                size={18}
+                className="animate-spin text-yellow-600"
+                aria-hidden="true"
+              />
+            </span>
+          </div>
+
+          {!conductoresDisponibles.length &&
+            !loadingCatalogos && (
+              <p className="mt-2 text-xs font-semibold text-red-600">
+                No hay
+                conductores activos
+                disponibles.
+                Primero registra o
+                reactiva un
+                conductor.
+              </p>
+            )}
+
+          {conductorSeleccionado && (
+            <div className="mt-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
+              <p className="text-sm font-black text-blue-800">
+                {obtenerNombreConductor(
+                  conductorSeleccionado
+                )}
+              </p>
+
+              <p className="mt-1 text-xs font-semibold text-blue-700">
+                {conductorSeleccionado.cedula
+                  ? `Cédula: ${conductorSeleccionado.cedula}`
+                  : "Conductor sin cédula registrada"}
+              </p>
+
+              {conductorSeleccionado.sucursal_nombre && (
+                <p className="mt-1 text-xs font-semibold text-blue-700">
+                  Sucursal:{" "}
+                  {
+                    conductorSeleccionado.sucursal_nombre
+                  }
+                </p>
+              )}
+            </div>
+          )}
         </div>
-      </section>
 
-      <div className="sticky bottom-0 z-10 flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 py-4 sm:flex-row sm:justify-end">
+        <div className="md:col-span-2">
+          <label
+            htmlFor="asignacion-vehiculo"
+            className="mb-2 block text-sm font-bold text-slate-700"
+          >
+            Vehículo
+          </label>
+
+          <div className="relative">
+            <CarTaxiFront
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
+            />
+
+            <select
+              id="asignacion-vehiculo"
+              name="vehiculo"
+              value={
+                form.vehiculo
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                deshabilitado
+              }
+              className="w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+            >
+              <option value="">
+                {loadingCatalogos
+                  ? "Cargando vehículos..."
+                  : "Selecciona un vehículo"}
+              </option>
+
+              {vehiculosDisponibles.map(
+                (vehiculo) => (
+                  <option
+                    key={
+                      vehiculo.id
+                    }
+                    value={
+                      vehiculo.id
+                    }
+                  >
+                    {obtenerNombreVehiculo(
+                      vehiculo
+                    )}
+
+                    {vehiculo.sucursal_nombre
+                      ? ` - ${vehiculo.sucursal_nombre}`
+                      : esSuperAdmin
+                        ? " - Panel general"
+                        : ""}
+                  </option>
+                )
+              )}
+            </select>
+
+            <span
+              aria-hidden={
+                !loadingCatalogos
+              }
+              className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${
+                loadingCatalogos
+                  ? "block"
+                  : "hidden"
+              }`}
+            >
+              <LoaderCircle
+                size={18}
+                className="animate-spin text-yellow-600"
+                aria-hidden="true"
+              />
+            </span>
+          </div>
+
+          {!vehiculosDisponibles.length &&
+            !loadingCatalogos && (
+              <p className="mt-2 text-xs font-semibold text-red-600">
+                No hay vehículos
+                activos disponibles.
+                Primero registra o
+                habilita un
+                vehículo.
+              </p>
+            )}
+
+          {vehiculoSeleccionado && (
+            <div className="mt-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3">
+              <p className="text-sm font-black text-yellow-800">
+                {obtenerNombreVehiculo(
+                  vehiculoSeleccionado
+                )}
+              </p>
+
+              {vehiculoSeleccionado.sucursal_nombre && (
+                <p className="mt-1 text-xs font-semibold text-yellow-700">
+                  Sucursal:{" "}
+                  {
+                    vehiculoSeleccionado.sucursal_nombre
+                  }
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="asignacion-fecha-inicio"
+            className="mb-2 block text-sm font-bold text-slate-700"
+          >
+            Fecha de inicio
+          </label>
+
+          <div className="relative">
+            <CalendarDays
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
+            />
+
+            <input
+              id="asignacion-fecha-inicio"
+              type="date"
+              name="fecha_inicio"
+              value={
+                form.fecha_inicio
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                deshabilitado
+              }
+              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label
+            htmlFor="asignacion-fecha-fin"
+            className="mb-2 block text-sm font-bold text-slate-700"
+          >
+            Fecha final
+          </label>
+
+          <div className="relative">
+            <CalendarDays
+              size={18}
+              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
+            />
+
+            <input
+              id="asignacion-fecha-fin"
+              type="date"
+              name="fecha_fin"
+              value={
+                form.fecha_fin
+              }
+              min={
+                form.fecha_inicio ||
+                undefined
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                deshabilitado
+              }
+              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+            />
+          </div>
+
+          <p className="mt-2 text-xs font-medium text-slate-500">
+            Déjala vacía
+            mientras la
+            asignación continúe
+            vigente.
+          </p>
+        </div>
+
+        <div className="md:col-span-2">
+          <label
+            className={`flex items-center justify-between gap-4 rounded-2xl border px-4 py-4 transition ${
+              form.activa
+                ? "border-emerald-200 bg-emerald-50"
+                : "border-slate-200 bg-slate-50"
+            } ${
+              deshabilitado
+                ? "cursor-not-allowed opacity-70"
+                : "cursor-pointer"
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <Route
+                size={21}
+                className={
+                  form.activa
+                    ? "mt-0.5 shrink-0 text-emerald-600"
+                    : "mt-0.5 shrink-0 text-slate-500"
+                }
+                aria-hidden="true"
+              />
+
+              <div>
+                <p
+                  className={`text-sm font-black ${
+                    form.activa
+                      ? "text-emerald-800"
+                      : "text-slate-800"
+                  }`}
+                >
+                  Asignación
+                  activa
+                </p>
+
+                <p
+                  className={`mt-1 text-xs font-medium ${
+                    form.activa
+                      ? "text-emerald-700"
+                      : "text-slate-500"
+                  }`}
+                >
+                  El conductor
+                  podrá registrar
+                  jornadas con el
+                  vehículo
+                  seleccionado.
+                </p>
+              </div>
+            </div>
+
+            <input
+              type="checkbox"
+              name="activa"
+              checked={
+                form.activa
+              }
+              onChange={
+                handleChange
+              }
+              disabled={
+                deshabilitado
+              }
+              className="h-5 w-5 shrink-0 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400 disabled:cursor-not-allowed"
+            />
+          </label>
+        </div>
+      </div>
+
+      <div className="mt-7 flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">
         <button
           type="button"
-          onClick={onCancel}
-          disabled={submitting}
-          className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={
+            onCancel
+          }
+          disabled={
+            deshabilitado
+          }
+          className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Cancelar
         </button>
 
         <button
           type="submit"
-          disabled={submitting}
-          className="flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-6 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={
+            deshabilitado ||
+            !conductoresDisponibles.length ||
+            !vehiculosDisponibles.length
+          }
+          aria-busy={
+            saving
+          }
+          translate="no"
+          className="notranslate flex min-w-[175px] items-center justify-center rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {submitting ? (
-            <Loader2
+          <span
+            aria-hidden={
+              !saving
+            }
+            className={`items-center gap-2 ${
+              saving
+                ? "flex"
+                : "hidden"
+            }`}
+          >
+            <LoaderCircle
               size={18}
               className="animate-spin"
+              aria-hidden="true"
             />
-          ) : (
-            <Save size={18} />
-          )}
 
-          {submitting
-            ? "Guardando..."
-            : esEdicion
-              ? "Actualizar"
-              : "Registrar"}
+            <span>
+              Guardando...
+            </span>
+          </span>
+
+          <span
+            aria-hidden={
+              saving
+            }
+            className={`items-center gap-2 ${
+              saving
+                ? "hidden"
+                : "flex"
+            }`}
+          >
+            <CheckCircle2
+              size={18}
+              aria-hidden="true"
+            />
+
+            <span>
+              {esEdicion
+                ? "Guardar cambios"
+                : "Crear asignación"}
+            </span>
+          </span>
         </button>
       </div>
     </form>
   );
 };
 
-export default ConductorForm;
+export default AsignacionForm;

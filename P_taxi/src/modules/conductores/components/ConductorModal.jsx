@@ -1,8 +1,8 @@
-// src/modules/conductores/components/ConductorModal.jsx
 
 import { useEffect } from "react";
+
 import {
-  Loader2,
+  LoaderCircle,
   UserRound,
   X,
 } from "lucide-react";
@@ -25,10 +25,13 @@ const ConductorModal = ({
     const overflowAnterior =
       document.body.style.overflow;
 
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (
+      event
+    ) => {
       if (
         event.key === "Escape" &&
-        !submitting
+        !submitting &&
+        typeof onClose === "function"
       ) {
         onClose();
       }
@@ -51,30 +54,44 @@ const ConductorModal = ({
       document.body.style.overflow =
         overflowAnterior;
     };
-  }, [open, submitting, onClose]);
+  }, [
+    open,
+    submitting,
+    onClose,
+  ]);
 
   if (!open) {
     return null;
   }
 
-  const esEdicion = Boolean(conductor);
+  const esEdicion = Boolean(
+    conductor
+  );
 
   const cerrarModal = () => {
     if (submitting) {
       return;
     }
 
-    onClose();
+    if (
+      typeof onClose === "function"
+    ) {
+      onClose();
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center px-3 py-4 sm:px-5">
+    <div
+      className="notranslate fixed inset-0 z-[100] flex items-center justify-center px-3 py-4 sm:px-5"
+      translate="no"
+    >
       <button
         type="button"
         onClick={cerrarModal}
         disabled={submitting}
-        className="absolute inset-0 cursor-default bg-slate-950/60"
+        className="absolute inset-0 cursor-default bg-slate-950/60 disabled:cursor-not-allowed"
         aria-label="Cerrar modal"
+        tabIndex={-1}
       />
 
       <section
@@ -90,7 +107,10 @@ const ConductorModal = ({
           <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-center gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
-                <UserRound size={25} />
+                <UserRound
+                  size={25}
+                  aria-hidden="true"
+                />
               </div>
 
               <div>
@@ -104,7 +124,8 @@ const ConductorModal = ({
                 </h2>
 
                 <p className="mt-1 text-sm font-medium text-slate-500">
-                  Datos personales, licencia y pago.
+                  Datos personales,
+                  licencia y pago.
                 </p>
               </div>
             </div>
@@ -116,28 +137,42 @@ const ConductorModal = ({
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Cerrar"
             >
-              <X size={21} />
+              <X
+                size={21}
+                aria-hidden="true"
+              />
             </button>
           </div>
 
-          {submitting && (
-            <div className="mt-4 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <Loader2
-                size={18}
-                className="animate-spin text-yellow-600"
-              />
+          <div
+            aria-hidden={!submitting}
+            className={`mt-4 items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 ${
+              submitting
+                ? "flex"
+                : "hidden"
+            }`}
+          >
+            <LoaderCircle
+              size={18}
+              className="animate-spin text-yellow-600"
+              aria-hidden="true"
+            />
 
-              <p className="text-sm font-bold text-slate-600">
-                {esEdicion
-                  ? "Actualizando conductor..."
-                  : "Registrando conductor..."}
-              </p>
-            </div>
-          )}
+            <p className="text-sm font-bold text-slate-600">
+              {esEdicion
+                ? "Actualizando conductor..."
+                : "Registrando conductor..."}
+            </p>
+          </div>
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50">
           <ConductorForm
+            key={
+              conductor?.id
+                ? `conductor-${conductor.id}`
+                : "conductor-nuevo"
+            }
             initialData={conductor}
             onSubmit={onSubmit}
             onCancel={cerrarModal}

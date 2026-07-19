@@ -124,22 +124,23 @@ const AsignacionesPage = () => {
             </div>
 
             <button
-              type="button"
-              onClick={abrirModalCrear}
-              disabled={saving || loadingCatalogos}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:-translate-y-0.5 hover:bg-yellow-500 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-            >
-              {loadingCatalogos ? (
-                <Loader2
-                  size={19}
-                  className="animate-spin"
-                />
-              ) : (
-                <Plus size={20} />
-              )}
+                type="button"
+                onClick={abrirModalCrear}
+                disabled={saving || loadingCatalogos}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:-translate-y-0.5 hover:bg-yellow-500 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+              >
+                {loadingCatalogos ? (
+                  <Loader2
+                    size={19}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <Plus size={20} />
+                )}
 
-              Nueva asignación
-            </button>
+                {/* El cambio está aquí: envolver el texto en un span */}
+                <span>Nueva asignación</span>
+              </button>
           </div>
         </div>
       </section>
