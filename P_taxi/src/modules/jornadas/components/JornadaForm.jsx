@@ -770,6 +770,7 @@ const JornadaForm = ({
               min="0"
               inputMode="numeric"
               placeholder="Ejemplo: 25120"
+              required
               className="block w-full min-w-0 max-w-full rounded-2xl border border-slate-300 bg-white px-4 py-4 text-base font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
             />
           </div>

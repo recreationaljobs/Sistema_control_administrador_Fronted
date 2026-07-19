@@ -607,13 +607,13 @@ const JornadaTable = ({ jornadas, loading, onEdit, onDelete, esTaxista }) => {
                           </div>
 
                           <div>
-                            <p className="text-sm font-black text-slate-900">
+                            <p className="text-lg font-black text-slate-900">
                               {jornada.conductor_nombre}
                             </p>
 
-                            <p className="mt-1 text-xs font-medium text-slate-500">
+                            {/* <p className="mt-1 text-xs font-medium text-slate-500">
                               ID: {jornada.conductor}
-                            </p>
+                            </p> */}
                           </div>
                         </div>
                       </td>
