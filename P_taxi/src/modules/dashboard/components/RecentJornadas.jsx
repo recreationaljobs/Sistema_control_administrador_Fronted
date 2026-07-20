@@ -82,7 +82,7 @@ const RecentJornadas = ({
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-bold ${badge}`}
                 >
-                  {jornada.estado_nombre || "Sin estado"}
+                  {jornada.estado_nombre || "Circulando"}
                 </span>
 
                 <p className="w-24 text-right text-sm font-black text-slate-900">
