@@ -881,7 +881,7 @@ const GananciasTaxistaPage =
                 "150ms",
             }}
           >
-            <div className="resumen-movimiento rounded-2xl border border-[#F3D26A] bg-[#FFF9E7] p-3 text-center shadow-sm">
+            {/* <div className="resumen-movimiento rounded-2xl border border-[#F3D26A] bg-[#FFF9E7] p-3 text-center shadow-sm">
               <p className="text-[10px] font-black uppercase text-[#A97900]">
                 Ganancia
               </p>
@@ -891,9 +891,9 @@ const GananciasTaxistaPage =
                   saldoFiltradoAnimado
                 )}
               </p>
-            </div>
+            </div> */}
 
-            <div className="resumen-movimiento rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm">
+            {/* <div className="resumen-movimiento rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm">
               <p className="text-[10px] font-black uppercase text-slate-400">
                 Jornadas
               </p>
@@ -903,9 +903,9 @@ const GananciasTaxistaPage =
                   jornadasFiltradas.length
                 }
               </p>
-            </div>
+            </div> */}
 
-            <div className="resumen-movimiento rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm">
+            {/* <div className="resumen-movimiento rounded-2xl border border-slate-200 bg-white p-3 text-center shadow-sm">
               <p className="text-[10px] font-black uppercase text-slate-400">
                 Kilómetros
               </p>
@@ -915,7 +915,7 @@ const GananciasTaxistaPage =
                   kilometrosAnimados
                 )}
               </p>
-            </div>
+            </div> */}
           </section>
 
           <section

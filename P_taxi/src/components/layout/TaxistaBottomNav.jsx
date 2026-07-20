@@ -38,8 +38,8 @@ const TaxistaBottomNav = () => {
   };
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white px-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(15,23,42,0.10)]">
-      <div className="mx-auto grid max-w-md grid-cols-4 items-center">
+    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white px-3 pb-[calc(0.65rem+env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_30px_rgba(15,23,42,0.10)] ">
+      <div className="mx-auto grid max-w-md grid-cols-3 justify-between">
         <button
           type="button"
           onClick={abrirJornadas}
@@ -62,7 +62,7 @@ const TaxistaBottomNav = () => {
           <span>Jornadas</span>
         </button>
 
-        <button
+        {/* <button
           type="button"
           onClick={abrirCalendario}
           className={`flex flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-bold transition ${
@@ -82,7 +82,7 @@ const TaxistaBottomNav = () => {
           </div>
 
           <span>Fecha</span>
-        </button>
+        </button> */}
 
         <button
           type="button"
