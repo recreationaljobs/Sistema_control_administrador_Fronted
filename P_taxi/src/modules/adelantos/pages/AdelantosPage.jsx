@@ -9,17 +9,17 @@ import {
   Plus,
   Scale,
   UserRound,
-  Wallet,
 } from "lucide-react";
 
 import AdelantoModal from "../components/AdelantoModal";
 import AdelantoTable from "../components/AdelantoTable";
 import { useAdelantos } from "../hooks/useAdelantos";
 
-const formateadorDinero = new Intl.NumberFormat("es-NI", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
+const formateadorDinero =
+  new Intl.NumberFormat("es-NI", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 const formatoDinero = (valor) => {
   const monto = Number(valor);
@@ -54,6 +54,71 @@ const nombreConductor = (conductor) => {
   }`.trim();
 };
 
+const AdelantosLoader = () => {
+  return (
+    <div
+      translate="no"
+      className="flex min-h-[310px] flex-col items-center justify-center px-5 py-10 text-center"
+    >
+      <div className="relative flex h-28 w-28 items-center justify-center">
+        {/* Fondo exterior */}
+        <div className="absolute inset-0 rounded-full border-4 border-slate-100" />
+
+        {/* Aro amarillo */}
+        <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-r-yellow-400 border-t-yellow-400" />
+
+        {/* Aro verde en sentido contrario */}
+        <div
+          className="absolute inset-[10px] animate-spin rounded-full border-[3px] border-transparent border-b-emerald-500 border-l-emerald-500"
+          style={{
+            animationDuration: "1.4s",
+            animationDirection: "reverse",
+          }}
+        />
+
+        {/* Centro degradado */}
+        <div className="absolute inset-[22px] rounded-full bg-gradient-to-br from-yellow-50 via-white to-emerald-50 shadow-inner" />
+
+        {/* Icono central */}
+        <div
+          className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-white text-yellow-700 shadow-lg"
+          style={{
+            boxShadow:
+              "0 8px 25px rgba(234,179,8,0.22)",
+          }}
+        >
+          <HandCoins size={29} />
+        </div>
+
+        {/* Partículas */}
+        <span className="absolute left-1 top-4 h-2.5 w-2.5 animate-pulse rounded-full bg-yellow-400" />
+
+        <span
+          className="absolute bottom-4 right-0 h-2 w-2 animate-pulse rounded-full bg-emerald-500"
+          style={{
+            animationDelay: "200ms",
+          }}
+        />
+
+        <span
+          className="absolute right-6 top-0 h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400"
+          style={{
+            animationDelay: "400ms",
+          }}
+        />
+      </div>
+
+      <h3 className="mt-5 text-lg font-black text-slate-950">
+        Cargando movimientos
+      </h3>
+
+      <p className="mt-2 max-w-sm text-sm font-medium text-slate-500">
+        Preparando los adelantos, abonos y saldos registrados...
+      </p>
+    </div>
+  );
+};
+
 const TarjetaResumen = ({
   titulo,
   valor,
@@ -64,7 +129,7 @@ const TarjetaResumen = ({
   textoValor = "text-slate-950",
 }) => {
   return (
-    <article className="group rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <article className="group rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
       <div className="flex items-center gap-4">
         <div
           className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${fondoIcono} ${textoIcono}`}
@@ -78,7 +143,8 @@ const TarjetaResumen = ({
           </p>
 
           <h3
-            className={`mt-1 truncate text-xl font-black tabular-nums ${textoValor}`}
+            translate="no"
+            className={`notranslate mt-1 truncate text-xl font-black tabular-nums ${textoValor}`}
             title={String(valor)}
           >
             {valor}
@@ -99,23 +165,30 @@ const AdelantosPage = () => {
   const {
     adelantosFiltrados,
     conductores,
+
     loading,
     loadingCatalogos,
     saving,
+
     error,
+
     filtroTipo,
     setFiltroTipo,
     filtroConductor,
     setFiltroConductor,
+
     modalOpen,
     adelantoEditando,
     tipoInicial,
+
     totalAdelantos,
     totalAbonos,
     montoAdelantos,
     montoAbonos,
     saldo,
+
     esTaxista,
+
     abrirModalCrear,
     abrirModalEditar,
     cerrarModal,
@@ -130,7 +203,9 @@ const AdelantosPage = () => {
   const cantidadFiltrada =
     adelantosFiltrados.length;
 
-  const saldoNumerico = Number(saldo || 0);
+  const saldoNumerico = Number(
+    saldo || 0
+  );
 
   const textoSaldo =
     saldoNumerico > 0
@@ -140,10 +215,12 @@ const AdelantosPage = () => {
         : "No hay saldo pendiente";
 
   return (
-    <div className="space-y-6">
-      {/* Encabezado */}
+    <div
+      translate="no"
+      className="space-y-6"
+    >
       <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-        <div className="h-1.5 w-full bg-yellow-400" />
+        <div className="h-1.5 w-full bg-gradient-to-r from-yellow-400 via-yellow-300 to-emerald-500" />
 
         <div className="p-5 sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -172,24 +249,30 @@ const AdelantosPage = () => {
                 <button
                   type="button"
                   onClick={() =>
-                    abrirModalCrear("ADELANTO")
+                    abrirModalCrear(
+                      "ADELANTO"
+                    )
                   }
                   disabled={saving}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:-translate-y-0.5 hover:bg-yellow-500 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 cursor-pointer"
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:-translate-y-0.5 hover:bg-yellow-500 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-yellow-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   <Plus size={19} />
+
                   Registrar adelanto
                 </button>
 
                 <button
                   type="button"
                   onClick={() =>
-                    abrirModalCrear("ABONO")
+                    abrirModalCrear(
+                      "ABONO"
+                    )
                   }
                   disabled={saving}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-black text-white shadow-md shadow-emerald-100 transition hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-emerald-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 cursor-pointer"
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-black text-white shadow-md shadow-emerald-100 transition hover:-translate-y-0.5 hover:bg-emerald-600 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-emerald-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                 >
                   <Plus size={19} />
+
                   Registrar abono
                 </button>
               </div>
@@ -198,7 +281,6 @@ const AdelantosPage = () => {
         </div>
       </section>
 
-      {/* Mensaje de error */}
       {error && (
         <div
           role="alert"
@@ -214,11 +296,12 @@ const AdelantosPage = () => {
         </div>
       )}
 
-      {/* Tarjetas */}
       <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <TarjetaResumen
           titulo="Total de adelantos"
-          valor={formatoDinero(montoAdelantos)}
+          valor={formatoDinero(
+            montoAdelantos
+          )}
           descripcion={`${totalAdelantos} ${
             totalAdelantos === 1
               ? "registro"
@@ -232,7 +315,9 @@ const AdelantosPage = () => {
 
         <TarjetaResumen
           titulo="Total de abonos"
-          valor={formatoDinero(montoAbonos)}
+          valor={formatoDinero(
+            montoAbonos
+          )}
           descripcion={`${totalAbonos} ${
             totalAbonos === 1
               ? "registro"
@@ -246,7 +331,9 @@ const AdelantosPage = () => {
 
         <TarjetaResumen
           titulo="Saldo pendiente"
-          valor={formatoDinero(saldoNumerico)}
+          valor={formatoDinero(
+            saldoNumerico
+          )}
           descripcion={textoSaldo}
           icono={Scale}
           fondoIcono={
@@ -283,161 +370,206 @@ const AdelantosPage = () => {
         />
       </section>
 
-      {/* Listado */}
-      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <h2 className="text-lg font-black text-slate-950">
-              Listado de movimientos
-            </h2>
+      <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+        <div className="h-1.5 w-full bg-gradient-to-r from-yellow-400 via-yellow-300 to-emerald-500" />
 
-            <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
-              Consulta y filtra los adelantos y abonos
-              registrados.
-            </p>
-          </div>
-
-          <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-end xl:w-auto">
-            {/* Filtros de tipo */}
+        <div className="p-5 sm:p-6">
+          <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div>
-              <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">
-                Tipo de movimiento
-              </label>
+              <h2 className="text-lg font-black text-slate-950">
+                Listado de movimientos
+              </h2>
 
-              <div className="flex w-full overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50 p-1 lg:w-auto">
-                {FILTROS_TIPO.map((opcion) => {
-                  const activo =
-                    filtroTipo === opcion.value;
-
-                  return (
-                    <button
-                      key={opcion.value}
-                      type="button"
-                      onClick={() =>
-                        setFiltroTipo(
-                          opcion.value
-                        )
-                      }
-                      className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-black transition cursor-pointer ${
-                        activo
-                          ? "bg-white text-slate-950 shadow-sm"
-                          : "text-slate-500 hover:bg-white/60 hover:text-slate-800"
-                      }`}
-                    >
-                      {opcion.label}
-                    </button>
-                  );
-                })}
-              </div>
+              <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
+                Consulta y filtra los adelantos y abonos registrados.
+              </p>
             </div>
 
-            {/* Filtro de conductor */}
-            {!esTaxista && (
-              <div className="w-full lg:w-64">
-                <label
-                  htmlFor="filtro-conductor"
-                  className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500"
-                >
-                  Conductor
+            <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-end xl:w-auto">
+              <div>
+                <label className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500">
+                  Tipo de movimiento
                 </label>
 
-                <div className="relative">
-                  <UserRound
-                    size={17}
-                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                  />
+                <div className="flex w-full overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50 p-1 lg:w-auto">
+                  {FILTROS_TIPO.map(
+                    (opcion) => {
+                      const activo =
+                        filtroTipo ===
+                        opcion.value;
 
-                  <select
-                    id="filtro-conductor"
-                    value={filtroConductor}
-                    onChange={(event) =>
-                      setFiltroConductor(
-                        event.target.value
-                      )
-                    }
-                    disabled={
-                      loadingCatalogos
-                    }
-                    className="w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
-                  >
-                    <option value="">
-                      Todos los conductores
-                    </option>
-
-                    {conductores.map(
-                      (conductor) => (
-                        <option
-                          key={conductor.id}
-                          value={conductor.id}
+                      return (
+                        <button
+                          key={
+                            opcion.value
+                          }
+                          type="button"
+                          disabled={loading}
+                          onClick={() =>
+                            setFiltroTipo(
+                              opcion.value
+                            )
+                          }
+                          className={`cursor-pointer whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                            activo
+                              ? "bg-white text-slate-950 shadow-sm"
+                              : "text-slate-500 hover:bg-white/60 hover:text-slate-800"
+                          }`}
                         >
-                          {nombreConductor(
-                            conductor
-                          )}
-                        </option>
-                      )
-                    )}
-                  </select>
-
-                  {loadingCatalogos && (
-                    <Loader2
-                      size={17}
-                      className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-yellow-600"
-                    />
+                          {
+                            opcion.label
+                          }
+                        </button>
+                      );
+                    }
                   )}
                 </div>
               </div>
+
+              {!esTaxista && (
+                <div className="w-full lg:w-64">
+                  <label
+                    htmlFor="filtro-conductor"
+                    className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500"
+                  >
+                    Conductor
+                  </label>
+
+                  <div className="relative">
+                    <UserRound
+                      size={17}
+                      className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                    />
+
+                    <select
+                      id="filtro-conductor"
+                      value={
+                        filtroConductor
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        setFiltroConductor(
+                          event.target
+                            .value
+                        )
+                      }
+                      disabled={
+                        loading ||
+                        loadingCatalogos
+                      }
+                      className="w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+                    >
+                      <option value="">
+                        Todos los
+                        conductores
+                      </option>
+
+                      {conductores.map(
+                        (
+                          conductor
+                        ) => (
+                          <option
+                            key={
+                              conductor.id
+                            }
+                            value={
+                              conductor.id
+                            }
+                          >
+                            {nombreConductor(
+                              conductor
+                            )}
+                          </option>
+                        )
+                      )}
+                    </select>
+
+                    {loadingCatalogos && (
+                      <Loader2
+                        size={17}
+                        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 animate-spin text-yellow-600"
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {!loading && (
+            <div className="mt-5 flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm font-semibold text-slate-500">
+                {cantidadFiltrada}{" "}
+                {cantidadFiltrada === 1
+                  ? "movimiento encontrado"
+                  : "movimientos encontrados"}
+              </p>
+
+              {(filtroTipo !==
+                "TODOS" ||
+                filtroConductor) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFiltroTipo(
+                      "TODOS"
+                    );
+
+                    setFiltroConductor(
+                      ""
+                    );
+                  }}
+                  className="cursor-pointer self-start text-sm font-black text-yellow-700 transition hover:text-yellow-800 sm:self-auto"
+                >
+                  Limpiar filtros
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="mt-5">
+            {loading ? (
+              <AdelantosLoader />
+            ) : (
+              <AdelantoTable
+                adelantos={
+                  adelantosFiltrados
+                }
+                loading={false}
+                onEdit={
+                  abrirModalEditar
+                }
+                onDelete={
+                  eliminarAdelanto
+                }
+                onRecibo={verRecibo}
+                esTaxista={
+                  esTaxista
+                }
+                mostrarConductor={
+                  !esTaxista
+                }
+                mostrarSucursal={
+                  !esTaxista
+                }
+              />
             )}
           </div>
         </div>
-
-        <div className="mt-5 flex flex-col gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-semibold text-slate-500">
-            {loading
-              ? "Consultando movimientos..."
-              : `${cantidadFiltrada} ${
-                  cantidadFiltrada === 1
-                    ? "movimiento encontrado"
-                    : "movimientos encontrados"
-                }`}
-          </p>
-
-          {(filtroTipo !== "TODOS" ||
-            filtroConductor) && (
-            <button
-              type="button"
-              onClick={() => {
-                setFiltroTipo("TODOS");
-                setFiltroConductor("");
-              }}
-              className="self-start text-sm font-black text-yellow-700 transition hover:text-yellow-800 sm:self-auto cursor-pointer"
-            >
-              Limpiar filtros
-            </button>
-          )}
-        </div>
-
-        <div className="mt-5">
-          <AdelantoTable
-            adelantos={adelantosFiltrados}
-            loading={loading}
-            onEdit={abrirModalEditar}
-            onDelete={eliminarAdelanto}
-            onRecibo={verRecibo}
-            esTaxista={esTaxista}
-            mostrarConductor={!esTaxista}
-            mostrarSucursal={!esTaxista}
-          />
-        </div>
       </section>
 
-      {/* Modal */}
       <AdelantoModal
         open={modalOpen}
         onClose={cerrarModal}
         onSave={guardarAdelanto}
         saving={saving}
-        loadingCatalogos={loadingCatalogos}
-        adelantoEditando={adelantoEditando}
+        loadingCatalogos={
+          loadingCatalogos
+        }
+        adelantoEditando={
+          adelantoEditando
+        }
         tipoInicial={tipoInicial}
         conductores={conductores}
       />

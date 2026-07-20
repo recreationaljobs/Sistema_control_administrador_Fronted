@@ -4,19 +4,73 @@ import {
   Wallet,
   Wrench,
 } from "lucide-react";
+
 import FinancialChart from "../components/FinancialChart";
 import MaintenanceAlerts from "../components/MaintenanceAlerts";
 import RecentJornadas from "../components/RecentJornadas";
 import SummaryCards from "../components/SummaryCards";
 import { useDashboard } from "../hooks/useDashboard";
 
-
-
 const formatoDinero = (valor) => {
-  return `C$ ${Number(valor || 0).toLocaleString("es-NI", {
+  return `C$ ${Number(
+    valor || 0
+  ).toLocaleString("es-NI", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+};
+
+const DashboardLoader = () => {
+  return (
+    <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+      <div className="h-1.5 w-full bg-gradient-to-r from-[#F5B800] via-[#FFD45A] to-[#3B82F6]" />
+
+      <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
+        <div className="relative flex h-28 w-28 items-center justify-center">
+          <div className="absolute inset-0 rounded-full border-4 border-slate-100" />
+
+          <div className="absolute inset-0 rounded-full border-[4px] border-transparent border-t-[#F5B800] border-r-[#F5B800] animate-spin" />
+
+          <div
+            className="absolute inset-[10px] rounded-full border-[3px] border-transparent border-b-blue-500 border-l-blue-500 animate-spin"
+            style={{
+              animationDuration: "1.3s",
+            }}
+          />
+
+          <div
+            className="absolute inset-[22px] rounded-full bg-gradient-to-br from-[#FFF7D6] via-white to-[#E8F1FF] shadow-inner"
+            style={{
+              boxShadow:
+                "inset 0 2px 12px rgba(15,23,42,0.08), 0 0 25px rgba(245,184,0,0.14)",
+            }}
+          />
+
+          <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#D89C00] shadow-md">
+            <CarTaxiFront size={28} />
+          </div>
+
+          <span className="absolute left-2 top-3 h-2.5 w-2.5 rounded-full bg-[#F5B800] animate-pulse" />
+          <span
+            className="absolute bottom-4 right-1 h-2 w-2 rounded-full bg-blue-500 animate-pulse"
+            style={{ animationDelay: "200ms" }}
+          />
+          <span
+            className="absolute right-5 top-1 h-1.5 w-1.5 rounded-full bg-slate-400 animate-pulse"
+            style={{ animationDelay: "400ms" }}
+          />
+        </div>
+
+        <h3 className="mt-5 text-lg font-black text-slate-950">
+          Cargando dashboard
+        </h3>
+
+        <p className="mt-2 max-w-md text-sm font-medium text-slate-500">
+          Estamos preparando el resumen financiero, las jornadas y las alertas del sistema.
+        </p>
+      </div>
+    </section>
+  );
 };
 
 const DashboardPage = () => {
@@ -34,8 +88,6 @@ const DashboardPage = () => {
     cargarDashboard,
   } = useDashboard();
 
-
-
   const tituloJornadas =
     periodo === "dia"
       ? "Jornadas de hoy"
@@ -43,19 +95,37 @@ const DashboardPage = () => {
       ? "Jornadas de la semana"
       : "Jornadas del mes";
 
-  const totalVehiculos = vehiculosEstado.total || resumen?.vehiculos || 0;
+  const totalVehiculos =
+    vehiculosEstado.total ||
+    resumen?.vehiculos ||
+    0;
 
-  const porcentajeBuenEstado = totalVehiculos
-    ? Math.round((vehiculosEstado.buenEstado / totalVehiculos) * 100)
-    : 0;
+  const porcentajeBuenEstado =
+    totalVehiculos
+      ? Math.round(
+          (vehiculosEstado.buenEstado /
+            totalVehiculos) *
+            100
+        )
+      : 0;
 
-  const porcentajeProximos = totalVehiculos
-    ? Math.round((vehiculosEstado.proximos / totalVehiculos) * 100)
-    : 0;
+  const porcentajeProximos =
+    totalVehiculos
+      ? Math.round(
+          (vehiculosEstado.proximos /
+            totalVehiculos) *
+            100
+        )
+      : 0;
 
-  const porcentajeVencidos = totalVehiculos
-    ? Math.round((vehiculosEstado.vencidos / totalVehiculos) * 100)
-    : 0;
+  const porcentajeVencidos =
+    totalVehiculos
+      ? Math.round(
+          (vehiculosEstado.vencidos /
+            totalVehiculos) *
+            100
+        )
+      : 0;
 
   return (
     <div className="space-y-6">
@@ -99,7 +169,14 @@ const DashboardPage = () => {
               disabled={loading}
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
             >
-              <RefreshCcw size={18} />
+              <RefreshCcw
+                size={18}
+                className={
+                  loading
+                    ? "animate-spin"
+                    : ""
+                }
+              />
               Actualizar
             </button>
           </div>
@@ -112,186 +189,187 @@ const DashboardPage = () => {
         </div>
       )}
 
-      {loading && (
-        <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm font-bold text-slate-500">
-          Cargando dashboard...
-        </div>
-      )}
+      {loading ? (
+        <DashboardLoader />
+      ) : (
+        <>
+          <SummaryCards
+            metricas={metricasPeriodo}
+          />
 
-      <SummaryCards metricas={metricasPeriodo} />
+          <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_1fr]">
+            <FinancialChart
+              datos={datosGrafica}
+            />
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_1fr]">
-        <FinancialChart datos={datosGrafica} />
+            <MaintenanceAlerts
+              alertas={alertas}
+              totalAlertas={
+                resumen?.alertas_mantenimiento ||
+                0
+              }
+            />
+          </section>
 
-        <MaintenanceAlerts
-          alertas={alertas}
-          totalAlertas={resumen?.alertas_mantenimiento || 0}
-        />
-      </section>
+          <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+            <RecentJornadas
+              jornadas={jornadasHoy}
+              titulo={tituloJornadas}
+            />
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <RecentJornadas
-          jornadas={jornadasHoy}
-          titulo={tituloJornadas}
-        />
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="text-lg font-black text-slate-950">
+                  Gastos operativos
+                </h3>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-5 flex items-center justify-between">
-            <h3 className="text-lg font-black text-slate-950">
-              Gastos operativos
-            </h3>
-
-            <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-700">
-              {periodo}
-            </span>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center gap-4 border-b border-slate-100 pb-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
-                <Wallet size={23} />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p className="font-bold text-slate-900">
-                  Gastos de vehículos
-                </p>
-                <p className="text-xs font-medium text-slate-500">
-                  Gastos registrados por administración.
-                </p>
-              </div>
-
-              <p className="font-black text-red-600">
-                {formatoDinero(metricasPeriodo.gastosVehiculos)}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-4 border-b border-slate-100 pb-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                <Wrench size={23} />
-              </div>
-
-              <div className="min-w-0 flex-1">
-                <p className="font-bold text-slate-900">Mantenimiento</p>
-                <p className="text-xs font-medium text-slate-500">
-                  Costos de mantenimiento de vehículos.
-                </p>
-              </div>
-
-              <p className="font-black text-blue-600">
-                {formatoDinero(metricasPeriodo.mantenimiento)}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-            <p className="font-black text-slate-900">Total operativo</p>
-            <p className="font-black text-red-500">
-              {formatoDinero(metricasPeriodo.gastosOperativos)}
-            </p>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div className="mb-5 flex items-center justify-between">
-            <h3 className="text-lg font-black text-slate-950">
-              Estado de vehículos
-            </h3>
-
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
-              {totalVehiculos} total
-            </span>
-          </div>
-
-          <div className="flex flex-col items-center gap-6 md:flex-row xl:flex-col 2xl:flex-row">
-            <div className="relative flex h-44 w-44 items-center justify-center rounded-full bg-[conic-gradient(#39C636_0_62%,#F4C400_62%_87%,#F43F5E_87%_100%)]">
-              <div className="flex h-28 w-28 flex-col items-center justify-center rounded-full bg-white">
-                <span className="text-4xl font-black text-slate-950">
-                  {totalVehiculos}
+                <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-700">
+                  {periodo}
                 </span>
-                <span className="text-sm text-slate-500">Total</span>
               </div>
-            </div>
 
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="h-3 w-3 rounded bg-green-500" />
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 border-b border-slate-100 pb-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600">
+                    <Wallet size={23} />
+                  </div>
 
-                <div>
-                  <p className="text-sm font-medium text-slate-600">
-                    En buen estado
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-slate-900">
+                      Gastos de vehículos
+                    </p>
+                    <p className="text-xs font-medium text-slate-500">
+                      Gastos registrados por administración.
+                    </p>
+                  </div>
+
+                  <p className="font-black text-red-600">
+                    {formatoDinero(
+                      metricasPeriodo.gastosVehiculos
+                    )}
                   </p>
+                </div>
 
-                  <p className="font-black text-slate-900">
-                    {vehiculosEstado.buenEstado} ({porcentajeBuenEstado}%)
+                <div className="flex items-center gap-4 border-b border-slate-100 pb-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                    <Wrench size={23} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="font-bold text-slate-900">
+                      Mantenimiento
+                    </p>
+                    <p className="text-xs font-medium text-slate-500">
+                      Costos de mantenimiento de vehículos.
+                    </p>
+                  </div>
+
+                  <p className="font-black text-blue-600">
+                    {formatoDinero(
+                      metricasPeriodo.mantenimiento
+                    )}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="h-3 w-3 rounded bg-yellow-400" />
+              <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
+                <p className="font-black text-slate-900">
+                  Total operativo
+                </p>
+                <p className="font-black text-red-500">
+                  {formatoDinero(
+                    metricasPeriodo.gastosOperativos
+                  )}
+                </p>
+              </div>
+            </div>
 
-                <div>
-                  <p className="text-sm font-medium text-slate-600">
-                    Próx. mantenimiento
-                  </p>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="text-lg font-black text-slate-950">
+                  Estado de vehículos
+                </h3>
 
-                  <p className="font-black text-slate-900">
-                    {vehiculosEstado.proximos} ({porcentajeProximos}%)
-                  </p>
+                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-700">
+                  {totalVehiculos} total
+                </span>
+              </div>
+
+              <div className="flex flex-col items-center gap-6 md:flex-row xl:flex-col 2xl:flex-row">
+                <div className="relative flex h-44 w-44 items-center justify-center rounded-full bg-[conic-gradient(#39C636_0_62%,#F4C400_62%_87%,#F43F5E_87%_100%)]">
+                  <div className="flex h-28 w-28 flex-col items-center justify-center rounded-full bg-white">
+                    <span className="text-4xl font-black text-slate-950">
+                      {totalVehiculos}
+                    </span>
+                    <span className="text-sm text-slate-500">
+                      Total
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="h-3 w-3 rounded bg-green-500" />
+
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">
+                        En buen estado
+                      </p>
+
+                      <p className="font-black text-slate-900">
+                        {vehiculosEstado.buenEstado} (
+                        {porcentajeBuenEstado}%)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="h-3 w-3 rounded bg-yellow-400" />
+
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">
+                        Próx. mantenimiento
+                      </p>
+
+                      <p className="font-black text-slate-900">
+                        {vehiculosEstado.proximos} (
+                        {porcentajeProximos}%)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="h-3 w-3 rounded bg-rose-500" />
+
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">
+                        Mantenimiento vencido
+                      </p>
+
+                      <p className="font-black text-slate-900">
+                        {vehiculosEstado.vencidos} (
+                        {porcentajeVencidos}%)
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="h-3 w-3 rounded bg-rose-500" />
+              {!totalVehiculos && (
+                <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
+                    <CarTaxiFront size={25} />
+                  </div>
 
-                <div>
-                  <p className="text-sm font-medium text-slate-600">
-                    Mantenimiento vencido
-                  </p>
-
-                  <p className="font-black text-slate-900">
-                    {vehiculosEstado.vencidos} ({porcentajeVencidos}%)
+                  <p className="mt-3 text-sm font-bold text-slate-500">
+                    No hay vehículos registrados.
                   </p>
                 </div>
-              </div>
+              )}
             </div>
-          </div>
-
-          {!totalVehiculos && (
-            <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
-                <CarTaxiFront size={25} />
-              </div>
-
-              <p className="mt-3 text-sm font-bold text-slate-500">
-                No hay vehículos registrados.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-{/* 
-      <section className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-        <div className="flex items-start gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
-            <AlertTriangle size={23} />
-          </div>
-
-          <div>
-            <p className="font-black text-blue-900">
-              Módulo de adelantos en espera
-            </p>
-
-            <p className="mt-1 text-sm font-semibold text-blue-700">
-              El dashboard no depende todavía de adelantos. Se está calculando
-              con jornadas, gastos, mantenimiento, vehículos y alertas.
-            </p>
-          </div>
-        </div>
-      </section> */}
-
-
+          </section>
+        </>
+      )}
     </div>
   );
 };

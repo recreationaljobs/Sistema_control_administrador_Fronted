@@ -159,6 +159,68 @@ const obtenerEstadoJornada = (
   };
 };
 
+const JornadasLoader = ({
+  texto = "Cargando jornadas",
+}) => {
+  return (
+    <div
+      translate="no"
+      className="flex min-h-[290px] flex-col items-center justify-center px-5 py-10 text-center"
+    >
+      <div className="relative flex h-28 w-28 items-center justify-center">
+        <div className="absolute inset-0 rounded-full border-4 border-slate-100" />
+
+        <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-r-[#F5B800] border-t-[#F5B800]" />
+
+        <div
+          className="absolute inset-[10px] animate-spin rounded-full border-[3px] border-transparent border-b-blue-500 border-l-blue-500"
+          style={{
+            animationDuration: "1.4s",
+            animationDirection:
+              "reverse",
+          }}
+        />
+
+        <div className="absolute inset-[22px] rounded-full bg-gradient-to-br from-[#FFF7D6] via-white to-blue-50 shadow-inner" />
+
+        <div
+          className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#D89C00] shadow-lg"
+          style={{
+            boxShadow:
+              "0 8px 25px rgba(245,184,0,0.20)",
+          }}
+        >
+          <CarFront size={29} />
+        </div>
+
+        <span className="absolute left-1 top-4 h-2.5 w-2.5 animate-pulse rounded-full bg-[#F5B800]" />
+
+        <span
+          className="absolute bottom-4 right-0 h-2 w-2 animate-pulse rounded-full bg-blue-500"
+          style={{
+            animationDelay: "200ms",
+          }}
+        />
+
+        <span
+          className="absolute right-6 top-0 h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400"
+          style={{
+            animationDelay: "400ms",
+          }}
+        />
+      </div>
+
+      <h3 className="mt-5 text-lg font-black text-slate-950">
+        {texto}
+      </h3>
+
+      <p className="mt-2 text-sm font-medium text-slate-500">
+        Preparando la información de las jornadas...
+      </p>
+    </div>
+  );
+};
+
 const TarjetaJornadaConductor = ({
   jornada,
 }) => {
@@ -193,7 +255,8 @@ const TarjetaJornadaConductor = ({
   const kilometrajeFinalTexto =
     tieneKilometrajeFinal
       ? Number(
-          jornada?.kilometraje_final || 0
+          jornada?.kilometraje_final ||
+            0
         ).toLocaleString("es-NI")
       : "Pendiente";
 
@@ -216,8 +279,6 @@ const TarjetaJornadaConductor = ({
                   jornada.fecha
                 )}
               </h3>
-
-             
             </div>
           </div>
 
@@ -231,9 +292,7 @@ const TarjetaJornadaConductor = ({
         <div className="mt-4 rounded-3xl bg-slate-50 p-3">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FFF4CF] text-slate-700">
-              <CarFront
-                size={20}
-              />
+              <CarFront size={20} />
             </div>
 
             <div className="min-w-0">
@@ -242,7 +301,7 @@ const TarjetaJornadaConductor = ({
               </h4>
 
               <p className="mt-1 break-words text-xs text-slate-500">
-                {vehiculoTexto}
+                Vehículo asignado
               </p>
             </div>
           </div>
@@ -252,6 +311,7 @@ const TarjetaJornadaConductor = ({
           <div className="rounded-2xl bg-slate-50 p-3">
             <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide text-slate-400">
               <Gauge size={15} />
+
               <span>Km</span>
             </div>
 
@@ -266,6 +326,7 @@ const TarjetaJornadaConductor = ({
           <div className="rounded-2xl bg-slate-50 p-3">
             <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wide text-slate-400">
               <Gauge size={15} />
+
               <span>Trayecto</span>
             </div>
 
@@ -278,18 +339,15 @@ const TarjetaJornadaConductor = ({
 
         <div className="mt-4 rounded-[22px] bg-gradient-to-br from-[#DCEBFF] to-[#CFE2FF] p-4">
           <p className="text-xs font-black uppercase tracking-wide text-[#1D4ED8]">
-            Acumulado del dia
+            Acumulado del día
           </p>
 
-          <h4 className="mt-2 break-words text-3xl font-black leading-none text-[#0F3FAF]">
+          <h4
+            translate="no"
+            className="notranslate mt-2 break-words text-3xl font-black leading-none text-[#0F3FAF]"
+          >
             {formatoDinero(ganancia)}
           </h4>
-
-          {/* <p className="mt-2 text-xs font-semibold text-[#2563EB]">
-            {jornada?.liquidada
-              ? "Jornada liquidada"
-              : "Pendiente de liquidación"}
-          </p> */}
         </div>
       </div>
     </article>
@@ -298,22 +356,7 @@ const TarjetaJornadaConductor = ({
 
 const JornadaHoyConductor = ({
   jornadas = [],
-  loading = false,
 }) => {
-  if (loading) {
-    return (
-      <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-8 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-[#E7A900] shadow-sm">
-          <CalendarDays size={26} />
-        </div>
-
-        <p className="mt-3 text-sm font-bold text-slate-500">
-          Cargando jornada...
-        </p>
-      </div>
-    );
-  }
-
   if (!jornadas.length) {
     return (
       <div className="rounded-[28px] border border-slate-200 bg-slate-50 p-8 text-center">
@@ -326,9 +369,7 @@ const JornadaHoyConductor = ({
         </h3>
 
         <p className="mt-2 text-sm font-medium text-slate-500">
-          Presiona Iniciar jornada
-          para registrar el
-          kilometraje inicial.
+          Presiona Iniciar jornada para registrar el kilometraje inicial.
         </p>
       </div>
     );
@@ -390,6 +431,7 @@ const JornadasPage = () => {
       abrirModalCerrar(
         jornadaAbiertaHoy
       );
+
       return;
     }
 
@@ -398,6 +440,7 @@ const JornadasPage = () => {
 
   return (
     <div
+      translate="no"
       className={`w-full space-y-6 ${
         esTaxista
           ? "mx-auto max-w-md"
@@ -427,7 +470,9 @@ const JornadasPage = () => {
           <div className="w-full min-w-0 space-y-3">
             <button
               type="button"
-              onClick={handleBotonTaxista}
+              onClick={
+                handleBotonTaxista
+              }
               disabled={Boolean(
                 jornadaCerradaHoy
               )}
@@ -468,10 +513,12 @@ const JornadasPage = () => {
 
       {!esTaxista && (
         <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#FFF4CF] text-[#E7A900]">
-                <CalendarDays size={28} />
+                <CalendarDays
+                  size={28}
+                />
               </div>
 
               <div className="min-w-0">
@@ -486,7 +533,7 @@ const JornadasPage = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-600">
                 <Wallet size={28} />
@@ -497,7 +544,10 @@ const JornadasPage = () => {
                   Ingreso bruto
                 </p>
 
-                <h3 className="mt-1 break-words text-xl font-black text-green-600">
+                <h3
+                  translate="no"
+                  className="notranslate mt-1 break-words text-xl font-black text-green-600"
+                >
                   {formatoDinero(
                     ingresoTotal
                   )}
@@ -506,10 +556,12 @@ const JornadasPage = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#FFF4CF] text-[#B98200]">
-                <TrendingUp size={28} />
+                <TrendingUp
+                  size={28}
+                />
               </div>
 
               <div className="min-w-0">
@@ -517,7 +569,10 @@ const JornadasPage = () => {
                   Ganancias del dueño
                 </p>
 
-                <h3 className="mt-1 break-words text-xl font-black text-[#B98200]">
+                <h3
+                  translate="no"
+                  className="notranslate mt-1 break-words text-xl font-black text-[#B98200]"
+                >
                   {formatoDinero(
                     gananciaTotal
                   )}
@@ -526,7 +581,7 @@ const JornadasPage = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
             <div className="flex items-center gap-4">
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-700">
                 <Gauge size={28} />
@@ -551,33 +606,54 @@ const JornadasPage = () => {
         </section>
       )}
 
-      <section className="w-full min-w-0 rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-        {esTaxista && (
-          <div className="mb-5 min-w-0">
-            <h2 className="text-lg font-black text-slate-950">
-              Historial de jornadas
-            </h2>
+      <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+        <div className="h-1.5 w-full bg-gradient-to-r from-[#F5B800] via-[#FFD45A] to-blue-500" />
 
-            <p className="mt-1 break-words text-sm font-medium text-slate-500">
-              Consulta la jornada de hoy.
-            </p>
-          </div>
-        )}
+        <div className="p-4 sm:p-5">
+          {esTaxista && (
+            <div className="mb-5 min-w-0">
+              <h2 className="text-lg font-black text-slate-950">
+                Jornada de hoy
+              </h2>
 
-        {esTaxista ? (
-          <JornadaHoyConductor
-            jornadas={jornadasHoy}
-            loading={loading}
-          />
-        ) : (
-          <JornadaTable
-            jornadas={jornadasFiltradas}
-            loading={loading}
-            onEdit={abrirModalEditar}
-            onDelete={eliminarJornada}
-            esTaxista={esTaxista}
-          />
-        )}
+              <p className="mt-1 break-words text-sm font-medium text-slate-500">
+                Consulta la información registrada durante el día.
+              </p>
+            </div>
+          )}
+
+          {loading ? (
+            <JornadasLoader
+              texto={
+                esTaxista
+                  ? "Cargando jornada"
+                  : "Cargando jornadas"
+              }
+            />
+          ) : esTaxista ? (
+            <JornadaHoyConductor
+              jornadas={
+                jornadasHoy || []
+              }
+            />
+          ) : (
+            <JornadaTable
+              jornadas={
+                jornadasFiltradas
+              }
+              loading={false}
+              onEdit={
+                abrirModalEditar
+              }
+              onDelete={
+                eliminarJornada
+              }
+              esTaxista={
+                esTaxista
+              }
+            />
+          )}
+        </div>
       </section>
 
       <JornadaModal
@@ -585,13 +661,21 @@ const JornadasPage = () => {
         onClose={cerrarModal}
         onSave={guardarJornada}
         saving={saving}
-        loadingCatalogos={loadingCatalogos}
-        jornadaEditando={jornadaEditando}
+        loadingCatalogos={
+          loadingCatalogos
+        }
+        jornadaEditando={
+          jornadaEditando
+        }
         conductores={conductores}
         vehiculos={vehiculos}
         asignaciones={asignaciones}
-        esSuperAdmin={esSuperAdmin}
-        esAdminSucursal={esAdminSucursal}
+        esSuperAdmin={
+          esSuperAdmin
+        }
+        esAdminSucursal={
+          esAdminSucursal
+        }
         esTaxista={esTaxista}
       />
     </div>

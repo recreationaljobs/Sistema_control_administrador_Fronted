@@ -14,6 +14,65 @@ import AsignacionModal from "../components/AsignacionModal";
 import AsignacionTable from "../components/AsignacionTable";
 import { useAsignaciones } from "../hooks/useAsignaciones";
 
+const AsignacionesLoader = () => {
+  return (
+    <div
+      translate="no"
+      className="flex min-h-[310px] flex-col items-center justify-center px-5 py-10 text-center"
+    >
+      <div className="relative flex h-28 w-28 items-center justify-center">
+        <div className="absolute inset-0 rounded-full border-4 border-slate-100" />
+
+        <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-r-yellow-400 border-t-yellow-400" />
+
+        <div
+          className="absolute inset-[10px] animate-spin rounded-full border-[3px] border-transparent border-b-blue-500 border-l-blue-500"
+          style={{
+            animationDuration: "1.4s",
+            animationDirection: "reverse",
+          }}
+        />
+
+        <div className="absolute inset-[22px] rounded-full bg-gradient-to-br from-yellow-50 via-white to-blue-50 shadow-inner" />
+
+        <div
+          className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-white text-yellow-700 shadow-lg"
+          style={{
+            boxShadow:
+              "0 8px 25px rgba(234,179,8,0.22)",
+          }}
+        >
+          <Route size={29} />
+        </div>
+
+        <span className="absolute left-1 top-4 h-2.5 w-2.5 animate-pulse rounded-full bg-yellow-400" />
+
+        <span
+          className="absolute bottom-4 right-0 h-2 w-2 animate-pulse rounded-full bg-blue-500"
+          style={{
+            animationDelay: "200ms",
+          }}
+        />
+
+        <span
+          className="absolute right-6 top-0 h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400"
+          style={{
+            animationDelay: "400ms",
+          }}
+        />
+      </div>
+
+      <h3 className="mt-5 text-lg font-black text-slate-950">
+        Cargando asignaciones
+      </h3>
+
+      <p className="mt-2 max-w-sm text-sm font-medium text-slate-500">
+        Preparando los conductores y vehículos asignados...
+      </p>
+    </div>
+  );
+};
+
 const TarjetaResumen = ({
   titulo,
   valor,
@@ -24,7 +83,7 @@ const TarjetaResumen = ({
   descripcion,
 }) => {
   return (
-    <article className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+    <article className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
       <div className="flex items-center gap-4">
         <div
           className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${fondoIcono} ${textoIcono}`}
@@ -32,7 +91,7 @@ const TarjetaResumen = ({
           <Icono size={28} />
         </div>
 
-        <div>
+        <div className="min-w-0">
           <p className="text-sm font-bold text-slate-500">
             {titulo}
           </p>
@@ -87,10 +146,6 @@ const AsignacionesPage = () => {
     eliminarAsignacion,
   } = useAsignaciones();
 
-  /*
-   * Garantiza que la página y la tabla
-   * siempre trabajen con un arreglo.
-   */
   const listaAsignaciones =
     Array.isArray(asignacionesFiltradas)
       ? asignacionesFiltradas.filter(Boolean)
@@ -100,9 +155,12 @@ const AsignacionesPage = () => {
     listaAsignaciones.length;
 
   return (
-    <div className="space-y-6">
+    <div
+      translate="no"
+      className="notranslate space-y-6"
+    >
       <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-        <div className="h-1.5 w-full bg-yellow-400" />
+        <div className="h-1.5 w-full bg-gradient-to-r from-yellow-400 via-yellow-300 to-blue-500" />
 
         <div className="p-5 sm:p-6">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -124,23 +182,28 @@ const AsignacionesPage = () => {
             </div>
 
             <button
-                type="button"
-                onClick={abrirModalCrear}
-                disabled={saving || loadingCatalogos}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:-translate-y-0.5 hover:bg-yellow-500 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-              >
-                {loadingCatalogos ? (
-                  <Loader2
-                    size={19}
-                    className="animate-spin"
-                  />
-                ) : (
-                  <Plus size={20} />
-                )}
+              type="button"
+              onClick={abrirModalCrear}
+              disabled={
+                saving ||
+                loadingCatalogos ||
+                loading
+              }
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:-translate-y-0.5 hover:bg-yellow-500 hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-yellow-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+            >
+              {loadingCatalogos ? (
+                <Loader2
+                  size={19}
+                  className="animate-spin"
+                />
+              ) : (
+                <Plus size={20} />
+              )}
 
-                {/* El cambio está aquí: envolver el texto en un span */}
-                <span>Nueva asignación</span>
-              </button>
+              <span>
+                Nueva asignación
+              </span>
+            </button>
           </div>
         </div>
       </section>
@@ -201,76 +264,96 @@ const AsignacionesPage = () => {
         />
       </section>
 
-      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h2 className="text-lg font-black text-slate-950">
-              Listado de asignaciones
-            </h2>
+      <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+        <div className="h-1.5 w-full bg-gradient-to-r from-yellow-400 via-yellow-300 to-blue-500" />
 
-            <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
-              Consulta qué vehículo tiene asignado cada conductor.
-            </p>
-          </div>
+        <div className="p-5 sm:p-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h2 className="text-lg font-black text-slate-950">
+                Listado de asignaciones
+              </h2>
 
-          <div className="relative w-full lg:w-96">
-            <label
-              htmlFor="buscar-asignacion"
-              className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500"
-            >
-              Buscar asignación
-            </label>
+              <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
+                Consulta qué vehículo tiene asignado cada conductor.
+              </p>
+            </div>
 
-            <div className="relative">
-              <Search
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
+            <div className="relative w-full lg:w-96">
+              <label
+                htmlFor="buscar-asignacion"
+                className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500"
+              >
+                Buscar asignación
+              </label>
 
-              <input
-                id="buscar-asignacion"
-                type="text"
-                value={search}
-                onChange={(event) =>
-                  setSearch(event.target.value)
-                }
-                placeholder="Conductor, placa, número o sucursal..."
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
-              />
+              <div className="relative">
+                <Search
+                  size={18}
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+
+                <input
+                  id="buscar-asignacion"
+                  type="text"
+                  value={search}
+                  onChange={(event) =>
+                    setSearch(
+                      event.target.value
+                    )
+                  }
+                  placeholder="Conductor, placa, número o sucursal..."
+                  disabled={loading}
+                  className="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:opacity-70"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
-          <p className="text-sm font-semibold text-slate-500">
-            {loading
-              ? "Consultando asignaciones..."
-              : `${cantidadResultados} ${
-                  cantidadResultados === 1
-                    ? "asignación encontrada"
-                    : "asignaciones encontradas"
-                }`}
-          </p>
+          {!loading && (
+            <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
+              <p className="text-sm font-semibold text-slate-500">
+                {cantidadResultados}{" "}
+                {cantidadResultados === 1
+                  ? "asignación encontrada"
+                  : "asignaciones encontradas"}
+              </p>
 
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch("")}
-              className="text-sm font-black text-yellow-700 transition hover:text-yellow-800"
-            >
-              Limpiar búsqueda
-            </button>
+              {search && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setSearch("")
+                  }
+                  className="text-sm font-black text-yellow-700 transition hover:text-yellow-800"
+                >
+                  Limpiar búsqueda
+                </button>
+              )}
+            </div>
           )}
-        </div>
 
-        <div className="mt-5">
-          <AsignacionTable
-            asignaciones={listaAsignaciones}
-            loading={loading}
-            onEdit={abrirModalEditar}
-            onToggle={cambiarEstadoAsignacion}
-            onDelete={eliminarAsignacion}
-          />
+          <div className="mt-5">
+            {loading ? (
+              <AsignacionesLoader />
+            ) : (
+              <AsignacionTable
+                asignaciones={
+                  listaAsignaciones
+                }
+                loading={false}
+                onEdit={
+                  abrirModalEditar
+                }
+                onToggle={
+                  cambiarEstadoAsignacion
+                }
+                onDelete={
+                  eliminarAsignacion
+                }
+              />
+            )}
+          </div>
         </div>
       </section>
 
@@ -279,12 +362,20 @@ const AsignacionesPage = () => {
         onClose={cerrarModal}
         onSave={guardarAsignacion}
         saving={saving}
-        loadingCatalogos={loadingCatalogos}
-        asignacionEditando={asignacionEditando}
+        loadingCatalogos={
+          loadingCatalogos
+        }
+        asignacionEditando={
+          asignacionEditando
+        }
         conductores={conductores}
         vehiculos={vehiculos}
-        esSuperAdmin={esSuperAdmin}
-        esAdminSucursal={esAdminSucursal}
+        esSuperAdmin={
+          esSuperAdmin
+        }
+        esAdminSucursal={
+          esAdminSucursal
+        }
       />
     </div>
   );
