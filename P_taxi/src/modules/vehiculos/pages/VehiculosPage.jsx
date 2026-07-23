@@ -10,6 +10,10 @@ import {
 import VehiculoCard from "../components/VehiculoCard";
 import VehiculoModal from "../components/VehiculoModal";
 import VehiculoTable from "../components/VehiculoTable";
+
+import DocumentacionVehiculoModal from "../components/DocumentacionVehiculoModal";
+
+import { useDocumentosVehiculo } from "../hooks/useDocumentosVehiculo";
 import { useVehiculos } from "../hooks/useVehiculos";
 
 const VehiculosLoader = () => {
@@ -27,7 +31,8 @@ const VehiculosLoader = () => {
           className="absolute inset-[10px] animate-spin rounded-full border-[3px] border-transparent border-b-blue-500 border-l-blue-500"
           style={{
             animationDuration: "1.4s",
-            animationDirection: "reverse",
+            animationDirection:
+              "reverse",
           }}
         />
 
@@ -65,7 +70,8 @@ const VehiculosLoader = () => {
       </h3>
 
       <p className="mt-2 text-sm font-medium text-slate-500">
-        Preparando el kilometraje y las alertas...
+        Preparando el kilometraje, las
+        alertas y la documentación...
       </p>
     </div>
   );
@@ -94,12 +100,46 @@ const VehiculosPage = () => {
     esAdminSucursal,
     esTaxista,
 
+    cargarVehiculos,
+
     abrirModalCrear,
     abrirModalEditar,
     cerrarModal,
     guardarVehiculo,
     eliminarVehiculo,
   } = useVehiculos();
+
+  const {
+    modalDocumentosOpen,
+
+    vehiculoSeleccionado,
+    documentosTipoActivo,
+    resumenDocumental,
+
+    loadingDocumentos,
+    savingDocumento,
+    errorDocumentos,
+
+    tipoActivo,
+    documentoEditando,
+
+    abrirModalDocumentos,
+    cerrarModalDocumentos,
+
+    seleccionarTipoDocumento,
+
+    iniciarEdicionDocumento,
+    cancelarEdicionDocumento,
+
+    guardarDocumento,
+    eliminarDocumento,
+  } = useDocumentosVehiculo({
+    onDocumentoGuardado: async () => {
+      await cargarVehiculos({
+        mostrarCarga: false,
+      });
+    },
+  });
 
   return (
     <div
@@ -113,7 +153,9 @@ const VehiculosPage = () => {
           </h1>
 
           <p className="mt-1 text-sm font-medium text-slate-500 md:text-base">
-            Registra vehículos, kilometraje y alertas de mantenimiento.
+            {esTaxista
+              ? "Consulta el vehículo asignado, su kilometraje, mantenimiento y documentación."
+              : "Registra vehículos, kilometraje, documentación y alertas de mantenimiento."}
           </p>
         </div>
 
@@ -138,7 +180,11 @@ const VehiculosPage = () => {
 
       <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
         <VehiculoCard
-          title="Total vehículos"
+          title={
+            esTaxista
+              ? "Vehículos asignados"
+              : "Total vehículos"
+          }
           value={totalVehiculos}
           icon={CarTaxiFront}
           color="bg-[#FFF4CF] text-[#E7A900]"
@@ -162,7 +208,9 @@ const VehiculosPage = () => {
 
         <VehiculoCard
           title="Alertas mantenimiento"
-          value={vehiculosAlertaMantenimiento}
+          value={
+            vehiculosAlertaMantenimiento
+          }
           icon={Wrench}
           color="bg-red-100 text-red-600"
         />
@@ -175,11 +223,15 @@ const VehiculosPage = () => {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h2 className="text-lg font-black text-slate-950">
-                Listado de vehículos
+                {esTaxista
+                  ? "Mi vehículo asignado"
+                  : "Listado de vehículos"}
               </h2>
 
               <p className="mt-1 text-sm font-medium text-slate-500">
-                Consulta, edita o elimina los vehículos registrados.
+                {esTaxista
+                  ? "Consulta el estado general y documental del vehículo que tienes asignado."
+                  : "Consulta vehículos y administra su documentación."}
               </p>
             </div>
 
@@ -193,7 +245,9 @@ const VehiculosPage = () => {
                 type="text"
                 value={search}
                 onChange={(event) =>
-                  setSearch(event.target.value)
+                  setSearch(
+                    event.target.value
+                  )
                 }
                 placeholder="Buscar vehículo..."
                 disabled={loading}
@@ -207,24 +261,93 @@ const VehiculosPage = () => {
               <VehiculosLoader />
             ) : (
               <VehiculoTable
-                vehiculos={vehiculosFiltrados}
+                vehiculos={
+                  vehiculosFiltrados
+                }
                 loading={false}
-                onEdit={abrirModalEditar}
-                onDelete={eliminarVehiculo}
+                onDocumentos={
+                  abrirModalDocumentos
+                }
+                onEdit={
+                  abrirModalEditar
+                }
+                onDelete={
+                  eliminarVehiculo
+                }
+                esTaxista={
+                  esTaxista
+                }
               />
             )}
           </div>
         </div>
       </section>
 
-      <VehiculoModal
-        open={modalOpen}
-        onClose={cerrarModal}
-        onSave={guardarVehiculo}
-        saving={saving}
-        vehiculoEditando={vehiculoEditando}
-        esSuperAdmin={esSuperAdmin}
-        esAdminSucursal={esAdminSucursal}
+      {!esTaxista && (
+        <VehiculoModal
+          open={modalOpen}
+          onClose={cerrarModal}
+          onSave={guardarVehiculo}
+          saving={saving}
+          vehiculoEditando={
+            vehiculoEditando
+          }
+          esSuperAdmin={
+            esSuperAdmin
+          }
+          esAdminSucursal={
+            esAdminSucursal
+          }
+        />
+      )}
+
+      <DocumentacionVehiculoModal
+        open={modalDocumentosOpen}
+        onClose={
+          cerrarModalDocumentos
+        }
+        vehiculo={
+          vehiculoSeleccionado
+        }
+        documentosTipoActivo={
+          documentosTipoActivo
+        }
+        resumenDocumental={
+          resumenDocumental
+        }
+        loading={
+          loadingDocumentos
+        }
+        saving={
+          savingDocumento
+        }
+        error={
+          errorDocumentos
+        }
+        tipoActivo={
+          tipoActivo
+        }
+        documentoEditando={
+          documentoEditando
+        }
+        onSelectTipo={
+          seleccionarTipoDocumento
+        }
+        onSave={
+          guardarDocumento
+        }
+        onEdit={
+          iniciarEdicionDocumento
+        }
+        onCancelEdit={
+          cancelarEdicionDocumento
+        }
+        onDelete={
+          eliminarDocumento
+        }
+        soloLectura={
+          esTaxista
+        }
       />
     </div>
   );

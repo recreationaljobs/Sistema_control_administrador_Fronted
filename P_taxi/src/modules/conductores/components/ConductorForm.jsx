@@ -1,335 +1,237 @@
-// src/modules/asignaciones/components/AsignacionForm.jsx
-
-import { useEffect, useMemo, useState } from "react";
-import Swal from "sweetalert2";
-
 import {
-  Building2,
+  BadgePercent,
   CalendarDays,
-  CarTaxiFront,
-  CheckCircle2,
+  CreditCard,
+  Home,
+  IdCard,
   LoaderCircle,
-  Route,
+  MapPin,
+  Phone,
+  Save,
   UserRound,
+  X,
 } from "lucide-react";
 
-import "sweetalert2/dist/sweetalert2.min.css";
+import {
+  useEffect,
+  useState,
+} from "react";
 
-const obtenerFechaLocal = () => {
-  const ahora = new Date();
-  const diferenciaZona =
-    ahora.getTimezoneOffset() * 60_000;
-
-  return new Date(
-    ahora.getTime() - diferenciaZona
-  )
-    .toISOString()
-    .split("T")[0];
+const initialForm = {
+  nombre: "",
+  apellido: "",
+  telefono: "",
+  cedula: "",
+  direccion: "",
+  numero_licencia: "",
+  fecha_inicio_licencia: "",
+  fecha_vencimiento_licencia: "",
+  porcentaje_pago: "30.00",
 };
 
-const crearFormularioInicial = () => ({
-  conductor: "",
-  vehiculo: "",
-  fecha_inicio: obtenerFechaLocal(),
-  fecha_fin: "",
-  activa: true,
-});
-
-const obtenerId = (valor) => {
-  if (!valor) {
+const normalizarFecha = (fecha) => {
+  if (!fecha) {
     return "";
   }
 
-  if (typeof valor === "object") {
-    return valor.id
-      ? String(valor.id)
-      : "";
+  return String(fecha).slice(0, 10);
+};
+
+const normalizarValor = (valor) => {
+  if (
+    valor === null ||
+    valor === undefined
+  ) {
+    return "";
   }
 
   return String(valor);
 };
 
-const obtenerNombreConductor = (
-  conductor
-) => {
-  if (!conductor) {
-    return "Conductor sin nombre";
-  }
-
-  return (
-    conductor.nombre_completo ||
-    `${conductor.nombre || ""} ${
-      conductor.apellido || ""
-    }`.trim() ||
-    "Conductor sin nombre"
-  );
-};
-
-const obtenerNombreVehiculo = (
-  vehiculo
-) => {
-  if (!vehiculo) {
-    return "Vehículo sin información";
-  }
-
-  const identificacion = [
-    vehiculo.numero,
-    vehiculo.placa,
-  ]
-    .filter(Boolean)
-    .join(" - ");
-
-  const descripcion = [
-    vehiculo.marca,
-    vehiculo.modelo,
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  return [
-    identificacion,
-    descripcion,
-  ]
-    .filter(Boolean)
-    .join(" - ");
-};
-
-const obtenerMensajeError = (
-  error
-) => {
-  const data =
-    error?.response?.data;
-
-  if (
-    typeof data?.detail === "string"
-  ) {
-    return data.detail;
-  }
-
-  if (
-    typeof data?.message === "string"
-  ) {
-    return data.message;
-  }
-
-  if (
-    data &&
-    typeof data === "object"
-  ) {
-    const primerValor =
-      Object.values(data)[0];
-
-    if (
-      Array.isArray(primerValor)
-    ) {
-      return (
-        primerValor[0] ||
-        "No se pudo guardar la asignación."
-      );
-    }
-
-    if (
-      typeof primerValor === "string"
-    ) {
-      return primerValor;
-    }
-  }
-
-  return (
-    error?.message ||
-    "No se pudo guardar la asignación."
-  );
-};
-
-const estaDisponible = (
-  registro
-) => {
-  const estado = String(
-    registro.estado_codigo ||
-      registro.estado ||
-      ""
-  )
-    .trim()
-    .toUpperCase();
-
-  return (
-    registro.activo !== false &&
-    registro.activa !== false &&
-    estado !== "INACTIVO" &&
-    estado !== "DESPEDIDO" &&
-    estado !== "FUERA_SERVICIO"
-  );
-};
-
-const AsignacionForm = ({
-  asignacionEditando = null,
-  conductores = [],
-  vehiculos = [],
-  onSave,
+const ConductorForm = ({
+  initialData = null,
+  onSubmit,
   onCancel,
-  saving = false,
-  loadingCatalogos = false,
-  esSuperAdmin = false,
-  esAdminSucursal = false,
+  submitting = false,
+  submitError = "",
 }) => {
   const [form, setForm] =
-    useState(
-      crearFormularioInicial
-    );
+    useState(initialForm);
 
-  const [
-    formError,
-    setFormError,
-  ] = useState("");
+  const [formError, setFormError] =
+    useState("");
 
   const esEdicion = Boolean(
-    asignacionEditando
+    initialData?.id
   );
 
   useEffect(() => {
-    if (asignacionEditando) {
+    if (initialData) {
       setForm({
-        conductor: obtenerId(
-          asignacionEditando.conductor
-        ),
+        nombre:
+          normalizarValor(
+            initialData.nombre
+          ),
 
-        vehiculo: obtenerId(
-          asignacionEditando.vehiculo
-        ),
+        apellido:
+          normalizarValor(
+            initialData.apellido
+          ),
 
-        fecha_inicio:
-          asignacionEditando.fecha_inicio ||
-          obtenerFechaLocal(),
+        telefono:
+          normalizarValor(
+            initialData.telefono
+          ),
 
-        fecha_fin:
-          asignacionEditando.fecha_fin ||
-          "",
+        cedula:
+          normalizarValor(
+            initialData.cedula
+          ),
 
-        activa:
-          typeof asignacionEditando.activa ===
-          "boolean"
-            ? asignacionEditando.activa
-            : true,
+        direccion:
+          normalizarValor(
+            initialData.direccion
+          ),
+
+        numero_licencia:
+          normalizarValor(
+            initialData.numero_licencia ||
+              initialData.licencia
+          ),
+
+        fecha_inicio_licencia:
+          normalizarFecha(
+            initialData.fecha_inicio_licencia
+          ),
+
+        fecha_vencimiento_licencia:
+          normalizarFecha(
+            initialData.fecha_vencimiento_licencia ||
+              initialData.vencimiento_licencia
+          ),
+
+        porcentaje_pago:
+          normalizarValor(
+            initialData.porcentaje_pago ??
+              "30.00"
+          ),
       });
     } else {
-      setForm(
-        crearFormularioInicial()
-      );
+      setForm(initialForm);
     }
 
     setFormError("");
-  }, [asignacionEditando]);
+  }, [initialData]);
 
-  const conductoresDisponibles =
-    useMemo(() => {
-      return conductores.filter(
-        (conductor) => {
-          const esSeleccionado =
-            String(
-              conductor.id
-            ) ===
-            String(
-              form.conductor
-            );
-
-          return (
-            esSeleccionado ||
-            estaDisponible(
-              conductor
-            )
-          );
-        }
-      );
-    }, [
-      conductores,
-      form.conductor,
-    ]);
-
-  const vehiculosDisponibles =
-    useMemo(() => {
-      return vehiculos.filter(
-        (vehiculo) => {
-          const esSeleccionado =
-            String(
-              vehiculo.id
-            ) ===
-            String(
-              form.vehiculo
-            );
-
-          return (
-            esSeleccionado ||
-            estaDisponible(
-              vehiculo
-            )
-          );
-        }
-      );
-    }, [
-      vehiculos,
-      form.vehiculo,
-    ]);
-
-  const conductorSeleccionado =
-    useMemo(() => {
-      return (
-        conductores.find(
-          (conductor) =>
-            String(
-              conductor.id
-            ) ===
-            String(
-              form.conductor
-            )
-        ) || null
-      );
-    }, [
-      conductores,
-      form.conductor,
-    ]);
-
-  const vehiculoSeleccionado =
-    useMemo(() => {
-      return (
-        vehiculos.find(
-          (vehiculo) =>
-            String(
-              vehiculo.id
-            ) ===
-            String(
-              form.vehiculo
-            )
-        ) || null
-      );
-    }, [
-      vehiculos,
-      form.vehiculo,
-    ]);
-
-  const handleChange = (
-    event
-  ) => {
+  const handleChange = (event) => {
     const {
       name,
       value,
-      type,
-      checked,
     } = event.target;
 
-    setForm(
-      (formAnterior) => ({
-        ...formAnterior,
-
-        [name]:
-          type === "checkbox"
-            ? checked
-            : value,
-      })
-    );
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
     if (formError) {
       setFormError("");
     }
+  };
+
+  const validarFormulario = () => {
+    if (!form.nombre.trim()) {
+      setFormError(
+        "El nombre del conductor es obligatorio."
+      );
+
+      return false;
+    }
+
+    if (!form.apellido.trim()) {
+      setFormError(
+        "El apellido del conductor es obligatorio."
+      );
+
+      return false;
+    }
+
+    if (!form.cedula.trim()) {
+      setFormError(
+        "La cédula del conductor es obligatoria."
+      );
+
+      return false;
+    }
+
+    if (!form.telefono.trim()) {
+      setFormError(
+        "El teléfono del conductor es obligatorio."
+      );
+
+      return false;
+    }
+
+    if (!form.direccion.trim()) {
+      setFormError(
+        "La dirección del conductor es obligatoria."
+      );
+
+      return false;
+    }
+
+    if (!form.numero_licencia.trim()) {
+      setFormError(
+        "El número de licencia es obligatorio."
+      );
+
+      return false;
+    }
+
+    if (!form.fecha_inicio_licencia) {
+      setFormError(
+        "La fecha de inicio de la licencia es obligatoria."
+      );
+
+      return false;
+    }
+
+    if (!form.fecha_vencimiento_licencia) {
+      setFormError(
+        "La fecha de vencimiento de la licencia es obligatoria."
+      );
+
+      return false;
+    }
+
+    if (
+      form.fecha_vencimiento_licencia <
+      form.fecha_inicio_licencia
+    ) {
+      setFormError(
+        "La fecha de vencimiento no puede ser anterior a la fecha de inicio de la licencia."
+      );
+
+      return false;
+    }
+
+    const porcentaje = Number(
+      form.porcentaje_pago
+    );
+
+    if (
+      !Number.isFinite(porcentaje) ||
+      porcentaje < 1 ||
+      porcentaje > 100
+    ) {
+      setFormError(
+        "El porcentaje de pago debe estar entre 1 y 100."
+      );
+
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async (
@@ -337,692 +239,462 @@ const AsignacionForm = ({
   ) => {
     event.preventDefault();
 
-    if (
-      saving ||
-      loadingCatalogos
-    ) {
+    if (submitting) {
       return;
     }
 
-    if (!form.conductor) {
-      setFormError(
-        "Debes seleccionar un conductor."
-      );
-
-      return;
-    }
-
-    if (!form.vehiculo) {
-      setFormError(
-        "Debes seleccionar un vehículo."
-      );
-
-      return;
-    }
-
-    if (!form.fecha_inicio) {
-      setFormError(
-        "La fecha de inicio es obligatoria."
-      );
-
+    if (!validarFormulario()) {
       return;
     }
 
     if (
-      form.fecha_fin &&
-      form.fecha_fin <
-        form.fecha_inicio
+      typeof onSubmit !== "function"
     ) {
       setFormError(
-        "La fecha final no puede ser menor que la fecha de inicio."
+        "No se encontró la función para guardar el conductor."
       );
 
       return;
     }
 
-    if (
-      form.activa &&
-      form.fecha_fin &&
-      form.fecha_fin <
-        obtenerFechaLocal()
-    ) {
-      setFormError(
-        "Una asignación activa no puede tener una fecha final anterior a la fecha actual."
-      );
+    const payload = {
+      nombre:
+        form.nombre.trim(),
 
-      return;
-    }
+      apellido:
+        form.apellido.trim(),
 
-    if (
-      typeof onSave !==
-      "function"
-    ) {
-      setFormError(
-        "No se encontró la función para guardar la asignación."
-      );
+      telefono:
+        form.telefono.trim(),
 
-      return;
-    }
+      cedula:
+        form.cedula.trim(),
 
-    let resultado;
+      direccion:
+        form.direccion.trim(),
 
-    try {
-      resultado =
-        await onSave({
-          conductor: Number(
-            form.conductor
-          ),
+      numero_licencia:
+        form.numero_licencia
+          .trim(),
 
-          vehiculo: Number(
-            form.vehiculo
-          ),
+      fecha_inicio_licencia:
+        form.fecha_inicio_licencia,
 
-          fecha_inicio:
-            form.fecha_inicio,
+      fecha_vencimiento_licencia:
+        form.fecha_vencimiento_licencia,
 
-          fecha_fin:
-            form.fecha_fin ||
-            null,
+      porcentaje_pago:
+        Number(
+          form.porcentaje_pago
+        ).toFixed(2),
+    };
 
-          activa: Boolean(
-            form.activa
-          ),
-        });
-    } catch (error) {
-      console.error(
-        "Error al guardar la asignación:",
-        error
-      );
-
-      const mensajeError =
-        obtenerMensajeError(
-          error
-        );
-
-      setFormError(
-        mensajeError
-      );
-
-      await Swal.fire({
-        title: esEdicion
-          ? "No se pudo actualizar"
-          : "No se pudo registrar",
-
-        text: mensajeError,
-
-        icon: "error",
-
-        confirmButtonText:
-          "Entendido",
-
-        confirmButtonColor:
-          "#eab308",
-      });
-
-      return;
-    }
-
-    if (
-      resultado === false
-    ) {
-      return;
-    }
-
-    await Swal.fire({
-      title: esEdicion
-        ? "¡Asignación actualizada!"
-        : "¡Asignación registrada!",
-
-      text: esEdicion
-        ? "Los cambios se guardaron correctamente."
-        : "La asignación se registró correctamente.",
-
-      icon: "success",
-
-      showConfirmButton:
-        false,
-
-      showCancelButton:
-        false,
-
-      timer: 2200,
-
-      timerProgressBar:
-        true,
-
-      allowOutsideClick:
-        false,
-
-      allowEscapeKey:
-        false,
-    });
+    await onSubmit(payload);
   };
 
   const deshabilitado =
-    saving ||
-    loadingCatalogos;
+    submitting;
 
   return (
     <form
-      onSubmit={
-        handleSubmit
-      }
+      onSubmit={handleSubmit}
       className="notranslate p-5 sm:p-6"
       noValidate
       translate="no"
-      aria-busy={
-        deshabilitado
-      }
+      aria-busy={submitting}
     >
-      {formError && (
+      {(formError ||
+        submitError) && (
         <div
           role="alert"
           className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3"
         >
           <p className="text-sm font-black text-red-700">
-            Revisa la
-            información
+            Revisa la información
           </p>
 
           <p className="mt-1 text-sm font-medium text-red-600">
-            {formError}
+            {formError ||
+              submitError}
           </p>
         </div>
       )}
 
-      {esSuperAdmin && (
-        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
-          <Building2
-            size={20}
-            className="mt-0.5 shrink-0 text-blue-600"
-            aria-hidden="true"
-          />
-
-          <div>
-            <p className="text-sm font-black text-blue-800">
-              Panel general
-            </p>
-
-            <p className="mt-1 text-sm font-medium text-blue-700">
-              La asignación
-              quedará registrada
-              desde el panel del
-              superadministrador.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {esAdminSucursal && (
-        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-          <CheckCircle2
-            size={20}
-            className="mt-0.5 shrink-0 text-emerald-600"
-            aria-hidden="true"
-          />
-
-          <div>
-            <p className="text-sm font-black text-emerald-800">
-              Sucursal asignada
-            </p>
-
-            <p className="mt-1 text-sm font-medium text-emerald-700">
-              La asignación
-              quedará asociada
-              automáticamente a
-              tu sucursal.
-            </p>
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <div className="md:col-span-2">
-          <label
-            htmlFor="asignacion-conductor"
-            className="mb-2 block text-sm font-bold text-slate-700"
-          >
-            Conductor
-          </label>
-
-          <div className="relative">
+      <div className="mb-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
             <UserRound
-              size={18}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              size={21}
               aria-hidden="true"
             />
-
-            <select
-              id="asignacion-conductor"
-              name="conductor"
-              value={
-                form.conductor
-              }
-              onChange={
-                handleChange
-              }
-              disabled={
-                deshabilitado
-              }
-              className="w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
-            >
-              <option value="">
-                {loadingCatalogos
-                  ? "Cargando conductores..."
-                  : "Selecciona un conductor"}
-              </option>
-
-              {conductoresDisponibles.map(
-                (conductor) => (
-                  <option
-                    key={
-                      conductor.id
-                    }
-                    value={
-                      conductor.id
-                    }
-                  >
-                    {obtenerNombreConductor(
-                      conductor
-                    )}
-
-                    {conductor.cedula
-                      ? ` - ${conductor.cedula}`
-                      : ""}
-
-                    {conductor.sucursal_nombre
-                      ? ` - ${conductor.sucursal_nombre}`
-                      : esSuperAdmin
-                        ? " - Panel general"
-                        : ""}
-                  </option>
-                )
-              )}
-            </select>
-
-            <span
-              aria-hidden={
-                !loadingCatalogos
-              }
-              className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${
-                loadingCatalogos
-                  ? "block"
-                  : "hidden"
-              }`}
-            >
-              <LoaderCircle
-                size={18}
-                className="animate-spin text-yellow-600"
-                aria-hidden="true"
-              />
-            </span>
           </div>
 
-          {!conductoresDisponibles.length &&
-            !loadingCatalogos && (
-              <p className="mt-2 text-xs font-semibold text-red-600">
-                No hay
-                conductores activos
-                disponibles.
-                Primero registra o
-                reactiva un
-                conductor.
-              </p>
-            )}
+          <div>
+            <h3 className="text-base font-black text-slate-950">
+              Información personal
+            </h3>
 
-          {conductorSeleccionado && (
-            <div className="mt-3 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
-              <p className="text-sm font-black text-blue-800">
-                {obtenerNombreConductor(
-                  conductorSeleccionado
-                )}
-              </p>
-
-              <p className="mt-1 text-xs font-semibold text-blue-700">
-                {conductorSeleccionado.cedula
-                  ? `Cédula: ${conductorSeleccionado.cedula}`
-                  : "Conductor sin cédula registrada"}
-              </p>
-
-              {conductorSeleccionado.sucursal_nombre && (
-                <p className="mt-1 text-xs font-semibold text-blue-700">
-                  Sucursal:{" "}
-                  {
-                    conductorSeleccionado.sucursal_nombre
-                  }
-                </p>
-              )}
-            </div>
-          )}
+            <p className="mt-0.5 text-xs font-medium text-slate-500">
+              Datos generales del conductor.
+            </p>
+          </div>
         </div>
 
-        <div className="md:col-span-2">
-          <label
-            htmlFor="asignacion-vehiculo"
-            className="mb-2 block text-sm font-bold text-slate-700"
-          >
-            Vehículo
-          </label>
+        <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div>
+            <label
+              htmlFor="conductor-nombre"
+              className="mb-2 block text-sm font-bold text-slate-700"
+            >
+              Nombre
+            </label>
 
-          <div className="relative">
-            <CarTaxiFront
-              size={18}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            <div className="relative">
+              <UserRound
+                size={18}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+
+              <input
+                id="conductor-nombre"
+                type="text"
+                name="nombre"
+                value={form.nombre}
+                onChange={handleChange}
+                disabled={deshabilitado}
+                placeholder="Nombre del conductor"
+                autoComplete="given-name"
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="conductor-apellido"
+              className="mb-2 block text-sm font-bold text-slate-700"
+            >
+              Apellido
+            </label>
+
+            <div className="relative">
+              <UserRound
+                size={18}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+
+              <input
+                id="conductor-apellido"
+                type="text"
+                name="apellido"
+                value={form.apellido}
+                onChange={handleChange}
+                disabled={deshabilitado}
+                placeholder="Apellido del conductor"
+                autoComplete="family-name"
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="conductor-cedula"
+              className="mb-2 block text-sm font-bold text-slate-700"
+            >
+              Cédula
+            </label>
+
+            <div className="relative">
+              <IdCard
+                size={18}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+
+              <input
+                id="conductor-cedula"
+                type="text"
+                name="cedula"
+                value={form.cedula}
+                onChange={handleChange}
+                disabled={deshabilitado}
+                placeholder="Número de cédula"
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="conductor-telefono"
+              className="mb-2 block text-sm font-bold text-slate-700"
+            >
+              Teléfono
+            </label>
+
+            <div className="relative">
+              <Phone
+                size={18}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+
+              <input
+                id="conductor-telefono"
+                type="tel"
+                name="telefono"
+                value={form.telefono}
+                onChange={handleChange}
+                disabled={deshabilitado}
+                placeholder="Número de teléfono"
+                autoComplete="tel"
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              />
+            </div>
+          </div>
+
+          <div className="md:col-span-2">
+            <label
+              htmlFor="conductor-direccion"
+              className="mb-2 block text-sm font-bold text-slate-700"
+            >
+              Dirección
+            </label>
+
+            <div className="relative">
+              <MapPin
+                size={18}
+                className="pointer-events-none absolute left-4 top-4 text-slate-400"
+              />
+
+              <textarea
+                id="conductor-direccion"
+                name="direccion"
+                value={form.direccion}
+                onChange={handleChange}
+                disabled={deshabilitado}
+                rows={3}
+                placeholder="Dirección del conductor"
+                className="w-full resize-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-slate-200 pt-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
+            <CreditCard
+              size={21}
               aria-hidden="true"
             />
-
-            <select
-              id="asignacion-vehiculo"
-              name="vehiculo"
-              value={
-                form.vehiculo
-              }
-              onChange={
-                handleChange
-              }
-              disabled={
-                deshabilitado
-              }
-              className="w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
-            >
-              <option value="">
-                {loadingCatalogos
-                  ? "Cargando vehículos..."
-                  : "Selecciona un vehículo"}
-              </option>
-
-              {vehiculosDisponibles.map(
-                (vehiculo) => (
-                  <option
-                    key={
-                      vehiculo.id
-                    }
-                    value={
-                      vehiculo.id
-                    }
-                  >
-                    {obtenerNombreVehiculo(
-                      vehiculo
-                    )}
-
-                    {vehiculo.sucursal_nombre
-                      ? ` - ${vehiculo.sucursal_nombre}`
-                      : esSuperAdmin
-                        ? " - Panel general"
-                        : ""}
-                  </option>
-                )
-              )}
-            </select>
-
-            <span
-              aria-hidden={
-                !loadingCatalogos
-              }
-              className={`pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 ${
-                loadingCatalogos
-                  ? "block"
-                  : "hidden"
-              }`}
-            >
-              <LoaderCircle
-                size={18}
-                className="animate-spin text-yellow-600"
-                aria-hidden="true"
-              />
-            </span>
           </div>
 
-          {!vehiculosDisponibles.length &&
-            !loadingCatalogos && (
-              <p className="mt-2 text-xs font-semibold text-red-600">
-                No hay vehículos
-                activos disponibles.
-                Primero registra o
-                habilita un
-                vehículo.
-              </p>
-            )}
+          <div>
+            <h3 className="text-base font-black text-slate-950">
+              Licencia de conducir
+            </h3>
 
-          {vehiculoSeleccionado && (
-            <div className="mt-3 rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3">
-              <p className="text-sm font-black text-yellow-800">
-                {obtenerNombreVehiculo(
-                  vehiculoSeleccionado
-                )}
-              </p>
-
-              {vehiculoSeleccionado.sucursal_nombre && (
-                <p className="mt-1 text-xs font-semibold text-yellow-700">
-                  Sucursal:{" "}
-                  {
-                    vehiculoSeleccionado.sucursal_nombre
-                  }
-                </p>
-              )}
-            </div>
-          )}
+            <p className="mt-0.5 text-xs font-medium text-slate-500">
+              Número, vigencia y vencimiento.
+            </p>
+          </div>
         </div>
 
-        <div>
+        <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="md:col-span-2">
+            <label
+              htmlFor="conductor-licencia"
+              className="mb-2 block text-sm font-bold text-slate-700"
+            >
+              Número de licencia
+            </label>
+
+            <div className="relative">
+              <IdCard
+                size={18}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+
+              <input
+                id="conductor-licencia"
+                type="text"
+                name="numero_licencia"
+                value={
+                  form.numero_licencia
+                }
+                onChange={handleChange}
+                disabled={deshabilitado}
+                placeholder="Número de licencia"
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="conductor-fecha-inicio-licencia"
+              className="mb-2 block text-sm font-bold text-slate-700"
+            >
+              Fecha de inicio
+            </label>
+
+            <div className="relative">
+              <CalendarDays
+                size={18}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+
+              <input
+                id="conductor-fecha-inicio-licencia"
+                type="date"
+                name="fecha_inicio_licencia"
+                value={
+                  form.fecha_inicio_licencia
+                }
+                onChange={handleChange}
+                disabled={deshabilitado}
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              htmlFor="conductor-fecha-vencimiento-licencia"
+              className="mb-2 block text-sm font-bold text-slate-700"
+            >
+              Fecha de vencimiento
+            </label>
+
+            <div className="relative">
+              <CalendarDays
+                size={18}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+
+              <input
+                id="conductor-fecha-vencimiento-licencia"
+                type="date"
+                name="fecha_vencimiento_licencia"
+                value={
+                  form.fecha_vencimiento_licencia
+                }
+                min={
+                  form.fecha_inicio_licencia ||
+                  undefined
+                }
+                onChange={handleChange}
+                disabled={deshabilitado}
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6 border-t border-slate-200 pt-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+            <BadgePercent
+              size={21}
+              aria-hidden="true"
+            />
+          </div>
+
+          <div>
+            <h3 className="text-base font-black text-slate-950">
+              Pago del conductor
+            </h3>
+
+            <p className="mt-0.5 text-xs font-medium text-slate-500">
+              Porcentaje aplicado a sus jornadas.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5">
           <label
-            htmlFor="asignacion-fecha-inicio"
+            htmlFor="conductor-porcentaje"
             className="mb-2 block text-sm font-bold text-slate-700"
           >
-            Fecha de inicio
+            Porcentaje de pago
           </label>
 
-          <div className="relative">
-            <CalendarDays
+          <div className="relative max-w-md">
+            <BadgePercent
               size={18}
               className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              aria-hidden="true"
             />
 
             <input
-              id="asignacion-fecha-inicio"
-              type="date"
-              name="fecha_inicio"
+              id="conductor-porcentaje"
+              type="number"
+              name="porcentaje_pago"
               value={
-                form.fecha_inicio
+                form.porcentaje_pago
               }
-              onChange={
-                handleChange
-              }
-              disabled={
-                deshabilitado
-              }
-              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label
-            htmlFor="asignacion-fecha-fin"
-            className="mb-2 block text-sm font-bold text-slate-700"
-          >
-            Fecha final
-          </label>
-
-          <div className="relative">
-            <CalendarDays
-              size={18}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              aria-hidden="true"
+              onChange={handleChange}
+              disabled={deshabilitado}
+              min="1"
+              max="100"
+              step="0.01"
+              placeholder="Ejemplo: 30"
+              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-14 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
             />
 
-            <input
-              id="asignacion-fecha-fin"
-              type="date"
-              name="fecha_fin"
-              value={
-                form.fecha_fin
-              }
-              min={
-                form.fecha_inicio ||
-                undefined
-              }
-              onChange={
-                handleChange
-              }
-              disabled={
-                deshabilitado
-              }
-              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
-            />
+            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-500">
+              %
+            </span>
           </div>
 
           <p className="mt-2 text-xs font-medium text-slate-500">
-            Déjala vacía
-            mientras la
-            asignación continúe
-            vigente.
+            Debe ser un valor entre 1 y 100.
           </p>
-        </div>
-
-        <div className="md:col-span-2">
-          <label
-            className={`flex items-center justify-between gap-4 rounded-2xl border px-4 py-4 transition ${
-              form.activa
-                ? "border-emerald-200 bg-emerald-50"
-                : "border-slate-200 bg-slate-50"
-            } ${
-              deshabilitado
-                ? "cursor-not-allowed opacity-70"
-                : "cursor-pointer"
-            }`}
-          >
-            <div className="flex items-start gap-3">
-              <Route
-                size={21}
-                className={
-                  form.activa
-                    ? "mt-0.5 shrink-0 text-emerald-600"
-                    : "mt-0.5 shrink-0 text-slate-500"
-                }
-                aria-hidden="true"
-              />
-
-              <div>
-                <p
-                  className={`text-sm font-black ${
-                    form.activa
-                      ? "text-emerald-800"
-                      : "text-slate-800"
-                  }`}
-                >
-                  Asignación
-                  activa
-                </p>
-
-                <p
-                  className={`mt-1 text-xs font-medium ${
-                    form.activa
-                      ? "text-emerald-700"
-                      : "text-slate-500"
-                  }`}
-                >
-                  El conductor
-                  podrá registrar
-                  jornadas con el
-                  vehículo
-                  seleccionado.
-                </p>
-              </div>
-            </div>
-
-            <input
-              type="checkbox"
-              name="activa"
-              checked={
-                form.activa
-              }
-              onChange={
-                handleChange
-              }
-              disabled={
-                deshabilitado
-              }
-              className="h-5 w-5 shrink-0 rounded border-slate-300 text-yellow-500 focus:ring-yellow-400 disabled:cursor-not-allowed"
-            />
-          </label>
         </div>
       </div>
 
       <div className="mt-7 flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">
         <button
           type="button"
-          onClick={
-            onCancel
-          }
-          disabled={
-            deshabilitado
-          }
-          className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={onCancel}
+          disabled={deshabilitado}
+          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
+          <X size={18} />
+
           Cancelar
         </button>
 
         <button
           type="submit"
-          disabled={
-            deshabilitado ||
-            !conductoresDisponibles.length ||
-            !vehiculosDisponibles.length
-          }
-          aria-busy={
-            saving
-          }
-          translate="no"
-          className="notranslate flex min-w-[175px] items-center justify-center rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={deshabilitado}
+          className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <span
-            aria-hidden={
-              !saving
-            }
-            className={`items-center gap-2 ${
-              saving
-                ? "flex"
-                : "hidden"
-            }`}
-          >
-            <LoaderCircle
-              size={18}
-              className="animate-spin"
-              aria-hidden="true"
-            />
+          {submitting ? (
+            <>
+              <LoaderCircle
+                size={18}
+                className="animate-spin"
+              />
 
-            <span>
-              Guardando...
-            </span>
-          </span>
+              {esEdicion
+                ? "Actualizando..."
+                : "Registrando..."}
+            </>
+          ) : (
+            <>
+              <Save size={18} />
 
-          <span
-            aria-hidden={
-              saving
-            }
-            className={`items-center gap-2 ${
-              saving
-                ? "hidden"
-                : "flex"
-            }`}
-          >
-            <CheckCircle2
-              size={18}
-              aria-hidden="true"
-            />
-
-            <span>
               {esEdicion
                 ? "Guardar cambios"
-                : "Crear asignación"}
-            </span>
-          </span>
+                : "Registrar conductor"}
+            </>
+          )}
         </button>
       </div>
     </form>
   );
 };
 
-export default AsignacionForm;
+export default ConductorForm;
