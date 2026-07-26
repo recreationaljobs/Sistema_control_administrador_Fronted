@@ -1,10 +1,14 @@
-
-import { useEffect, useMemo, useState } from "react";
 import {
-  getDashboardResumen,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
   getDashboardFinanciero,
+  getDashboardResumen,
   getJornadas,
-  getVehiculos,
 } from "../services/dashboardService";
 
 const MESES = {
@@ -23,13 +27,28 @@ const MESES = {
 };
 
 const normalizarLista = (data) => {
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.results)) return data.results;
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (Array.isArray(data?.results)) {
+    return data.results;
+  }
+
   return [];
+};
+
+const numeroSeguro = (valor) => {
+  const numero = Number(valor);
+
+  return Number.isFinite(numero)
+    ? numero
+    : 0;
 };
 
 const formatearFechaLocal = (fecha) => {
   const year = fecha.getFullYear();
+
   const month = String(
     fecha.getMonth() + 1
   ).padStart(2, "0");
@@ -45,6 +64,7 @@ const obtenerParametrosPeriodo = (
   periodoSeleccionado
 ) => {
   const fechaActual = new Date();
+
   const fechaFin =
     formatearFechaLocal(fechaActual);
 
@@ -77,9 +97,7 @@ const obtenerParametrosPeriodo = (
         formatearFechaLocal(
           inicioSemana
         ),
-
-      fecha_fin:
-        fechaFin,
+      fecha_fin: fechaFin,
     };
   }
 
@@ -94,9 +112,7 @@ const obtenerParametrosPeriodo = (
       formatearFechaLocal(
         inicioMes
       ),
-
-    fecha_fin:
-      fechaFin,
+    fecha_fin: fechaFin,
   };
 };
 
@@ -133,11 +149,6 @@ export const useDashboard = ({
   ] = useState([]);
 
   const [
-    vehiculos,
-    setVehiculos,
-  ] = useState([]);
-
-  const [
     financieroMensual,
     setFinancieroMensual,
   ] = useState([]);
@@ -156,260 +167,222 @@ export const useDashboard = ({
   const [error, setError] =
     useState("");
 
-  const limpiarDashboard = () => {
-    setResumen({});
-    setFinancieroMensual([]);
-    setJornadasHoy([]);
-    setVehiculos([]);
-    setError("");
-    setLoading(false);
-  };
-
-  const cargarDashboard = async () => {
-    /*
-     * El taxista utiliza enabled=false.
-     * Por lo tanto, no se realizan peticiones
-     * financieras ni administrativas.
-     */
-    if (!enabled) {
-      limpiarDashboard();
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError("");
-
-      const parametrosJornadas =
-        obtenerParametrosPeriodo(
-          periodo
-        );
-
-      const [
-        resumenData,
-        financieroData,
-        jornadasData,
-        vehiculosData,
-      ] = await Promise.all([
-        getDashboardResumen(),
-
-        getDashboardFinanciero({
-          anio: anioSeleccionado,
-        }),
-
-        getJornadas(
-          parametrosJornadas
-        ),
-
-        getVehiculos(),
-      ]);
-
-      setResumen(
-        resumenData || {}
-      );
-
-      setFinancieroMensual(
-        normalizarLista(
-          financieroData
-        )
-      );
-
-      setJornadasHoy(
-        normalizarLista(
-          jornadasData
-        )
-      );
-
-      setVehiculos(
-        normalizarLista(
-          vehiculosData
-        )
-      );
-    } catch (err) {
-      console.error(
-        "Error al cargar dashboard:",
-        err?.response?.data || err
-      );
-
-      setError(
-        obtenerMensajeError(
-          err,
-          "No se pudo cargar la información del dashboard."
-        )
-      );
-
+  const limpiarDashboard =
+    useCallback(() => {
       setResumen({});
       setFinancieroMensual([]);
       setJornadasHoy([]);
-      setVehiculos([]);
-    } finally {
+      setError("");
       setLoading(false);
-    }
-  };
+    }, []);
+
+  const cargarDashboard =
+    useCallback(async () => {
+      if (!enabled) {
+        limpiarDashboard();
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError("");
+
+        const parametrosJornadas =
+          obtenerParametrosPeriodo(
+            periodo
+          );
+
+        const [
+          resumenData,
+          financieroData,
+          jornadasData,
+        ] = await Promise.all([
+          getDashboardResumen(),
+
+          getDashboardFinanciero({
+            anio: anioSeleccionado,
+          }),
+
+          getJornadas(
+            parametrosJornadas
+          ),
+        ]);
+
+        setResumen(
+          resumenData || {}
+        );
+
+        setFinancieroMensual(
+          normalizarLista(
+            financieroData
+          )
+        );
+
+        setJornadasHoy(
+          normalizarLista(
+            jornadasData
+          )
+        );
+      } catch (err) {
+        console.error(
+          "Error al cargar dashboard:",
+          err?.response?.data || err
+        );
+
+        setError(
+          obtenerMensajeError(
+            err,
+            "No se pudo cargar la información del dashboard."
+          )
+        );
+
+        setResumen({});
+        setFinancieroMensual([]);
+        setJornadasHoy([]);
+      } finally {
+        setLoading(false);
+      }
+    }, [
+      anioSeleccionado,
+      enabled,
+      limpiarDashboard,
+      periodo,
+    ]);
+
+  const moneda = useMemo(() => {
+    const valor = String(
+      resumen?.moneda || "C$"
+    ).trim();
+
+    return valor || "C$";
+  }, [resumen]);
 
   const metricasPeriodo =
     useMemo(() => {
-      const data =
-        resumen || {};
+      const data = resumen || {};
 
       if (periodo === "semana") {
         return {
-          ingreso:
-            data.ingreso_semana || 0,
-
-          pagoTaxistas:
-            data.pago_taxistas_semana ||
-            0,
-
-          gananciaBase:
-            data.ganancia_dueno_semana ||
-            0,
-
-          gastosVehiculos:
-            data.gastos_vehiculos_semana ||
-            0,
-
-          mantenimiento:
-            data.mantenimiento_semana ||
-            0,
-
-          gastosOperativos:
-            data.gastos_semana || 0,
-
-          gananciaReal:
-            data.ganancia_real_dueno_semana ||
-            0,
-
-          kilometros:
-            data.km_semana || 0,
+          ingreso: numeroSeguro(
+            data.ingreso_semana
+          ),
+          pagoTaxistas: numeroSeguro(
+            data.pago_taxistas_semana
+          ),
+          gananciaBase: numeroSeguro(
+            data.ganancia_dueno_semana
+          ),
+          gastosVehiculos: numeroSeguro(
+            data.gastos_vehiculos_semana
+          ),
+          mantenimiento: numeroSeguro(
+            data.mantenimiento_semana
+          ),
+          gastosOperativos: numeroSeguro(
+            data.gastos_semana
+          ),
+          gananciaReal: numeroSeguro(
+            data.ganancia_real_dueno_semana
+          ),
+          kilometros: numeroSeguro(
+            data.km_semana
+          ),
         };
       }
 
       if (periodo === "mes") {
         return {
-          ingreso:
-            data.ingreso_mes || 0,
-
-          pagoTaxistas:
-            data.pago_taxistas_mes ||
-            0,
-
-          gananciaBase:
-            data.ganancia_dueno_mes ||
-            0,
-
-          gastosVehiculos:
-            data.gastos_vehiculos_mes ||
-            0,
-
-          mantenimiento:
-            data.mantenimiento_mes ||
-            0,
-
-          gastosOperativos:
-            data.gastos_mes || 0,
-
-          gananciaReal:
-            data.ganancia_real_dueno_mes ||
-            0,
-
-          kilometros:
-            data.km_mes || 0,
+          ingreso: numeroSeguro(
+            data.ingreso_mes
+          ),
+          pagoTaxistas: numeroSeguro(
+            data.pago_taxistas_mes
+          ),
+          gananciaBase: numeroSeguro(
+            data.ganancia_dueno_mes
+          ),
+          gastosVehiculos: numeroSeguro(
+            data.gastos_vehiculos_mes
+          ),
+          mantenimiento: numeroSeguro(
+            data.mantenimiento_mes
+          ),
+          gastosOperativos: numeroSeguro(
+            data.gastos_mes
+          ),
+          gananciaReal: numeroSeguro(
+            data.ganancia_real_dueno_mes
+          ),
+          kilometros: numeroSeguro(
+            data.km_mes
+          ),
         };
       }
 
       return {
-        ingreso:
-          data.ingreso_dia || 0,
-
-        pagoTaxistas:
-          data.pago_taxistas_dia ||
-          0,
-
-        gananciaBase:
-          data.ganancia_dueno_dia ||
-          0,
-
-        gastosVehiculos:
-          data.gastos_vehiculos_dia ||
-          0,
-
-        mantenimiento:
-          data.mantenimiento_dia ||
-          0,
-
-        gastosOperativos:
-          data.gastos_dia || 0,
-
-        gananciaReal:
-          data.ganancia_real_dueno_dia ||
-          0,
-
-        kilometros:
-          data.km_dia || 0,
+        ingreso: numeroSeguro(
+          data.ingreso_dia
+        ),
+        pagoTaxistas: numeroSeguro(
+          data.pago_taxistas_dia
+        ),
+        gananciaBase: numeroSeguro(
+          data.ganancia_dueno_dia
+        ),
+        gastosVehiculos: numeroSeguro(
+          data.gastos_vehiculos_dia
+        ),
+        mantenimiento: numeroSeguro(
+          data.mantenimiento_dia
+        ),
+        gastosOperativos: numeroSeguro(
+          data.gastos_dia
+        ),
+        gananciaReal: numeroSeguro(
+          data.ganancia_real_dueno_dia
+        ),
+        kilometros: numeroSeguro(
+          data.km_dia
+        ),
       };
-    }, [resumen, periodo]);
+    }, [
+      periodo,
+      resumen,
+    ]);
 
   const alertas = useMemo(() => {
-    if (
-      Array.isArray(
-        resumen?.alertas
-      )
-    ) {
-      return resumen.alertas;
-    }
-
-    return [];
+    return Array.isArray(
+      resumen?.alertas
+    )
+      ? resumen.alertas
+      : [];
   }, [resumen]);
 
   const vehiculosEstado =
     useMemo(() => {
-      const total =
-        vehiculos.length;
-
-      const vencidos =
-        vehiculos.filter(
-          (vehiculo) => {
-            return (
-              vehiculo.necesita_cambio_aceite ||
-              vehiculo.necesita_mantenimiento
-            );
-          }
-        ).length;
-
-      const proximos =
-        vehiculos.filter(
-          (vehiculo) => {
-            const alerta =
-              vehiculo.alerta_cambio_aceite ||
-              vehiculo.alerta_mantenimiento;
-
-            const vencido =
-              vehiculo.necesita_cambio_aceite ||
-              vehiculo.necesita_mantenimiento;
-
-            return (
-              alerta &&
-              !vencido
-            );
-          }
-        ).length;
-
-      const buenEstado =
-        Math.max(
-          total -
-            vencidos -
-            proximos,
-          0
-        );
+      const estado =
+        resumen?.estado_vehiculos ||
+        {};
 
       return {
-        total,
-        buenEstado,
-        proximos,
-        vencidos,
+        total: numeroSeguro(
+          estado.total ??
+            resumen?.vehiculos
+        ),
+        buenEstado: numeroSeguro(
+          estado.buen_estado
+        ),
+        proximos: numeroSeguro(
+          estado.proximos
+        ),
+        vencidos: numeroSeguro(
+          estado.vencidos
+        ),
+        sinHistorial: numeroSeguro(
+          estado.sin_historial
+        ),
       };
-    }, [vehiculos]);
+    }, [resumen]);
 
   const datosGrafica =
     useMemo(() => {
@@ -427,18 +400,14 @@ export const useDashboard = ({
               MESES[numeroMes] ||
               item.mes ||
               "",
-
-            ingreso: Number(
-              item.ingresos || 0
+            ingreso: numeroSeguro(
+              item.ingresos
             ),
-
-            ganancia: Number(
-              item.ganancia_real || 0
+            ganancia: numeroSeguro(
+              item.ganancia_real
             ),
-
-            gastos: Number(
-              item.gastos_operativos ||
-                0
+            gastos: numeroSeguro(
+              item.gastos_operativos
             ),
           };
         }
@@ -453,18 +422,18 @@ export const useDashboard = ({
 
     cargarDashboard();
   }, [
+    cargarDashboard,
     enabled,
-    anioSeleccionado,
-    periodo,
+    limpiarDashboard,
   ]);
 
   return {
     resumen,
     jornadasHoy,
-    vehiculos,
     vehiculosEstado,
     alertas,
     datosGrafica,
+    moneda,
 
     periodo,
     setPeriodo,
@@ -482,4 +451,3 @@ export const useDashboard = ({
     financieroMensual,
   };
 };
-

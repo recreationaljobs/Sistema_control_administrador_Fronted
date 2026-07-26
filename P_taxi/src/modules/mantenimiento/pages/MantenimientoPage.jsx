@@ -667,20 +667,13 @@ const MantenimientoPage = () => {
       </section>
 
       <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="flex flex-col gap-4 border-b border-dashed border-slate-200 pb-5 md:flex-row md:items-start md:justify-between">
+        <div className="flex flex-col gap-4 pb-5 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 className="text-lg font-black text-slate-950">
               Listado de mantenimientos
             </h2>
-
-            <p className="mt-2 text-sm font-semibold text-slate-500">
-              {textoResumenFecha}
-            </p>
-
-            <p className="mt-1 text-xs font-bold text-slate-400">
-              {mantenimientosMostrados.length} registro(s) encontrado(s)
-            </p>
           </div>
+          
 
           <CalendarioMantenimiento
             rango={rangoFecha}

@@ -1,33 +1,98 @@
 import Chart from "react-apexcharts";
-import { DollarSign, Wallet, Wrench } from "lucide-react";
 
-const formatoDinero = (valor) => {
-  return `C$ ${Number(valor || 0).toLocaleString("es-NI", {
+import {
+  DollarSign,
+  Wallet,
+  Wrench,
+} from "lucide-react";
+
+const formatoDinero = (
+  valor,
+  moneda
+) => {
+  return `${moneda} ${Number(
+    valor || 0
+  ).toLocaleString("es-NI", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 };
 
-const formatoDineroCorto = (valor) => {
-  const numero = Number(valor || 0);
+const formatoDineroCorto = (
+  valor,
+  moneda
+) => {
+  const numero = Number(
+    valor || 0
+  );
 
-  if (numero >= 1000000) return `C$ ${(numero / 1000000).toFixed(1)}M`;
-  if (numero >= 1000) return `C$ ${(numero / 1000).toFixed(1)}K`;
+  if (Math.abs(numero) >= 1000000) {
+    return `${moneda} ${(
+      numero / 1000000
+    ).toFixed(1)}M`;
+  }
 
-  return `C$ ${numero.toFixed(0)}`;
+  if (Math.abs(numero) >= 1000) {
+    return `${moneda} ${(
+      numero / 1000
+    ).toFixed(1)}K`;
+  }
+
+  return `${moneda} ${numero.toFixed(0)}`;
 };
 
-const FinancialChart = ({ datos = [] }) => {
-  const datosSeguros = Array.isArray(datos) ? datos : [];
+const FinancialChart = ({
+  datos = [],
+  moneda = "C$",
+}) => {
+  const datosSeguros =
+    Array.isArray(datos)
+      ? datos
+      : [];
 
-  const categorias = datosSeguros.map((item) => item.label || "");
-  const ingresos = datosSeguros.map((item) => Number(item.ingreso || 0));
-  const ganancias = datosSeguros.map((item) => Number(item.ganancia || 0));
-  const gastos = datosSeguros.map((item) => Number(item.gastos || 0));
+  const categorias =
+    datosSeguros.map(
+      (item) => item.label || ""
+    );
 
-  const totalIngresos = ingresos.reduce((total, valor) => total + valor, 0);
-  const totalGanancia = ganancias.reduce((total, valor) => total + valor, 0);
-  const totalGastos = gastos.reduce((total, valor) => total + valor, 0);
+  const ingresos =
+    datosSeguros.map(
+      (item) =>
+        Number(item.ingreso || 0)
+    );
+
+  const ganancias =
+    datosSeguros.map(
+      (item) =>
+        Number(item.ganancia || 0)
+    );
+
+  const gastos =
+    datosSeguros.map(
+      (item) =>
+        Number(item.gastos || 0)
+    );
+
+  const totalIngresos =
+    ingresos.reduce(
+      (total, valor) =>
+        total + valor,
+      0
+    );
+
+  const totalGanancia =
+    ganancias.reduce(
+      (total, valor) =>
+        total + valor,
+      0
+    );
+
+  const totalGastos =
+    gastos.reduce(
+      (total, valor) =>
+        total + valor,
+      0
+    );
 
   const options = {
     chart: {
@@ -38,20 +103,29 @@ const FinancialChart = ({ datos = [] }) => {
       zoom: {
         enabled: false,
       },
-      fontFamily: "Inter, system-ui, sans-serif",
+      fontFamily:
+        "Inter, system-ui, sans-serif",
     },
     stroke: {
       curve: "smooth",
       width: 3,
     },
-    colors: ["#F5B800", "#22C55E", "#EF4444"],
+    colors: [
+      "#F5B800",
+      "#22C55E",
+      "#EF4444",
+    ],
     fill: {
       type: "gradient",
       gradient: {
         shadeIntensity: 1,
         opacityFrom: 0.45,
         opacityTo: 0,
-        stops: [0, 95, 100],
+        stops: [
+          0,
+          95,
+          100,
+        ],
       },
     },
     dataLabels: {
@@ -79,7 +153,11 @@ const FinancialChart = ({ datos = [] }) => {
     },
     yaxis: {
       labels: {
-        formatter: (value) => formatoDineroCorto(value),
+        formatter: (value) =>
+          formatoDineroCorto(
+            value,
+            moneda
+          ),
         style: {
           colors: "#64748b",
           fontSize: "12px",
@@ -100,7 +178,11 @@ const FinancialChart = ({ datos = [] }) => {
       theme: "dark",
       shared: true,
       y: {
-        formatter: (value) => formatoDinero(value),
+        formatter: (value) =>
+          formatoDinero(
+            value,
+            moneda
+          ),
       },
     },
   };
@@ -134,8 +216,17 @@ const FinancialChart = ({ datos = [] }) => {
         </div>
 
         <div className="text-left md:text-right">
-          <p className="text-xl font-extrabold text-emerald-600">
-            {formatoDinero(totalGanancia)}
+          <p
+            className={`text-xl font-extrabold ${
+              totalGanancia < 0
+                ? "text-red-600"
+                : "text-emerald-600"
+            }`}
+          >
+            {formatoDinero(
+              totalGanancia,
+              moneda
+            )}
           </p>
 
           <p className="mt-1 text-sm text-slate-400">
@@ -150,7 +241,12 @@ const FinancialChart = ({ datos = [] }) => {
         </div>
       ) : (
         <>
-          <Chart options={options} series={series} type="area" height={340} />
+          <Chart
+            options={options}
+            series={series}
+            type="area"
+            height={340}
+          />
 
           <div className="mx-auto -mt-2 grid w-full max-w-3xl grid-cols-1 gap-4 rounded-3xl border border-slate-100 bg-slate-50 px-6 py-4 shadow-sm md:grid-cols-3">
             <div className="flex items-center gap-4">
@@ -164,7 +260,10 @@ const FinancialChart = ({ datos = [] }) => {
                 </p>
 
                 <p className="text-base font-extrabold text-slate-900">
-                  {formatoDinero(totalIngresos)}
+                  {formatoDinero(
+                    totalIngresos,
+                    moneda
+                  )}
                 </p>
               </div>
             </div>
@@ -179,8 +278,17 @@ const FinancialChart = ({ datos = [] }) => {
                   Ganancia real
                 </p>
 
-                <p className="text-base font-extrabold text-slate-900">
-                  {formatoDinero(totalGanancia)}
+                <p
+                  className={`text-base font-extrabold ${
+                    totalGanancia < 0
+                      ? "text-red-600"
+                      : "text-slate-900"
+                  }`}
+                >
+                  {formatoDinero(
+                    totalGanancia,
+                    moneda
+                  )}
                 </p>
               </div>
             </div>
@@ -196,7 +304,10 @@ const FinancialChart = ({ datos = [] }) => {
                 </p>
 
                 <p className="text-base font-extrabold text-slate-900">
-                  {formatoDinero(totalGastos)}
+                  {formatoDinero(
+                    totalGastos,
+                    moneda
+                  )}
                 </p>
               </div>
             </div>

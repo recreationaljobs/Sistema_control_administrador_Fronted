@@ -1,24 +1,53 @@
 import { CarTaxiFront } from "lucide-react";
 
-const formatoDinero = (valor) => {
-  return `C$ ${Number(valor || 0).toLocaleString("es-NI", {
+const formatoDinero = (
+  valor,
+  moneda
+) => {
+  return `${moneda} ${Number(
+    valor || 0
+  ).toLocaleString("es-NI", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 };
 
-const obtenerBadge = (estadoCodigo = "", estadoNombre = "") => {
-  const value = `${estadoCodigo} ${estadoNombre}`.toLowerCase();
+const obtenerBadge = (
+  estadoCodigo = "",
+  estadoNombre = ""
+) => {
+  const value = (
+    `${estadoCodigo} ${estadoNombre}`
+  ).toLowerCase();
 
-  if (value.includes("cerrada") || value.includes("completa")) {
+  if (
+    value.includes("cerrada") ||
+    value.includes("completa") ||
+    value.includes("finalizada")
+  ) {
     return "bg-green-100 text-green-700";
   }
 
-  if (value.includes("abierta") || value.includes("proceso")) {
+  if (
+    value.includes("abierta") ||
+    value.includes("proceso") ||
+    value.includes("circulando") ||
+    value.includes("corriendo") ||
+    value.includes("trabajando")
+  ) {
+    return "bg-blue-100 text-blue-700";
+  }
+
+  if (
+    value.includes("pendiente")
+  ) {
     return "bg-yellow-100 text-yellow-700";
   }
 
-  if (value.includes("anulada")) {
+  if (
+    value.includes("anulada") ||
+    value.includes("cancelada")
+  ) {
     return "bg-red-100 text-red-700";
   }
 
@@ -27,7 +56,9 @@ const obtenerBadge = (estadoCodigo = "", estadoNombre = "") => {
 
 const RecentJornadas = ({
   jornadas = [],
-  titulo = "Jornadas de hoy",}) => {
+  titulo = "Jornadas de hoy",
+  moneda = "C$",
+}) => {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="mb-5 flex items-center justify-between">
@@ -47,50 +78,60 @@ const RecentJornadas = ({
           </div>
 
           <p className="mt-4 text-sm font-bold text-slate-500">
-            No hay jornadas registradas hoy.
+            No hay jornadas registradas en este período.
           </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {jornadas.slice(0, 6).map((jornada, index) => {
-            const badge = obtenerBadge(
-              jornada.estado_codigo,
-              jornada.estado_nombre
-            );
+          {jornadas
+            .slice(0, 6)
+            .map(
+              (jornada, index) => {
+                const badge =
+                  obtenerBadge(
+                    jornada.estado_codigo,
+                    jornada.estado_nombre
+                  );
 
-            return (
-              <div
-                key={jornada.id}
-                className="flex items-center gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0"
-              >
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-yellow-100 text-sm font-black text-slate-900">
-                  {index + 1}
-                </div>
+                return (
+                  <div
+                    key={jornada.id}
+                    className="flex items-center gap-3 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0"
+                  >
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-yellow-100 text-sm font-black text-slate-900">
+                      {index + 1}
+                    </div>
 
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-black text-slate-900">
-                    {jornada.conductor_nombre || "Sin conductor"}
-                  </p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-black text-slate-900">
+                        {jornada.conductor_nombre ||
+                          "Sin conductor"}
+                      </p>
 
-                  <p className="truncate text-xs font-medium text-slate-500">
-                    {jornada.vehiculo_descripcion ||
-                      jornada.vehiculo_placa ||
-                      "Sin vehículo"}
-                  </p>
-                </div>
+                      <p className="truncate text-xs font-medium text-slate-500">
+                        {jornada.vehiculo_descripcion ||
+                          jornada.vehiculo_placa ||
+                          "Sin vehículo"}
+                      </p>
+                    </div>
 
-                <span
-                  className={`rounded-full px-3 py-1 text-xs font-bold ${badge}`}
-                >
-                  {jornada.estado_nombre || "Circulando"}
-                </span>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${badge}`}
+                    >
+                      {jornada.estado_nombre ||
+                        "Sin estado"}
+                    </span>
 
-                <p className="w-24 text-right text-sm font-black text-slate-900">
-                  {formatoDinero(jornada.ingreso_bruto)}
-                </p>
-              </div>
-            );
-          })}
+                    <p className="w-28 text-right text-sm font-black text-slate-900">
+                      {formatoDinero(
+                        jornada.ingreso_bruto,
+                        moneda
+                      )}
+                    </p>
+                  </div>
+                );
+              }
+            )}
         </div>
       )}
     </div>

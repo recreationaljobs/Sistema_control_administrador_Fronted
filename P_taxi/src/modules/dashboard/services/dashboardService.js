@@ -1,21 +1,53 @@
 import api from "../../../api/axios";
 
-export const getDashboardResumen = async (params = {}) => {
-  const response = await api.get("dashboard/resumen/", { params });
+export const getDashboardResumen = async (
+  params = {}
+) => {
+  const response = await api.get(
+    "dashboard/resumen/",
+    { params }
+  );
+
   return response.data;
 };
 
-export const getDashboardFinanciero = async (params = {}) => {
-  const response = await api.get("dashboard/financiero/", { params });
+export const getDashboardFinanciero = async (
+  params = {}
+) => {
+  const response = await api.get(
+    "dashboard/financiero/",
+    { params }
+  );
+
   return response.data;
 };
 
-export const getJornadas = async (params = {}) => {
-  const response = await api.get("jornadas/", { params });
+export const getJornadas = async (
+  params = {}
+) => {
+  const response = await api.get(
+    "jornadas/",
+    { params }
+  );
+
   return response.data;
 };
 
-export const getVehiculos = async () => {
-  const response = await api.get("vehiculos/");
-  return response.data;
-};
+export const getConfiguracionSistema =
+  async () => {
+    const response = await api.get(
+      "configuracion-sistema/"
+    );
+
+    return response.data;
+  };
+
+export const getAlertasMantenimiento =
+  async (params = {}) => {
+    const response = await api.get(
+      "mantenimiento/alertas/",
+      { params }
+    );
+
+    return response.data;
+  };

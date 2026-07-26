@@ -254,7 +254,7 @@ const VehiculoTable = ({
                               />
                             )}
 
-                            Aceite:{" "}
+                            Faltan {" "}
                             {formatearKilometraje(
                               vehiculo.faltan_km_cambio_aceite
                             )}{" "}
@@ -262,7 +262,7 @@ const VehiculoTable = ({
                           </span>
                         </div>
 
-                        <div>
+                        {/* <div>
                           <span
                             className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black ${
                               alertaMantenimiento
@@ -286,7 +286,7 @@ const VehiculoTable = ({
                             )}{" "}
                             km
                           </span>
-                        </div>
+                        </div> */}
                       </div>
                     </td>
 

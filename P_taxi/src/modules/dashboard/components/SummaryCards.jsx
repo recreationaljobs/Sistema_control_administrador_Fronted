@@ -6,49 +6,83 @@ import {
   Wrench,
 } from "lucide-react";
 
-const formatoDinero = (valor) => {
-  return `C$ ${Number(valor || 0).toLocaleString("es-NI", {
+const formatoDinero = (
+  valor,
+  moneda
+) => {
+  return `${moneda} ${Number(
+    valor || 0
+  ).toLocaleString("es-NI", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 };
 
-const SummaryCards = ({ metricas }) => {
+const SummaryCards = ({
+  metricas,
+  moneda = "C$",
+}) => {
   const cards = [
     {
       title: "Ingreso",
-      value: formatoDinero(metricas.ingreso),
+      value: formatoDinero(
+        metricas.ingreso,
+        moneda
+      ),
       icon: CircleDollarSign,
-      iconBox: "bg-green-100 text-green-600",
-      valueColor: "text-green-600",
+      iconBox:
+        "bg-green-100 text-green-600",
+      valueColor:
+        "text-green-600",
     },
     {
       title: "Ganancia real dueño",
-      value: formatoDinero(metricas.gananciaReal),
+      value: formatoDinero(
+        metricas.gananciaReal,
+        moneda
+      ),
       icon: Wallet,
-      iconBox: "bg-blue-100 text-blue-600",
-      valueColor: "text-blue-600",
+      iconBox:
+        "bg-blue-100 text-blue-600",
+      valueColor:
+        metricas.gananciaReal < 0
+          ? "text-red-600"
+          : "text-blue-600",
     },
     {
       title: "Pago a taxistas",
-      value: formatoDinero(metricas.pagoTaxistas),
+      value: formatoDinero(
+        metricas.pagoTaxistas,
+        moneda
+      ),
       icon: Users,
-      iconBox: "bg-yellow-100 text-yellow-600",
-      valueColor: "text-orange-500",
+      iconBox:
+        "bg-yellow-100 text-yellow-600",
+      valueColor:
+        "text-orange-500",
     },
     {
       title: "Gastos + mantenimiento",
-      value: formatoDinero(metricas.gastosOperativos),
+      value: formatoDinero(
+        metricas.gastosOperativos,
+        moneda
+      ),
       icon: Wrench,
-      iconBox: "bg-red-100 text-red-600",
-      valueColor: "text-red-600",
+      iconBox:
+        "bg-red-100 text-red-600",
+      valueColor:
+        "text-red-600",
     },
     {
       title: "Km recorridos",
-      value: `${Number(metricas.kilometros || 0).toLocaleString("es-NI")} km`,
+      value: `${Number(
+        metricas.kilometros || 0
+      ).toLocaleString("es-NI")} km`,
       icon: Gauge,
-      iconBox: "bg-purple-100 text-purple-600",
-      valueColor: "text-purple-600",
+      iconBox:
+        "bg-purple-100 text-purple-600",
+      valueColor:
+        "text-purple-600",
     },
   ];
 
@@ -66,7 +100,10 @@ const SummaryCards = ({ metricas }) => {
               <div
                 className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${card.iconBox}`}
               >
-                <Icon size={27} strokeWidth={2.4} />
+                <Icon
+                  size={27}
+                  strokeWidth={2.4}
+                />
               </div>
 
               <div className="min-w-0">
@@ -74,7 +111,9 @@ const SummaryCards = ({ metricas }) => {
                   {card.title}
                 </p>
 
-                <h3 className={`mt-2 text-xl font-black ${card.valueColor}`}>
+                <h3
+                  className={`mt-2 text-xl font-black ${card.valueColor}`}
+                >
                   {card.value}
                 </h3>
               </div>

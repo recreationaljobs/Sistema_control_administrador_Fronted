@@ -11,13 +11,22 @@ import RecentJornadas from "../components/RecentJornadas";
 import SummaryCards from "../components/SummaryCards";
 import { useDashboard } from "../hooks/useDashboard";
 
-const formatoDinero = (valor) => {
-  return `C$ ${Number(
+const formatoDinero = (
+  valor,
+  moneda
+) => {
+  return `${moneda} ${Number(
     valor || 0
   ).toLocaleString("es-NI", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
+};
+
+const ETIQUETAS_PERIODO = {
+  dia: "Día",
+  semana: "Semana",
+  mes: "Mes",
 };
 
 const DashboardLoader = () => {
@@ -29,10 +38,10 @@ const DashboardLoader = () => {
         <div className="relative flex h-28 w-28 items-center justify-center">
           <div className="absolute inset-0 rounded-full border-4 border-slate-100" />
 
-          <div className="absolute inset-0 rounded-full border-[4px] border-transparent border-t-[#F5B800] border-r-[#F5B800] animate-spin" />
+          <div className="absolute inset-0 animate-spin rounded-full border-[4px] border-transparent border-r-[#F5B800] border-t-[#F5B800]" />
 
           <div
-            className="absolute inset-[10px] rounded-full border-[3px] border-transparent border-b-blue-500 border-l-blue-500 animate-spin"
+            className="absolute inset-[10px] animate-spin rounded-full border-[3px] border-transparent border-b-blue-500 border-l-blue-500"
             style={{
               animationDuration: "1.3s",
             }}
@@ -50,14 +59,20 @@ const DashboardLoader = () => {
             <CarTaxiFront size={28} />
           </div>
 
-          <span className="absolute left-2 top-3 h-2.5 w-2.5 rounded-full bg-[#F5B800] animate-pulse" />
+          <span className="absolute left-2 top-3 h-2.5 w-2.5 animate-pulse rounded-full bg-[#F5B800]" />
+
           <span
-            className="absolute bottom-4 right-1 h-2 w-2 rounded-full bg-blue-500 animate-pulse"
-            style={{ animationDelay: "200ms" }}
+            className="absolute bottom-4 right-1 h-2 w-2 animate-pulse rounded-full bg-blue-500"
+            style={{
+              animationDelay: "200ms",
+            }}
           />
+
           <span
-            className="absolute right-5 top-1 h-1.5 w-1.5 rounded-full bg-slate-400 animate-pulse"
-            style={{ animationDelay: "400ms" }}
+            className="absolute right-5 top-1 h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400"
+            style={{
+              animationDelay: "400ms",
+            }}
           />
         </div>
 
@@ -80,6 +95,7 @@ const DashboardPage = () => {
     vehiculosEstado,
     alertas,
     datosGrafica,
+    moneda,
     periodo,
     setPeriodo,
     metricasPeriodo,
@@ -96,36 +112,88 @@ const DashboardPage = () => {
       : "Jornadas del mes";
 
   const totalVehiculos =
-    vehiculosEstado.total ||
-    resumen?.vehiculos ||
+    vehiculosEstado.total ??
+    resumen?.vehiculos ??
     0;
 
+  const calcularPorcentaje = (
+    cantidad
+  ) => {
+    if (!totalVehiculos) {
+      return 0;
+    }
+
+    return Math.round(
+      (
+        Number(cantidad || 0) /
+        totalVehiculos
+      ) * 100
+    );
+  };
+
   const porcentajeBuenEstado =
-    totalVehiculos
-      ? Math.round(
-          (vehiculosEstado.buenEstado /
-            totalVehiculos) *
-            100
-        )
-      : 0;
+    calcularPorcentaje(
+      vehiculosEstado.buenEstado
+    );
 
   const porcentajeProximos =
-    totalVehiculos
-      ? Math.round(
-          (vehiculosEstado.proximos /
-            totalVehiculos) *
-            100
-        )
-      : 0;
+    calcularPorcentaje(
+      vehiculosEstado.proximos
+    );
 
   const porcentajeVencidos =
+    calcularPorcentaje(
+      vehiculosEstado.vencidos
+    );
+
+  const porcentajeSinHistorial =
+    calcularPorcentaje(
+      vehiculosEstado.sinHistorial
+    );
+
+  const porcentajeExacto = (
+    cantidad
+  ) => {
+    if (!totalVehiculos) {
+      return 0;
+    }
+
+    return (
+      Number(cantidad || 0) /
+      totalVehiculos
+    ) * 100;
+  };
+
+  const finBuenEstado =
+    porcentajeExacto(
+      vehiculosEstado.buenEstado
+    );
+
+  const finProximos =
+    finBuenEstado +
+    porcentajeExacto(
+      vehiculosEstado.proximos
+    );
+
+  const finVencidos =
+    finProximos +
+    porcentajeExacto(
+      vehiculosEstado.vencidos
+    );
+
+  const fondoEstadoVehiculos =
     totalVehiculos
-      ? Math.round(
-          (vehiculosEstado.vencidos /
-            totalVehiculos) *
-            100
-        )
-      : 0;
+      ? {
+          background: `conic-gradient(
+            #39C636 0% ${finBuenEstado}%,
+            #F4C400 ${finBuenEstado}% ${finProximos}%,
+            #F43F5E ${finProximos}% ${finVencidos}%,
+            #94A3B8 ${finVencidos}% 100%
+          )`,
+        }
+      : {
+          background: "#E2E8F0",
+        };
 
   return (
     <div className="space-y-6">
@@ -144,23 +212,36 @@ const DashboardPage = () => {
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="grid grid-cols-3 rounded-2xl border border-slate-200 bg-slate-50 p-1">
               {[
-                ["dia", "Día"],
-                ["semana", "Semana"],
-                ["mes", "Mes"],
-              ].map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setPeriodo(key)}
-                  className={`rounded-xl px-4 py-2 text-sm font-black transition ${
-                    periodo === key
-                      ? "bg-[#F5B800] text-white shadow-sm"
-                      : "text-slate-600 hover:bg-white"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
+                [
+                  "dia",
+                  "Día",
+                ],
+                [
+                  "semana",
+                  "Semana",
+                ],
+                [
+                  "mes",
+                  "Mes",
+                ],
+              ].map(
+                ([key, label]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() =>
+                      setPeriodo(key)
+                    }
+                    className={`rounded-xl px-4 py-2 text-sm font-black transition ${
+                      periodo === key
+                        ? "bg-[#F5B800] text-white shadow-sm"
+                        : "text-slate-600 hover:bg-white"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                )
+              )}
             </div>
 
             <button
@@ -177,6 +258,7 @@ const DashboardPage = () => {
                     : ""
                 }
               />
+
               Actualizar
             </button>
           </div>
@@ -195,18 +277,21 @@ const DashboardPage = () => {
         <>
           <SummaryCards
             metricas={metricasPeriodo}
+            moneda={moneda}
           />
 
           <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.4fr_1fr]">
             <FinancialChart
               datos={datosGrafica}
+              moneda={moneda}
             />
 
             <MaintenanceAlerts
               alertas={alertas}
               totalAlertas={
-                resumen?.alertas_mantenimiento ||
-                0
+                resumen
+                  ?.alertas_mantenimiento ??
+                alertas.length
               }
             />
           </section>
@@ -215,6 +300,7 @@ const DashboardPage = () => {
             <RecentJornadas
               jornadas={jornadasHoy}
               titulo={tituloJornadas}
+              moneda={moneda}
             />
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -224,7 +310,9 @@ const DashboardPage = () => {
                 </h3>
 
                 <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-black text-red-700">
-                  {periodo}
+                  {ETIQUETAS_PERIODO[
+                    periodo
+                  ] || periodo}
                 </span>
               </div>
 
@@ -238,6 +326,7 @@ const DashboardPage = () => {
                     <p className="font-bold text-slate-900">
                       Gastos de vehículos
                     </p>
+
                     <p className="text-xs font-medium text-slate-500">
                       Gastos registrados por administración.
                     </p>
@@ -245,7 +334,9 @@ const DashboardPage = () => {
 
                   <p className="font-black text-red-600">
                     {formatoDinero(
-                      metricasPeriodo.gastosVehiculos
+                      metricasPeriodo
+                        .gastosVehiculos,
+                      moneda
                     )}
                   </p>
                 </div>
@@ -259,14 +350,17 @@ const DashboardPage = () => {
                     <p className="font-bold text-slate-900">
                       Mantenimiento
                     </p>
+
                     <p className="text-xs font-medium text-slate-500">
-                      Costos de mantenimiento de vehículos.
+                      Solo mantenimientos finalizados.
                     </p>
                   </div>
 
                   <p className="font-black text-blue-600">
                     {formatoDinero(
-                      metricasPeriodo.mantenimiento
+                      metricasPeriodo
+                        .mantenimiento,
+                      moneda
                     )}
                   </p>
                 </div>
@@ -276,9 +370,12 @@ const DashboardPage = () => {
                 <p className="font-black text-slate-900">
                   Total operativo
                 </p>
+
                 <p className="font-black text-red-500">
                   {formatoDinero(
-                    metricasPeriodo.gastosOperativos
+                    metricasPeriodo
+                      .gastosOperativos,
+                    moneda
                   )}
                 </p>
               </div>
@@ -296,11 +393,17 @@ const DashboardPage = () => {
               </div>
 
               <div className="flex flex-col items-center gap-6 md:flex-row xl:flex-col 2xl:flex-row">
-                <div className="relative flex h-44 w-44 items-center justify-center rounded-full bg-[conic-gradient(#39C636_0_62%,#F4C400_62%_87%,#F43F5E_87%_100%)]">
+                <div
+                  className="relative flex h-44 w-44 items-center justify-center rounded-full"
+                  style={
+                    fondoEstadoVehiculos
+                  }
+                >
                   <div className="flex h-28 w-28 flex-col items-center justify-center rounded-full bg-white">
                     <span className="text-4xl font-black text-slate-950">
                       {totalVehiculos}
                     </span>
+
                     <span className="text-sm text-slate-500">
                       Total
                     </span>
@@ -317,8 +420,15 @@ const DashboardPage = () => {
                       </p>
 
                       <p className="font-black text-slate-900">
-                        {vehiculosEstado.buenEstado} (
-                        {porcentajeBuenEstado}%)
+                        {
+                          vehiculosEstado
+                            .buenEstado
+                        }{" "}
+                        (
+                        {
+                          porcentajeBuenEstado
+                        }
+                        %)
                       </p>
                     </div>
                   </div>
@@ -332,8 +442,15 @@ const DashboardPage = () => {
                       </p>
 
                       <p className="font-black text-slate-900">
-                        {vehiculosEstado.proximos} (
-                        {porcentajeProximos}%)
+                        {
+                          vehiculosEstado
+                            .proximos
+                        }{" "}
+                        (
+                        {
+                          porcentajeProximos
+                        }
+                        %)
                       </p>
                     </div>
                   </div>
@@ -347,8 +464,37 @@ const DashboardPage = () => {
                       </p>
 
                       <p className="font-black text-slate-900">
-                        {vehiculosEstado.vencidos} (
-                        {porcentajeVencidos}%)
+                        {
+                          vehiculosEstado
+                            .vencidos
+                        }{" "}
+                        (
+                        {
+                          porcentajeVencidos
+                        }
+                        %)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="h-3 w-3 rounded bg-slate-400" />
+
+                    <div>
+                      <p className="text-sm font-medium text-slate-600">
+                        Sin historial finalizado
+                      </p>
+
+                      <p className="font-black text-slate-900">
+                        {
+                          vehiculosEstado
+                            .sinHistorial
+                        }{" "}
+                        (
+                        {
+                          porcentajeSinHistorial
+                        }
+                        %)
                       </p>
                     </div>
                   </div>
@@ -358,7 +504,9 @@ const DashboardPage = () => {
               {!totalVehiculos && (
                 <div className="mt-5 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center">
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
-                    <CarTaxiFront size={25} />
+                    <CarTaxiFront
+                      size={25}
+                    />
                   </div>
 
                   <p className="mt-3 text-sm font-bold text-slate-500">
