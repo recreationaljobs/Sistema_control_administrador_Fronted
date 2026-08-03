@@ -1,9 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
 import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
+import {
+  Banknote,
   CalendarDays,
   Calculator,
   CheckCircle2,
+  ChevronRight,
+  CircleDollarSign,
+  Clock3,
   Loader2,
+  ReceiptText,
   Search,
   UserRound,
   WalletCards,
@@ -13,21 +23,36 @@ import {
 const formatoMoneda = (valor) => {
   const numero = Number(valor || 0);
 
-  return `C$ ${numero.toLocaleString("es-NI", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return `C$ ${numero.toLocaleString(
+    "es-NI",
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }
+  )}`;
 };
 
 const formatoFecha = (fecha) => {
-  if (!fecha) return "";
-  return new Date(`${fecha}T00:00:00`).toLocaleDateString("es-NI");
+  if (!fecha) {
+    return "";
+  }
+
+  return new Date(
+    `${fecha}T00:00:00`
+  ).toLocaleDateString("es-NI");
 };
 
-const nombreConductor = (conductor) => {
-  if (!conductor) return "";
+const nombreConductor = (
+  conductor
+) => {
+  if (!conductor) {
+    return "";
+  }
 
-  const nombre = `${conductor.nombre || ""} ${conductor.apellido || ""}`.trim();
+  const nombre = `
+    ${conductor.nombre || ""}
+    ${conductor.apellido || ""}
+  `.trim();
 
   if (conductor.cedula) {
     return `${nombre} - ${conductor.cedula}`;
@@ -36,12 +61,21 @@ const nombreConductor = (conductor) => {
   return nombre;
 };
 
-const buscarConductorPorId = (conductores, id) => {
-  if (!id) return null;
+const buscarConductorPorId = (
+  conductores,
+  id
+) => {
+  if (!id) {
+    return null;
+  }
 
-  return conductores.find((conductor) => {
-    return String(conductor.id) === String(id);
-  });
+  return (
+    conductores.find(
+      (conductor) =>
+        String(conductor.id) ===
+        String(id)
+    ) || null
+  );
 };
 
 const LiquidacionModal = ({
@@ -55,34 +89,67 @@ const LiquidacionModal = ({
   conductores = [],
   preview,
 }) => {
-  const [form, setForm] = useState({
-    conductor: "",
-    abono_aplicado: "0.00",
-    ajuste_manual: "0.00",
-    notas: "",
-  });
+  const [form, setForm] =
+    useState({
+      conductor: "",
+      abono_aplicado: "0.00",
+      ajuste_manual: "0.00",
+      notas: "",
+    });
 
-  const [busquedaConductor, setBusquedaConductor] = useState("");
-  const [mostrarResultados, setMostrarResultados] = useState(false);
-  const [formError, setFormError] = useState("");
+  const [
+    busquedaConductor,
+    setBusquedaConductor,
+  ] = useState("");
+
+  const [
+    mostrarResultados,
+    setMostrarResultados,
+  ] = useState(false);
+
+  const [
+    formError,
+    setFormError,
+  ] = useState("");
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      return;
+    }
 
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape" && !saving) {
+    const handleKeyDown = (
+      event
+    ) => {
+      if (
+        event.key === "Escape" &&
+        !saving
+      ) {
         onClose();
       }
     };
 
-    document.addEventListener("keydown", handleKeyDown);
-    document.body.style.overflow = "hidden";
+    document.addEventListener(
+      "keydown",
+      handleKeyDown
+    );
+
+    document.body.style.overflow =
+      "hidden";
 
     return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = "";
+      document.removeEventListener(
+        "keydown",
+        handleKeyDown
+      );
+
+      document.body.style.overflow =
+        "";
     };
-  }, [open, saving, onClose]);
+  }, [
+    open,
+    saving,
+    onClose,
+  ]);
 
   useEffect(() => {
     if (!open) {
@@ -92,180 +159,406 @@ const LiquidacionModal = ({
         ajuste_manual: "0.00",
         notas: "",
       });
+
       setBusquedaConductor("");
       setMostrarResultados(false);
       setFormError("");
     }
   }, [open]);
 
-  const conductoresFiltrados = useMemo(() => {
-    const value = busquedaConductor.trim().toLowerCase();
+  const conductoresFiltrados =
+    useMemo(() => {
+      const value =
+        busquedaConductor
+          .trim()
+          .toLowerCase();
 
-    if (!value) {
-      return conductores.slice(0, 8);
-    }
+      if (!value) {
+        return conductores.slice(
+          0,
+          8
+        );
+      }
 
-    return conductores
-      .filter((conductor) => {
-        const texto = nombreConductor(conductor).toLowerCase();
-        const sucursal = `${conductor.sucursal_nombre || ""}`.toLowerCase();
+      return conductores
+        .filter(
+          (conductor) => {
+            const texto =
+              nombreConductor(
+                conductor
+              ).toLowerCase();
 
-        return texto.includes(value) || sucursal.includes(value);
-      })
-      .slice(0, 10);
-  }, [conductores, busquedaConductor]);
+            const sucursal = String(
+              conductor
+                .sucursal_nombre ||
+                ""
+            ).toLowerCase();
 
-  const conductorSeleccionado = useMemo(() => {
-    return buscarConductorPorId(conductores, form.conductor);
-  }, [conductores, form.conductor]);
+            return (
+              texto.includes(value) ||
+              sucursal.includes(value)
+            );
+          }
+        )
+        .slice(0, 10);
+    }, [
+      conductores,
+      busquedaConductor,
+    ]);
 
-  const previewCoincide = useMemo(() => {
-    if (!preview) return false;
+  const conductorSeleccionado =
+    useMemo(() => {
+      return buscarConductorPorId(
+        conductores,
+        form.conductor
+      );
+    }, [
+      conductores,
+      form.conductor,
+    ]);
 
-    const conductorPreview = preview?.conductor?.id;
+  const previewCoincide =
+    useMemo(() => {
+      if (!preview) {
+        return false;
+      }
 
-    return String(conductorPreview) === String(form.conductor);
-  }, [preview, form.conductor]);
+      return (
+        String(
+          preview?.conductor?.id
+        ) ===
+        String(form.conductor)
+      );
+    }, [
+      preview,
+      form.conductor,
+    ]);
 
-  const totalFinal = useMemo(() => {
-    if (!previewCoincide) return 0;
+  const totalIngresoBruto =
+    useMemo(() => {
+      if (
+        !previewCoincide ||
+        !Array.isArray(
+          preview?.jornadas
+        )
+      ) {
+        return 0;
+      }
 
-    const totalJornadas = Number(preview.total_jornadas || 0);
-    const abonoAplicado = Number(form.abono_aplicado || 0);
-    const ajusteManual = Number(form.ajuste_manual || 0);
+      return preview.jornadas.reduce(
+        (
+          total,
+          jornada
+        ) =>
+          total +
+          Number(
+            jornada
+              ?.ingreso_bruto ||
+              0
+          ),
+        0
+      );
+    }, [
+      previewCoincide,
+      preview,
+    ]);
 
-    const total = totalJornadas - abonoAplicado + ajusteManual;
+  const totalFinal =
+    useMemo(() => {
+      if (!previewCoincide) {
+        return 0;
+      }
 
-    return total < 0 ? 0 : total;
-  }, [previewCoincide, preview, form.abono_aplicado, form.ajuste_manual]);
+      const totalJornadas =
+        Number(
+          preview
+            ?.total_jornadas ||
+            0
+        );
 
-  if (!open) return null;
+      const abonoAplicado =
+        Number(
+          form
+            .abono_aplicado ||
+            0
+        );
+
+      const ajusteManual =
+        Number(
+          form
+            .ajuste_manual ||
+            0
+        );
+
+      const total =
+        totalJornadas -
+        abonoAplicado +
+        ajusteManual;
+
+      return Math.max(
+        total,
+        0
+      );
+    }, [
+      previewCoincide,
+      preview,
+      form.abono_aplicado,
+      form.ajuste_manual,
+    ]);
+
+  if (!open) {
+    return null;
+  }
 
   const cerrarConFondo = () => {
-    if (saving) return;
-    onClose();
+    if (!saving) {
+      onClose();
+    }
   };
 
-  const seleccionarConductor = async (conductor) => {
-    const conductorId = String(conductor.id);
+  const seleccionarConductor =
+    async (
+      conductor
+    ) => {
+      const conductorId =
+        String(conductor.id);
 
-    setForm((prev) => ({
-      ...prev,
-      conductor: conductorId,
-      abono_aplicado: "0.00",
-      ajuste_manual: "0.00",
-    }));
+      setForm(
+        (prev) => ({
+          ...prev,
+          conductor:
+            conductorId,
+          abono_aplicado:
+            "0.00",
+          ajuste_manual:
+            "0.00",
+        })
+      );
 
-    setBusquedaConductor(nombreConductor(conductor));
-    setMostrarResultados(false);
-    setFormError("");
+      setBusquedaConductor(
+        nombreConductor(
+          conductor
+        )
+      );
 
-    await onPreview({
-      conductor: conductorId,
-    });
+      setMostrarResultados(
+        false
+      );
+
+      setFormError("");
+
+      await onPreview({
+        conductor:
+          conductorId,
+      });
+    };
+
+  const limpiarConductor =
+    () => {
+      setForm(
+        (prev) => ({
+          ...prev,
+          conductor: "",
+          abono_aplicado:
+            "0.00",
+          ajuste_manual:
+            "0.00",
+        })
+      );
+
+      setBusquedaConductor("");
+      setMostrarResultados(true);
+      setFormError("");
+    };
+
+  const handleChange = (
+    event
+  ) => {
+    const {
+      name,
+      value,
+    } = event.target;
+
+    setForm(
+      (prev) => ({
+        ...prev,
+        [name]: value,
+      })
+    );
+
+    if (formError) {
+      setFormError("");
+    }
   };
 
-  const limpiarConductor = () => {
-    setForm((prev) => ({
-      ...prev,
-      conductor: "",
-      abono_aplicado: "0.00",
-      ajuste_manual: "0.00",
-    }));
-
-    setBusquedaConductor("");
-    setMostrarResultados(true);
-    setFormError("");
-  };
-
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    if (formError) setFormError("");
-  };
-
-  const handleSubmit = (event) => {
+  const handleSubmit = (
+    event
+  ) => {
     event.preventDefault();
 
     if (!form.conductor) {
-      setFormError("Debes seleccionar el conductor.");
+      setFormError(
+        "Debes seleccionar el conductor."
+      );
+
       return;
     }
 
     if (!previewCoincide) {
-      setFormError("Debes seleccionar un conductor con jornadas pendientes.");
+      setFormError(
+        "Debes seleccionar un conductor con jornadas pendientes."
+      );
+
       return;
     }
 
-    if (!preview.jornadas_count || Number(preview.jornadas_count) <= 0) {
-      setFormError("No hay jornadas pendientes para liquidar.");
+    if (
+      !preview?.jornadas_count ||
+      Number(
+        preview.jornadas_count
+      ) <= 0
+    ) {
+      setFormError(
+        "No hay jornadas pendientes para liquidar."
+      );
+
       return;
     }
 
-    const abonoAplicado = Number(form.abono_aplicado || 0);
-    const ajusteManual = Number(form.ajuste_manual || 0);
-    const pendienteAdelantos = Number(preview.pendiente_adelantos || 0);
-    const totalJornadas = Number(preview.total_jornadas || 0);
+    const abonoAplicado =
+      Number(
+        form.abono_aplicado ||
+          0
+      );
 
-    if (Number.isNaN(abonoAplicado) || abonoAplicado < 0) {
-      setFormError("El abono aplicado no puede ser negativo.");
+    const ajusteManual =
+      Number(
+        form.ajuste_manual ||
+          0
+      );
+
+    const pendienteAdelantos =
+      Number(
+        preview
+          .pendiente_adelantos ||
+          0
+      );
+
+    const totalJornadas =
+      Number(
+        preview
+          .total_jornadas ||
+          0
+      );
+
+    if (
+      Number.isNaN(
+        abonoAplicado
+      ) ||
+      abonoAplicado < 0
+    ) {
+      setFormError(
+        "El abono aplicado no puede ser negativo."
+      );
+
       return;
     }
 
-    if (Number.isNaN(ajusteManual) || ajusteManual < 0) {
-      setFormError("El ajuste manual no puede ser negativo.");
+    if (
+      Number.isNaN(
+        ajusteManual
+      ) ||
+      ajusteManual < 0
+    ) {
+      setFormError(
+        "El ajuste manual no puede ser negativo."
+      );
+
       return;
     }
 
-    if (abonoAplicado > pendienteAdelantos) {
-      setFormError("El abono aplicado no puede ser mayor al saldo pendiente.");
+    if (
+      abonoAplicado >
+      pendienteAdelantos
+    ) {
+      setFormError(
+        "El abono aplicado no puede ser mayor al saldo pendiente."
+      );
+
       return;
     }
 
-    if (abonoAplicado > totalJornadas + ajusteManual) {
+    if (
+      abonoAplicado >
+      totalJornadas +
+        ajusteManual
+    ) {
       setFormError(
         "El abono aplicado no puede ser mayor al total disponible para pagar."
       );
+
       return;
     }
 
     onSave({
-      conductor: Number(form.conductor),
-      abono_aplicado: abonoAplicado,
-      ajuste_manual: ajusteManual,
-      notas: form.notas.trim(),
+      conductor:
+        Number(
+          form.conductor
+        ),
+
+      abono_aplicado:
+        abonoAplicado,
+
+      ajuste_manual:
+        ajusteManual,
+
+      notas:
+        form.notas.trim(),
     });
   };
 
+  const cargando =
+    loadingCatalogos ||
+    loadingPreview ||
+    saving;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-3 py-4 sm:px-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
       <button
         type="button"
-        onClick={cerrarConFondo}
-        className="absolute inset-0 bg-slate-950/50 backdrop-blur-[2px]"
+        onClick={
+          cerrarConFondo
+        }
+        className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
         aria-label="Cerrar modal"
       />
 
-      <section className="relative flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
-        <header className="border-b border-slate-100 bg-white px-5 py-5 sm:px-6">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex min-w-0 items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-yellow-50 text-yellow-600">
-                <Calculator size={26} />
+      <section className="relative flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-[26px] border border-white/10 bg-white shadow-[0_30px_100px_rgba(15,23,42,0.45)]">
+        <header className="relative overflow-hidden bg-slate-950 px-4 py-4 text-white sm:px-5">
+          <div className="pointer-events-none absolute -right-12 -top-20 h-52 w-52 rounded-full bg-yellow-400/20 blur-3xl" />
+
+          <div className="pointer-events-none absolute bottom-0 left-1/3 h-16 w-48 bg-blue-500/10 blur-3xl" />
+
+          <div className="relative flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-yellow-400 text-slate-950 shadow-lg shadow-yellow-400/20">
+                <Calculator
+                  size={23}
+                  strokeWidth={2.4}
+                />
               </div>
 
-              <div>
-                <h2 className="text-lg font-black text-slate-950 sm:text-xl">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-yellow-400">
+                  Control de pagos
+                </p>
+
+                <h2 className="truncate text-lg font-black sm:text-xl">
                   Registrar liquidación
                 </h2>
 
-                <p className="mt-1 max-w-3xl text-sm font-medium leading-5 text-slate-500">
-                  Busca el conductor y el sistema mostrará automáticamente todas sus jornadas pendientes de pago.
+                <p className="mt-0.5 hidden text-xs font-medium text-slate-400 sm:block">
+                  Calcula y registra el pago pendiente del conductor.
                 </p>
               </div>
             </div>
@@ -274,400 +567,619 @@ const LiquidacionModal = ({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-50"
               aria-label="Cerrar"
             >
-              <X size={22} />
+              <X size={19} />
             </button>
           </div>
 
-          {(loadingCatalogos || loadingPreview || saving) && (
-            <div className="mt-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
-              <Loader2 size={17} className="animate-spin" />
+          {cargando && (
+            <div className="relative mt-3 flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-xs font-bold text-slate-200">
+              <Loader2
+                size={15}
+                className="animate-spin text-yellow-400"
+              />
+
               {saving
                 ? "Registrando liquidación..."
                 : loadingPreview
-                ? "Buscando jornadas pendientes..."
-                : "Cargando conductores..."}
+                  ? "Calculando jornadas pendientes..."
+                  : "Cargando conductores..."}
             </div>
           )}
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto bg-slate-50/60">
-          <form onSubmit={handleSubmit} className="space-y-6 p-4 sm:p-6">
+        <main className="min-h-0 flex-1 overflow-y-auto bg-[#F5F7FB]">
+          <form
+            onSubmit={
+              handleSubmit
+            }
+            className="space-y-4 p-3 sm:p-5"
+          >
             {formError && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-                {formError}
+              <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+                <div className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" />
+
+                <p className="text-sm font-bold text-red-700">
+                  {formError}
+                </p>
               </div>
             )}
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-yellow-50 text-yellow-600">
-                  <Search size={22} />
+            <section className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-3 sm:w-[220px]">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-100 text-yellow-700">
+                    <Search
+                      size={19}
+                    />
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-black text-slate-900">
+                      Seleccionar conductor
+                    </h3>
+
+                    <p className="text-[11px] font-medium text-slate-400">
+                      Nombre o cédula
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <h3 className="text-base font-black text-slate-900">
-                    Buscar conductor
-                  </h3>
-                  <p className="text-sm font-medium text-slate-500">
-                    Al seleccionar un conductor, el sistema cargará todos los días pendientes de pago.
-                  </p>
+                <div className="relative min-w-0 flex-1">
+                  <Search
+                    size={17}
+                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  />
+
+                  <input
+                    type="text"
+                    value={
+                      busquedaConductor
+                    }
+                    onChange={(
+                      event
+                    ) => {
+                      setBusquedaConductor(
+                        event.target
+                          .value
+                      );
+
+                      setMostrarResultados(
+                        true
+                      );
+
+                      setForm(
+                        (prev) => ({
+                          ...prev,
+                          conductor:
+                            "",
+                          abono_aplicado:
+                            "0.00",
+                          ajuste_manual:
+                            "0.00",
+                        })
+                      );
+                    }}
+                    onFocus={() =>
+                      setMostrarResultados(
+                        true
+                      )
+                    }
+                    disabled={
+                      saving ||
+                      loadingPreview ||
+                      loadingCatalogos
+                    }
+                    placeholder="Buscar conductor..."
+                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm font-bold text-slate-800 outline-none transition focus:border-yellow-400 focus:bg-white focus:ring-4 focus:ring-yellow-100 disabled:opacity-60"
+                  />
+
+                  {mostrarResultados &&
+                    !cargando && (
+                      <div className="absolute z-30 mt-2 max-h-64 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xl">
+                        {conductoresFiltrados.length >
+                        0 ? (
+                          conductoresFiltrados.map(
+                            (
+                              conductor
+                            ) => (
+                              <button
+                                key={
+                                  conductor.id
+                                }
+                                type="button"
+                                onClick={() =>
+                                  seleccionarConductor(
+                                    conductor
+                                  )
+                                }
+                                className="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-yellow-50"
+                              >
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 group-hover:bg-yellow-100 group-hover:text-yellow-700">
+                                  <UserRound
+                                    size={
+                                      18
+                                    }
+                                  />
+                                </div>
+
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-black text-slate-800">
+                                    {
+                                      conductor.nombre
+                                    }{" "}
+                                    {
+                                      conductor.apellido
+                                    }
+                                  </p>
+
+                                  <p className="truncate text-[11px] font-semibold text-slate-400">
+                                    {conductor.cedula
+                                      ? `Cédula: ${conductor.cedula}`
+                                      : "Sin cédula registrada"}
+                                  </p>
+                                </div>
+
+                                <ChevronRight
+                                  size={
+                                    17
+                                  }
+                                  className="text-slate-300"
+                                />
+                              </button>
+                            )
+                          )
+                        ) : (
+                          <div className="px-4 py-5 text-center text-sm font-semibold text-slate-500">
+                            No se encontraron conductores.
+                          </div>
+                        )}
+                      </div>
+                    )}
                 </div>
-              </div>
-
-              <div className="relative">
-                <input
-                  type="text"
-                  value={busquedaConductor}
-                  onChange={(event) => {
-                    setBusquedaConductor(event.target.value);
-                    setMostrarResultados(true);
-
-                    setForm((prev) => ({
-                      ...prev,
-                      conductor: "",
-                      abono_aplicado: "0.00",
-                      ajuste_manual: "0.00",
-                    }));
-                  }}
-                  onFocus={() => setMostrarResultados(true)}
-                  disabled={saving || loadingPreview || loadingCatalogos}
-                  placeholder="Buscar por nombre o cédula..."
-                  className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
-                />
-
-                {mostrarResultados &&
-                  !saving &&
-                  !loadingPreview &&
-                  !loadingCatalogos && (
-                    <div className="absolute z-20 mt-2 max-h-72 w-full overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-xl">
-                      {conductoresFiltrados.length > 0 ? (
-                        conductoresFiltrados.map((conductor) => (
-                          <button
-                            key={conductor.id}
-                            type="button"
-                            onClick={() => seleccionarConductor(conductor)}
-                            className="flex w-full items-start gap-3 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-yellow-50"
-                          >
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
-                              <UserRound size={20} />
-                            </div>
-
-                            <div>
-                              <p className="text-sm font-black text-slate-800">
-                                {conductor.nombre} {conductor.apellido}
-                              </p>
-
-                              <p className="text-xs font-semibold text-slate-500">
-                                Cédula: {conductor.cedula || "Sin cédula"}
-                              </p>
-
-                              {conductor.sucursal_nombre && (
-                                <p className="text-xs font-semibold text-slate-400">
-                                  Sucursal: {conductor.sucursal_nombre}
-                                </p>
-                              )}
-                            </div>
-                          </button>
-                        ))
-                      ) : (
-                        <div className="px-4 py-4 text-sm font-semibold text-slate-500">
-                          No se encontraron conductores.
-                        </div>
-                      )}
-                    </div>
-                  )}
               </div>
 
               {conductorSeleccionado && (
-                <div className="mt-3 flex items-start justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                  <div className="flex items-start gap-3">
+                <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                  <div className="flex min-w-0 items-center gap-2.5">
                     <CheckCircle2
-                      size={20}
-                      className="mt-0.5 shrink-0 text-emerald-600"
+                      size={18}
+                      className="shrink-0 text-emerald-600"
                     />
 
-                    <div>
-                      <p className="text-sm font-black text-emerald-800">
-                        {conductorSeleccionado.nombre}{" "}
-                        {conductorSeleccionado.apellido}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-emerald-800">
+                        {
+                          conductorSeleccionado.nombre
+                        }{" "}
+                        {
+                          conductorSeleccionado.apellido
+                        }
                       </p>
 
-                      <p className="text-xs font-semibold text-emerald-700">
-                        Cédula: {conductorSeleccionado.cedula || "Sin cédula"}
+                      <p className="text-[11px] font-semibold text-emerald-600">
+                        Conductor seleccionado
                       </p>
-
-                      {conductorSeleccionado.sucursal_nombre && (
-                        <p className="text-xs font-semibold text-emerald-700">
-                          Sucursal detectada:{" "}
-                          {conductorSeleccionado.sucursal_nombre}
-                        </p>
-                      )}
                     </div>
                   </div>
 
                   <button
                     type="button"
-                    onClick={limpiarConductor}
-                    disabled={saving || loadingPreview}
-                    className="rounded-xl bg-white px-3 py-2 text-xs font-black text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-60"
+                    onClick={
+                      limpiarConductor
+                    }
+                    disabled={
+                      saving ||
+                      loadingPreview
+                    }
+                    className="shrink-0 rounded-lg bg-white px-3 py-1.5 text-xs font-black text-emerald-700 shadow-sm transition hover:bg-emerald-100 disabled:opacity-50"
                   >
                     Cambiar
                   </button>
                 </div>
               )}
-            </div>
+            </section>
 
             {previewCoincide && (
-              <div className="space-y-5">
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="mb-4 flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                      <CalendarDays size={22} />
+              <>
+                <section className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                        <CalendarDays
+                          size={18}
+                        />
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-black text-slate-900">
+                          Jornadas pendientes
+                        </h3>
+
+                        <p className="text-[11px] font-medium text-slate-400">
+                          Resumen del período
+                        </p>
+                      </div>
                     </div>
 
-                    <div>
-                      <h3 className="text-base font-black text-slate-900">
-                        Jornadas pendientes encontradas
-                      </h3>
-                      <p className="text-sm font-medium text-slate-500">
-                        Estas son todas las fechas trabajadas que todavía no han sido liquidadas.
-                      </p>
-                    </div>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600">
+                      {preview.jornadas_count ||
+                        0}{" "}
+                      días
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+                  
                     <ResumenCard
-                      label="Días trabajados"
-                      value={preview.jornadas_count || 0}
-                    />
-
-                    <ResumenCard
+                      icono={
+                        Clock3
+                      }
                       label="Desde"
-                      value={formatoFecha(preview.fecha_inicio) || "-"}
+                      value={
+                        formatoFecha(
+                          preview.fecha_inicio
+                        ) || "-"
+                      }
+                      compacto
                     />
 
                     <ResumenCard
+                      icono={
+                        Clock3
+                      }
                       label="Hasta"
-                      value={formatoFecha(preview.fecha_fin) || "-"}
+                      value={
+                        formatoFecha(
+                          preview.fecha_fin
+                        ) || "-"
+                      }
+                      compacto
                     />
 
                     <ResumenCard
-                      label="Total jornadas"
-                      value={formatoMoneda(preview.total_jornadas)}
+                      icono={
+                        CircleDollarSign
+                      }
+                      label="Ingreso bruto"
+                      value={
+                        formatoMoneda(
+                          totalIngresoBruto
+                        )
+                      }
+                    />
+
+                    <ResumenCard
+                      icono={
+                        Banknote
+                      }
+                      label="Pago conductor"
+                      value={
+                        formatoMoneda(
+                          preview.total_jornadas
+                        )
+                      }
                       resaltado
                     />
+
+                    <ResumenCard
+                      icono={
+                        CalendarDays
+                      }
+                      label="Días"
+                      value={
+                        preview.jornadas_count ||
+                        0
+                      }
+                    />
+
                   </div>
 
-                  <div className="mt-5 max-h-64 overflow-y-auto rounded-2xl border border-slate-200">
-                    {preview.jornadas?.length > 0 ? (
-                      preview.jornadas.map((jornada) => (
-                        <div
-                          key={jornada.id}
-                          className="grid grid-cols-2 gap-3 border-b border-slate-100 px-4 py-3 text-sm last:border-b-0 md:grid-cols-5"
-                        >
-                          <InfoItem
-                            label="Fecha"
-                            value={formatoFecha(jornada.fecha)}
-                          />
+                  <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
+                    <div className="hidden grid-cols-[1fr_1.2fr_.7fr_1fr_1fr] bg-slate-950 px-3 py-2 text-[10px] font-black uppercase tracking-wide text-slate-400 md:grid">
+                      <span>Fecha</span>
+                      <span>Vehículo</span>
+                      <span>KM</span>
+                      <span>Ingreso</span>
+                      <span className="text-right">
+                        Pago
+                      </span>
+                    </div>
 
-                          <InfoItem
-                            label="Vehículo"
-                            value={jornada.vehiculo || "-"}
-                          />
+                    <div className="max-h-52 overflow-y-auto">
+                      {preview.jornadas
+                        ?.length >
+                      0 ? (
+                        preview.jornadas.map(
+                          (
+                            jornada
+                          ) => (
+                            <div
+                              key={
+                                jornada.id
+                              }
+                              className="grid grid-cols-2 gap-2 border-b border-slate-100 px-3 py-2.5 text-xs last:border-b-0 md:grid-cols-[1fr_1.2fr_.7fr_1fr_1fr] md:items-center"
+                            >
+                              <DatoFila
+                                label="Fecha"
+                                value={
+                                  formatoFecha(
+                                    jornada.fecha
+                                  )
+                                }
+                              />
 
-                          <InfoItem
-                            label="KM"
-                            value={jornada.kilometros_recorridos || 0}
-                          />
+                              <DatoFila
+                                label="Vehículo"
+                                value={
+                                  jornada.vehiculo ||
+                                  "-"
+                                }
+                              />
 
-                          <InfoItem
-                            label="Ingreso"
-                            value={formatoMoneda(jornada.ingreso_bruto)}
-                          />
+                              <DatoFila
+                                label="KM"
+                                value={
+                                  jornada.kilometros_recorridos ||
+                                  0
+                                }
+                              />
 
-                          <InfoItem
-                            label="Pago conductor"
-                            value={formatoMoneda(jornada.pago_conductor)}
-                            alignRight
-                            strong
-                          />
+                              <DatoFila
+                                label="Ingreso"
+                                value={
+                                  formatoMoneda(
+                                    jornada.ingreso_bruto
+                                  )
+                                }
+                              />
+
+                              <DatoFila
+                                label="Pago"
+                                value={
+                                  formatoMoneda(
+                                    jornada.pago_conductor
+                                  )
+                                }
+                                fuerte
+                                derecha
+                              />
+                            </div>
+                          )
+                        )
+                      ) : (
+                        <div className="px-4 py-6 text-center text-sm font-semibold text-slate-500">
+                          No hay jornadas pendientes.
                         </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-6 text-center text-sm font-semibold text-slate-500">
-                        Este conductor no tiene jornadas pendientes de liquidar.
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
+                </section>
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="mb-4 flex items-start gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                      <WalletCards size={22} />
+                <section className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="mb-3 flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                      <WalletCards
+                        size={18}
+                      />
                     </div>
 
                     <div>
-                      <h3 className="text-base font-black text-slate-900">
-                        Adelantos y abonos del conductor
+                      <h3 className="text-sm font-black text-slate-900">
+                        Adelantos y ajustes
                       </h3>
-                      <p className="text-sm font-medium text-slate-500">
-                        Historial de anticipos, adelantos y abonos registrados.
+
+                      <p className="text-[11px] font-medium text-slate-400">
+                        Descuentos aplicados al pago
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  <div className="grid grid-cols-3 gap-2">
                     <ResumenCard
-                      label="Total adelantos"
-                      value={formatoMoneda(preview.total_adelantos)}
+                      label="Adelantos"
+                      value={
+                        formatoMoneda(
+                          preview.total_adelantos
+                        )
+                      }
+                      compacto
                     />
 
                     <ResumenCard
-                      label="Total abonos"
-                      value={formatoMoneda(preview.total_abonos)}
+                      label="Abonos"
+                      value={
+                        formatoMoneda(
+                          preview.total_abonos
+                        )
+                      }
+                      compacto
                     />
 
                     <ResumenCard
-                      label="Saldo pendiente"
-                      value={formatoMoneda(preview.pendiente_adelantos)}
+                      label="Pendiente"
+                      value={
+                        formatoMoneda(
+                          preview.pendiente_adelantos
+                        )
+                      }
+                      compacto
                       resaltado
                     />
                   </div>
 
-                  <div className="mt-5 max-h-52 overflow-y-auto rounded-2xl border border-slate-200">
-                    {preview.historial_adelantos?.length > 0 ? (
-                      preview.historial_adelantos.map((movimiento) => (
-                        <div
-                          key={movimiento.id}
-                          className="grid grid-cols-2 gap-3 border-b border-slate-100 px-4 py-3 text-sm last:border-b-0 md:grid-cols-4"
-                        >
-                          <InfoItem
-                            label="Fecha"
-                            value={formatoFecha(movimiento.fecha)}
-                          />
+                  {preview
+                    .historial_adelantos
+                    ?.length >
+                    0 && (
+                    <div className="mt-3 max-h-36 overflow-y-auto rounded-xl border border-slate-200">
+                      {preview.historial_adelantos.map(
+                        (
+                          movimiento
+                        ) => (
+                          <div
+                            key={
+                              movimiento.id
+                            }
+                            className="grid grid-cols-3 items-center gap-2 border-b border-slate-100 px-3 py-2 text-xs last:border-b-0"
+                          >
+                            <span className="font-semibold text-slate-500">
+                              {formatoFecha(
+                                movimiento.fecha
+                              )}
+                            </span>
 
-                          <InfoItem
-                            label="Tipo"
-                            value={movimiento.tipo_display || movimiento.tipo}
-                            strong
-                          />
+                            <span className="font-bold text-slate-700">
+                              {movimiento.tipo_display ||
+                                movimiento.tipo}
+                            </span>
 
-                          <InfoItem
-                            label="Estado"
-                            value={movimiento.estado_nombre || "Sin estado"}
-                          />
-
-                          <InfoItem
-                            label="Monto"
-                            value={formatoMoneda(movimiento.monto)}
-                            alignRight
-                            strong
-                          />
-                        </div>
-                      ))
-                    ) : (
-                      <div className="px-4 py-6 text-center text-sm font-semibold text-slate-500">
-                        Este conductor no tiene adelantos ni abonos registrados.
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-sm font-bold text-slate-700">
-                        Abono aplicado en esta liquidación
-                      </label>
-
-                      <input
-                        type="number"
-                        name="abono_aplicado"
-                        value={form.abono_aplicado}
-                        onChange={handleChange}
-                        disabled={saving}
-                        min="0"
-                        step="0.01"
-                        placeholder="Ejemplo: 200.00"
-                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
-                      />
-
-                      <p className="mt-1 text-xs font-semibold text-slate-500">
-                        Este monto se descuenta del pago y se registra como abono.
-                      </p>
+                            <span className="text-right font-black text-slate-900">
+                              {formatoMoneda(
+                                movimiento.monto
+                              )}
+                            </span>
+                          </div>
+                        )
+                      )}
                     </div>
+                  )}
 
-                    <div>
-                      <label className="mb-2 block text-sm font-bold text-slate-700">
-                        Ajuste manual
-                      </label>
-
-                      <input
-                        type="number"
-                        name="ajuste_manual"
-                        value={form.ajuste_manual}
-                        onChange={handleChange}
-                        disabled={saving}
-                        min="0"
-                        step="0.01"
-                        placeholder="Ejemplo: 0.00"
-                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-yellow-200 bg-yellow-50 p-5">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                    <ResumenCard
-                      label="Total jornadas"
-                      value={formatoMoneda(preview.total_jornadas)}
-                    />
-
-                    <ResumenCard
+                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <CampoMoneda
                       label="Abono aplicado"
-                      value={formatoMoneda(form.abono_aplicado)}
+                      descripcion="Se descuenta del pago."
+                      name="abono_aplicado"
+                      value={
+                        form.abono_aplicado
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      disabled={
+                        saving
+                      }
                     />
 
-                    <ResumenCard
-                      label="Ajuste"
-                      value={formatoMoneda(form.ajuste_manual)}
-                    />
-
-                    <ResumenCard
-                      label="Total a pagar"
-                      value={formatoMoneda(totalFinal)}
-                      resaltado
+                    <CampoMoneda
+                      label="Ajuste manual"
+                      descripcion="Monto adicional al pago."
+                      name="ajuste_manual"
+                      value={
+                        form.ajuste_manual
+                      }
+                      onChange={
+                        handleChange
+                      }
+                      disabled={
+                        saving
+                      }
                     />
                   </div>
-                </div>
+                </section>
 
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Nota
+                <section className="relative overflow-hidden rounded-[22px] bg-slate-950 p-4 text-white shadow-lg">
+                  <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-yellow-400/20 blur-3xl" />
+
+                  <div className="relative">
+                    <div className="mb-3 flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-yellow-400 text-slate-950">
+                        <ReceiptText
+                          size={18}
+                        />
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-black">
+                          Resumen final
+                        </h3>
+
+                        <p className="text-[11px] font-medium text-slate-400">
+                          Resultado de la liquidación
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
+                      <ResumenFinal
+                        label="Ingreso bruto"
+                        value={
+                          formatoMoneda(
+                            totalIngresoBruto
+                          )
+                        }
+                      />
+
+                      <ResumenFinal
+                        label="Pago jornadas"
+                        value={
+                          formatoMoneda(
+                            preview.total_jornadas
+                          )
+                        }
+                      />
+
+                      <ResumenFinal
+                        label="Abono"
+                        value={`- ${formatoMoneda(
+                          form.abono_aplicado
+                        )}`}
+                      />
+
+                      <ResumenFinal
+                        label="Ajuste"
+                        value={`+ ${formatoMoneda(
+                          form.ajuste_manual
+                        )}`}
+                      />
+
+                      <ResumenFinal
+                        label="Total a pagar"
+                        value={
+                          formatoMoneda(
+                            totalFinal
+                          )
+                        }
+                        principal
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-sm">
+                  <label
+                    htmlFor="notas-liquidacion"
+                    className="mb-2 block text-xs font-black uppercase tracking-wide text-slate-500"
+                  >
+                    Nota de liquidación
                   </label>
 
                   <textarea
+                    id="notas-liquidacion"
                     name="notas"
                     value={form.notas}
-                    onChange={handleChange}
-                    disabled={saving}
-                    rows="3"
+                    onChange={
+                      handleChange
+                    }
+                    disabled={
+                      saving
+                    }
+                    rows="2"
                     placeholder="Ejemplo: Pago semanal del conductor..."
-                    className="w-full resize-none rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
+                    className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-yellow-400 focus:bg-white focus:ring-4 focus:ring-yellow-100 disabled:opacity-60"
                   />
-                </div>
-              </div>
+                </section>
+              </>
             )}
 
-            <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+            <footer className="sticky bottom-0 -mx-3 -mb-3 flex flex-col-reverse gap-2 border-t border-slate-200 bg-white/95 p-3 backdrop-blur-md sm:-mx-5 sm:-mb-5 sm:flex-row sm:justify-end sm:p-4">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={saving}
-                className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                className="h-11 rounded-xl border border-slate-200 bg-white px-5 text-sm font-black text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
               >
                 Cancelar
               </button>
@@ -678,14 +1190,35 @@ const LiquidacionModal = ({
                   saving ||
                   loadingPreview ||
                   !previewCoincide ||
-                  !preview?.jornadas_count ||
-                  Number(preview.jornadas_count) <= 0
+                  !preview
+                    ?.jornadas_count ||
+                  Number(
+                    preview
+                      .jornadas_count
+                  ) <= 0
                 }
-                className="rounded-2xl bg-[#F5B800] px-5 py-3 text-sm font-black text-white shadow-md shadow-yellow-100 transition hover:bg-[#DFA600] disabled:opacity-60"
+                className="flex h-11 items-center justify-center gap-2 rounded-xl bg-yellow-400 px-6 text-sm font-black text-slate-950 shadow-lg shadow-yellow-200 transition hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {saving ? "Registrando pago..." : "Registrar liquidación"}
+                {saving ? (
+                  <>
+                    <Loader2
+                      size={17}
+                      className="animate-spin"
+                    />
+
+                    Registrando...
+                  </>
+                ) : (
+                  <>
+                    <Banknote
+                      size={18}
+                    />
+
+                    Registrar liquidación
+                  </>
+                )}
               </button>
-            </div>
+            </footer>
           </form>
         </main>
       </section>
@@ -693,31 +1226,153 @@ const LiquidacionModal = ({
   );
 };
 
-const ResumenCard = ({ label, value, resaltado = false }) => {
+const ResumenCard = ({
+  icono: Icono,
+  label,
+  value,
+  resaltado = false,
+  compacto = false,
+}) => {
   return (
     <div
-      className={`rounded-2xl border px-4 py-3 ${
+      className={`min-w-0 rounded-xl border px-3 py-2.5 ${
         resaltado
-          ? "border-yellow-300 bg-white text-slate-950"
-          : "border-slate-200 bg-white text-slate-800"
+          ? "border-yellow-300 bg-yellow-50"
+          : "border-slate-200 bg-slate-50"
       }`}
     >
-      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
-        {label}
+      <div className="flex items-center gap-1.5">
+        {Icono && (
+          <Icono
+            size={13}
+            className={
+              resaltado
+                ? "text-yellow-700"
+                : "text-slate-400"
+            }
+          />
+        )}
+
+        <p className="truncate text-[9px] font-black uppercase tracking-wide text-slate-400">
+          {label}
+        </p>
+      </div>
+
+      <p
+        className={`mt-1 truncate font-black text-slate-950 ${
+          compacto
+            ? "text-xs"
+            : "text-sm"
+        }`}
+        title={String(value)}
+      >
+        {value}
       </p>
-      <p className="mt-1 text-lg font-black">{value}</p>
     </div>
   );
 };
 
-const InfoItem = ({ label, value, alignRight = false, strong = false }) => {
+const CampoMoneda = ({
+  label,
+  descripcion,
+  name,
+  value,
+  onChange,
+  disabled,
+}) => {
   return (
-    <div className={alignRight ? "md:text-right" : ""}>
-      <p className="text-xs font-semibold text-slate-400">{label}</p>
+    <div>
+      <label className="mb-1.5 block text-xs font-black text-slate-700">
+        {label}
+      </label>
+
+      <div className="relative">
+        <CircleDollarSign
+          size={17}
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+        />
+
+        <input
+          type="number"
+          name={name}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          min="0"
+          step="0.01"
+          className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm font-black text-slate-800 outline-none transition focus:border-yellow-400 focus:bg-white focus:ring-4 focus:ring-yellow-100 disabled:opacity-60"
+        />
+      </div>
+
+      <p className="mt-1 text-[10px] font-medium text-slate-400">
+        {descripcion}
+      </p>
+    </div>
+  );
+};
+
+const ResumenFinal = ({
+  label,
+  value,
+  principal = false,
+}) => {
+  return (
+    <div
+      className={`rounded-xl px-3 py-2.5 ${
+        principal
+          ? "col-span-2 bg-yellow-400 text-slate-950 md:col-span-1"
+          : "bg-white/10"
+      }`}
+    >
       <p
-        className={`${
-          strong ? "font-black text-slate-900" : "font-bold text-slate-700"
+        className={`text-[9px] font-black uppercase tracking-wide ${
+          principal
+            ? "text-slate-700"
+            : "text-slate-400"
         }`}
+      >
+        {label}
+      </p>
+
+      <p
+        className={`mt-1 truncate font-black ${
+          principal
+            ? "text-base"
+            : "text-sm text-white"
+        }`}
+        title={String(value)}
+      >
+        {value}
+      </p>
+    </div>
+  );
+};
+
+const DatoFila = ({
+  label,
+  value,
+  fuerte = false,
+  derecha = false,
+}) => {
+  return (
+    <div
+      className={
+        derecha
+          ? "md:text-right"
+          : ""
+      }
+    >
+      <p className="mb-0.5 text-[9px] font-black uppercase text-slate-400 md:hidden">
+        {label}
+      </p>
+
+      <p
+        className={`truncate ${
+          fuerte
+            ? "font-black text-slate-950"
+            : "font-bold text-slate-600"
+        }`}
+        title={String(value)}
       >
         {value}
       </p>

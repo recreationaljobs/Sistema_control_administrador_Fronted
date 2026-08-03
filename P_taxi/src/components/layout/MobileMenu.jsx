@@ -239,7 +239,7 @@ const MobileMenu = ({ open, onClose }) => {
             <button
               type="button"
               onClick={cerrarSesion}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600"
+              className="cursor-pointer mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600"
             >
               <LogOut size={15} />
               Cerrar sesión

@@ -516,7 +516,7 @@ const GastosPage = () => {
             onClick={
               abrirModalCrear
             }
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#F5B800] px-5 py-3 text-sm font-black text-white shadow-md shadow-yellow-100 transition hover:-translate-y-0.5 hover:bg-[#DFA600] hover:shadow-lg active:scale-[0.98]"
+            className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-2xl bg-[#F5B800] px-5 py-3 text-sm font-black text-white shadow-md shadow-yellow-100 transition hover:-translate-y-0.5 hover:bg-[#DFA600] hover:shadow-lg active:scale-[0.98]"
           >
             <Plus size={20} />
 
@@ -768,7 +768,7 @@ const GastosPage = () => {
                 false
               )
             }
-            className="absolute inset-0"
+            className="cursor-pointer absolute inset-0"
             aria-label="Cerrar calendario"
           />
 
@@ -780,7 +780,7 @@ const GastosPage = () => {
                   onClick={() =>
                     cambiarMes(-1)
                   }
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/70 text-slate-700 shadow-sm transition hover:bg-white"
+                  className="cursor-pointer flex h-11 w-11 items-center justify-center rounded-full bg-white/70 text-slate-700 shadow-sm transition hover:bg-white"
                 >
                   <ChevronLeft
                     size={20}
@@ -812,7 +812,7 @@ const GastosPage = () => {
                   onClick={() =>
                     cambiarMes(1)
                   }
-                  className="flex h-11 w-11 items-center justify-center rounded-full bg-white/70 text-slate-700 shadow-sm transition hover:bg-white"
+                  className="cursor-pointer flex h-11 w-11 items-center justify-center rounded-full bg-white/70 text-slate-700 shadow-sm transition hover:bg-white"
                 >
                   <ChevronRight
                     size={20}
@@ -865,7 +865,7 @@ const GastosPage = () => {
                             date
                           )
                         }
-                        className={`flex h-11 items-center justify-center rounded-full text-sm font-black transition ${obtenerClaseDia(
+                        className={`cursor-pointer flex h-11 items-center justify-center rounded-full text-sm font-black transition ${obtenerClaseDia(
                           date
                         )}`}
                       >

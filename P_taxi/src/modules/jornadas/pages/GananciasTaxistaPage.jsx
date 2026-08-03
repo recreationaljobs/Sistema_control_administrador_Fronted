@@ -228,15 +228,26 @@ const GananciasTaxistaPage =
       setActualizando,
     ] = useState(false);
 
-    const jornadasPendientes =
-      useMemo(() => {
-        return jornadas.filter(
-          (jornada) =>
+   const jornadasPendientes =
+    useMemo(() => {
+      return jornadas.filter(
+        (jornada) => {
+          const estaLiquidada =
+            jornada?.liquidada === true ||
+            Boolean(
+              jornada?.liquidacion_id
+            );
+
+          return (
+            !estaLiquidada &&
             obtenerSaldoPendiente(
               jornada
             ) > 0
-        );
-      }, [jornadas]);
+          );
+        }
+      );
+    }, [jornadas]);
+
 
     const jornadasFiltradas =
       useMemo(() => {

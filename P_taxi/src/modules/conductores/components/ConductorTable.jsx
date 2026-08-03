@@ -141,7 +141,7 @@ const Acciones = ({
       <button
         type="button"
         onClick={() => onEdit?.(conductor)}
-        className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+        className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
         title="Editar"
         aria-label="Editar conductor"
       >
@@ -159,7 +159,7 @@ const Acciones = ({
         disabled={!activo}
         aria-hidden={!activo}
         tabIndex={activo ? 0 : -1}
-        className={`h-10 w-10 items-center justify-center rounded-xl transition ${
+        className={`cursor-pointer h-10 w-10 items-center justify-center rounded-xl transition ${
           activo
             ? "flex bg-orange-50 text-orange-600 hover:bg-orange-100"
             : "hidden"
@@ -181,7 +181,7 @@ const Acciones = ({
         disabled={activo}
         aria-hidden={activo}
         tabIndex={activo ? -1 : 0}
-        className={`h-10 w-10 items-center justify-center rounded-xl transition ${
+        className={`cursor-pointer h-10 w-10 items-center justify-center rounded-xl transition ${
           activo
             ? "hidden"
             : "flex bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
@@ -200,7 +200,7 @@ const Acciones = ({
         onClick={() =>
           onDelete?.(conductor)
         }
-        className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
+        className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
         title="Eliminar"
         aria-label="Eliminar conductor"
       >

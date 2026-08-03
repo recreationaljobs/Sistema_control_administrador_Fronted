@@ -27,7 +27,7 @@ const LiquidacionTable = ({ liquidaciones = [], loading, onViewRecibo }) => {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[950px] text-left text-sm">
         <thead>
-          <tr className="border-b bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+          <tr className="border-b border-gray-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
             <th className="px-4 py-3">Conductor</th>
             <th className="px-4 py-3">Desde</th>
             <th className="px-4 py-3">Hasta</th>
@@ -43,7 +43,7 @@ const LiquidacionTable = ({ liquidaciones = [], loading, onViewRecibo }) => {
           {liquidaciones.map((item) => (
             <tr
               key={item.id}
-              className="border-b last:border-b-0 hover:bg-slate-50"
+              className="border-gray-600 last:border-b-0 hover:bg-slate-50"
             >
               <td className="px-4 py-3 font-bold text-slate-800">
                 {item.conductor_nombre || "-"}
@@ -78,7 +78,7 @@ const LiquidacionTable = ({ liquidaciones = [], loading, onViewRecibo }) => {
                     type="button"
                     disabled={!item.id}
                     onClick={() => onViewRecibo(item)}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Eye size={16} />
                     Ver

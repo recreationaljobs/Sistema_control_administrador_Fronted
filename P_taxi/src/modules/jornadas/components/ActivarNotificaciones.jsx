@@ -124,8 +124,9 @@ const ActivarNotificaciones = () => {
     useMemo(() => {
       if (rol === "taxista") {
         return (
-          "Recibirás recordatorios para abrir " +
-          "y cerrar tu jornada."
+          "Recibirás recordatorios para abrir y cerrar " +
+          "tu jornada, además de alertas del próximo " +
+          "cambio de aceite del vehículo asignado."
         );
       }
 

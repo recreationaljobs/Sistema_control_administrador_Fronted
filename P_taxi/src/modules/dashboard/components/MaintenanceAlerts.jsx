@@ -122,7 +122,7 @@ const MaintenanceAlerts = ({
                       "/mantenimiento"
                   )
                 }
-                className="flex w-full items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 text-left shadow-sm transition hover:bg-slate-50"
+                className="cursor-pointer flex w-full items-center gap-4 rounded-2xl border border-slate-100 bg-white p-4 text-left shadow-sm transition hover:bg-slate-50"
               >
                 <div
                   className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${

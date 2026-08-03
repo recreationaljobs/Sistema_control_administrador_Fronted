@@ -443,7 +443,7 @@ const AsignacionForm = ({
               value={form.conductor}
               onChange={handleChange}
               disabled={deshabilitado}
-              className="w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+              className="cursor-pointer w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
             >
               <option value="">
                 {loadingCatalogos
@@ -572,7 +572,7 @@ const AsignacionForm = ({
               value={form.vehiculo}
               onChange={handleChange}
               disabled={deshabilitado}
-              className="w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
+              className="cursor-pointer w-full appearance-none rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-10 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500"
             >
               <option value="">
                 {loadingCatalogos
@@ -797,7 +797,7 @@ const AsignacionForm = ({
           type="button"
           onClick={handleCancel}
           disabled={deshabilitado}
-          className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+          className="cursor-pointer rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           Cancelar
         </button>
@@ -811,7 +811,7 @@ const AsignacionForm = ({
           }
           aria-busy={saving}
           translate="no"
-          className="notranslate flex min-w-[175px] items-center justify-center rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60"
+          className="cursor-pointer notranslate flex min-w-[175px] items-center justify-center rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span
             aria-hidden={!saving}

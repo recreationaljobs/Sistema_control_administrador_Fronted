@@ -212,7 +212,7 @@ const LoginPage = () => {
                       type="button"
                       onClick={togglePassword}
                       disabled={loading}
-                      className="absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="cursor-pointer absolute right-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-200 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:cursor-not-allowed disabled:opacity-50"
                       aria-label={
                         showPassword
                           ? "Ocultar contraseña"
@@ -232,7 +232,7 @@ const LoginPage = () => {
                   type="submit"
                   disabled={loading}
                   aria-busy={loading}
-                  className="group flex w-full items-center justify-center gap-2 rounded-2xl bg-yellow-400 py-3.5 text-sm font-black text-slate-950 shadow-lg shadow-yellow-200/70 transition duration-200 hover:-translate-y-0.5 hover:bg-yellow-500 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-yellow-200 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+                  className="cursor-pointer group flex w-full items-center justify-center gap-2 rounded-2xl bg-yellow-400 py-3.5 text-sm font-black text-slate-950 shadow-lg shadow-yellow-200/70 transition duration-200 hover:-translate-y-0.5 hover:bg-yellow-500 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-yellow-200 active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
                 >
                   {loading ? (
                     <>

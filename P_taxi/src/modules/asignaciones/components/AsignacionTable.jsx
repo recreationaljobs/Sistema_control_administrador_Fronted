@@ -382,7 +382,7 @@ const AsignacionTable = ({
                                 asignacion
                               )
                             }
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+                            className="cursor-pointer flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
                             title="Editar"
                             aria-label="Editar asignación"
                           >
@@ -401,7 +401,7 @@ const AsignacionTable = ({
                                 asignacion
                               )
                             }
-                            className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition ${
+                            className={`cursor-pointer flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition ${
                               activa
                                 ? "bg-orange-50 text-orange-600 hover:bg-orange-100"
                                 : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
@@ -432,7 +432,7 @@ const AsignacionTable = ({
                                 asignacion
                               )
                             }
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
+                            className="cursor-pointer flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
                             title="Eliminar"
                             aria-label="Eliminar asignación"
                           >

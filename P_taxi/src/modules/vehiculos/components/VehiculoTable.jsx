@@ -368,7 +368,7 @@ const VehiculoTable = ({
                               );
                             }
                           }}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600 transition hover:-translate-y-0.5 hover:bg-violet-100 focus:outline-none focus:ring-4 focus:ring-violet-100"
+                          className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-violet-600 transition hover:-translate-y-0.5 hover:bg-violet-100 focus:outline-none focus:ring-4 focus:ring-violet-100"
                           title={
                             esTaxista
                               ? "Consultar documentación"
@@ -399,7 +399,7 @@ const VehiculoTable = ({
                                   );
                                 }
                               }}
-                              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:-translate-y-0.5 hover:bg-blue-100 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                              className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:-translate-y-0.5 hover:bg-blue-100 focus:outline-none focus:ring-4 focus:ring-blue-100"
                               title="Editar vehículo"
                               aria-label="Editar vehículo"
                             >
@@ -420,7 +420,7 @@ const VehiculoTable = ({
                                   );
                                 }
                               }}
-                              className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:-translate-y-0.5 hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-100"
+                              className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:-translate-y-0.5 hover:bg-red-100 focus:outline-none focus:ring-4 focus:ring-red-100"
                               title="Eliminar vehículo"
                               aria-label="Eliminar vehículo"
                             >

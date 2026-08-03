@@ -11,7 +11,6 @@ import {
 
 import JornadaModal from "../components/JornadaModal";
 import JornadaTable from "../components/JornadaTable";
-import ActivarNotificaciones from "../components/ActivarNotificaciones";
 import { useJornadas } from "../hooks/useJornadas";
 
 const formatoDinero = (valor) => {
@@ -500,7 +499,7 @@ const JornadasPage = () => {
               </span>
             </button>
 
-            <ActivarNotificaciones />
+            {/* <ActivarNotificaciones /> */}
           </div>
         )}
       </section>

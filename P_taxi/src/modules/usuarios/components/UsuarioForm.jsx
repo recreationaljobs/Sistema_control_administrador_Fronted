@@ -1207,7 +1207,7 @@ const UsuarioForm = ({
                     type="button"
                     onClick={quitarConductor}
                     disabled={saving}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-700 hover:bg-emerald-100"
+                    className="cursor-pointer flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-700 hover:bg-emerald-100"
                     aria-label="Cambiar conductor"
                   >
                     <X size={17} />
@@ -1270,7 +1270,7 @@ const UsuarioForm = ({
                                   conductor
                                 )
                               }
-                              className="flex w-full items-center gap-3 rounded-xl border border-transparent bg-white p-3 text-left shadow-sm transition hover:border-yellow-300 hover:bg-yellow-50"
+                              className="cursor-pointer flex w-full items-center gap-3 rounded-xl border border-transparent bg-white p-3 text-left shadow-sm transition hover:border-yellow-300 hover:bg-yellow-50"
                             >
                               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
                                 <UserRound
@@ -1373,7 +1373,7 @@ const UsuarioForm = ({
           type="button"
           onClick={onCancel}
           disabled={disabled}
-          className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:bg-slate-100 disabled:opacity-60"
+          className="cursor-pointer rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 hover:bg-slate-100 disabled:opacity-60"
         >
           Cancelar
         </button>
@@ -1383,7 +1383,7 @@ const UsuarioForm = ({
           disabled={disabled}
           aria-busy={saving}
           translate="no"
-          className="notranslate flex min-w-[165px] items-center justify-center rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+          className="notranslate cursor-pointer flex min-w-[165px] items-center justify-center rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span
             aria-hidden={!saving}
@@ -1402,7 +1402,7 @@ const UsuarioForm = ({
 
           <span
             aria-hidden={saving}
-            className={`items-center gap-2 ${
+            className={`cursor-pointer items-center gap-2 ${
               saving ? "hidden" : "flex"
             }`}
           >

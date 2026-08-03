@@ -19,7 +19,7 @@ const VehiculoModal = ({
       <button
         type="button"
         onClick={onClose}
-        className="absolute inset-0 bg-slate-950/40"
+        className="cursor-pointer absolute inset-0 bg-slate-950/40"
         aria-label="Cerrar modal"
       />
 
@@ -44,7 +44,7 @@ const VehiculoModal = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+            className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
           >
             <X size={22} />
           </button>

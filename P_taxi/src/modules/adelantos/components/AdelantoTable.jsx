@@ -331,7 +331,7 @@ const AdelantoTable = ({
                         onClick={() =>
                           onRecibo(adelanto)
                         }
-                        className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-50 px-3 text-xs font-black text-amber-700 transition hover:bg-amber-100 hover:cursor-pointer"
+                        className="cursor-pointer flex h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-50 px-3 text-xs font-black text-amber-700 transition hover:bg-amber-100 hover:cursor-pointer"
                         title="Abrir recibo"
                       >
                         <Printer size={16} className="cursor-pointer"/>
@@ -345,7 +345,7 @@ const AdelantoTable = ({
                         onClick={() =>
                           onEdit(adelanto)
                         }
-                        className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100 cursor-pointer"
+                        className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100 cursor-pointer"
                         title="Editar"
                         aria-label="Editar movimiento"
                       >
@@ -362,7 +362,7 @@ const AdelantoTable = ({
                               adelanto
                             )
                           }
-                          className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100 cursor-pointer"
+                          className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100 cursor-pointer"
                           title="Eliminar"
                           aria-label="Eliminar movimiento"
                         >
@@ -554,7 +554,7 @@ const AdelantoTable = ({
                                 adelanto
                               )
                             }
-                            className="flex h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-50 px-3 text-xs font-black text-amber-700 transition hover:bg-amber-100"
+                            className="cursor-pointer flex h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-50 px-3 text-xs font-black text-amber-700 transition hover:bg-amber-100"
                             title="Abrir recibo"
                           >
                             <Printer
@@ -573,7 +573,7 @@ const AdelantoTable = ({
                                   adelanto
                                 )
                               }
-                              className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+                              className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
                               title="Editar"
                               aria-label="Editar movimiento"
                             >
@@ -592,7 +592,7 @@ const AdelantoTable = ({
                                   adelanto
                                 )
                               }
-                              className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
+                              className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
                               title="Eliminar"
                               aria-label="Eliminar movimiento"
                             >

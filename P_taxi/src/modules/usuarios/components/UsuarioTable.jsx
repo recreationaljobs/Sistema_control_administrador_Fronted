@@ -352,7 +352,7 @@ const UsuarioTable = ({
                             onClick={() =>
                               onWhatsApp(usuario)
                             }
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100"
+                            className="cursor-pointer flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100"
                             title="Enviar datos por WhatsApp"
                             aria-label="Enviar datos por WhatsApp"
                           > 
@@ -367,7 +367,7 @@ const UsuarioTable = ({
                             onClick={() =>
                               onEdit(usuario)
                             }
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+                            className="cursor-pointer flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
                             title="Editar"
                             aria-label="Editar usuario"
                           >
@@ -386,7 +386,7 @@ const UsuarioTable = ({
                                     usuario
                                   )
                                 }
-                                className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-orange-50 px-3 text-xs font-black text-orange-600 transition hover:bg-orange-100"
+                                className="cursor-pointer flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-orange-50 px-3 text-xs font-black text-orange-600 transition hover:bg-orange-100"
                                 title="Dar de baja"
                               >
                                 <UserX
@@ -406,7 +406,7 @@ const UsuarioTable = ({
                                     usuario
                                   )
                                 }
-                                className="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-emerald-50 px-3 text-xs font-black text-emerald-600 transition hover:bg-emerald-100"
+                                className="cursor-pointer flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-emerald-50 px-3 text-xs font-black text-emerald-600 transition hover:bg-emerald-100"
                                 title="Reactivar"
                               >
                                 <UserCheck
@@ -427,7 +427,7 @@ const UsuarioTable = ({
                                   usuario
                                 )
                               }
-                              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition ${
+                              className={`cursor-pointer flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition ${
                                 activo
                                   ? "bg-orange-50 text-orange-600 hover:bg-orange-100"
                                   : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
@@ -454,7 +454,7 @@ const UsuarioTable = ({
                                 usuario
                               )
                             }
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
+                            className="cursor-pointer flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
                             title="Eliminar"
                             aria-label="Eliminar usuario"
                           >

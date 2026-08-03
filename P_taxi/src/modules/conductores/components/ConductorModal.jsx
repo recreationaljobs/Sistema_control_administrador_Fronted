@@ -89,7 +89,7 @@ const ConductorModal = ({
         type="button"
         onClick={cerrarModal}
         disabled={submitting}
-        className="absolute inset-0 cursor-default bg-slate-950/60 disabled:cursor-not-allowed"
+        className="cursor-pointer absolute inset-0 bg-slate-950/60 disabled:cursor-not-allowed"
         aria-label="Cerrar modal"
         tabIndex={-1}
       />
@@ -99,7 +99,7 @@ const ConductorModal = ({
         aria-modal="true"
         aria-labelledby="conductor-modal-title"
         aria-busy={submitting}
-        className="relative flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl shadow-slate-950/20"
+        className="cursor-pointer relative flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-2xl shadow-slate-950/20"
       >
         <div className="h-1.5 w-full bg-yellow-400" />
 
@@ -134,7 +134,7 @@ const ConductorModal = ({
               type="button"
               onClick={cerrarModal}
               disabled={submitting}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+              className="cursor-pointer flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Cerrar"
             >
               <X

@@ -110,7 +110,7 @@ const AdelantoModal = ({
         type="button"
         onClick={cerrarModal}
         disabled={saving}
-        className="absolute inset-0 cursor-default bg-slate-950/60"
+        className="cursor-pointer absolute inset-0 cursor-default bg-slate-950/60"
         aria-label="Cerrar ventana"
       />
 
@@ -163,7 +163,7 @@ const AdelantoModal = ({
               type="button"
               onClick={cerrarModal}
               disabled={saving}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+              className="cursor-pointer flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Cerrar"
             >
               <X size={21} />

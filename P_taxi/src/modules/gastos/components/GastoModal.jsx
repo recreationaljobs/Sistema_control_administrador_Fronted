@@ -33,7 +33,7 @@ const GastoModal = ({
       <button
         type="button"
         onClick={onClose}
-        className="absolute inset-0 bg-slate-950/40"
+        className="cursor-pointer absolute inset-0 bg-slate-950/40"
         aria-label="Cerrar modal"
       />
 
@@ -59,7 +59,7 @@ const GastoModal = ({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 disabled:opacity-60"
+            className="cursor-pointer flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 disabled:opacity-60"
             aria-label="Cerrar"
           >
             <X size={22} />

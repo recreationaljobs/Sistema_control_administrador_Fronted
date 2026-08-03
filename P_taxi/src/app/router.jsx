@@ -1,33 +1,54 @@
 import {
   BrowserRouter,
-  Routes,
-  Route,
   Navigate,
+  Route,
+  Routes,
 } from "react-router-dom";
 
 import LoginPage from "../modules/auth/pages/LoginPage";
+
 import DashboardPage from "../modules/dashboard/pages/DashboardPage";
+
 import SucursalesPage from "../modules/sucursales/pages/SucursalesPage";
+
 import UsuariosPage from "../modules/usuarios/pages/UsuariosPage";
+
 import ConductoresPage from "../modules/conductores/pages/ConductoresPage";
+
 import VehiculosPage from "../modules/vehiculos/pages/VehiculosPage";
+
+import MiVehiculoTaxistaPage from "../modules/vehiculos/pages/MiVehiculoTaxistaPage";
+
 import AsignacionesPage from "../modules/asignaciones/pages/AsignacionesPage";
+
 import GananciasTaxistaPage from "../modules/jornadas/pages/GananciasTaxistaPage";
+
 import JornadasPage from "../modules/jornadas/pages/JornadasPage";
+
 import GastosPage from "../modules/gastos/pages/GastosPage";
+
 import AdelantosPage from "../modules/adelantos/pages/AdelantosPage";
+
 import LiquidacionesPage from "../modules/liquidaciones/pages/LiquidacionesPage";
+
 import MantenimientoPage from "../modules/mantenimiento/pages/MantenimientoPage";
+
 import ReportesPage from "../modules/reportes/pages/ReportesPage";
+
 import ConfiguracionPage from "../modules/configuracion/pages/ConfiguracionPage";
 
 import Layout from "../components/layout/Layout";
+
 import PrivateRoute from "../routes/PrivateRoute";
 import PublicRoute from "../routes/PublicRoute";
 import RoleRoute from "../routes/RoleRoute";
+
 import { useAuth } from "../hooks/useAuth";
 
-const obtenerRolNormalizado = (rol, user) => {
+const obtenerRolNormalizado = (
+  rol,
+  user
+) => {
   const valor = String(
     rol ||
       user?.rol_codigo ||
@@ -40,13 +61,17 @@ const obtenerRolNormalizado = (rol, user) => {
 
   if (
     valor === "admin" ||
-    valor === "administrador" ||
-    valor === "administrador de sucursal"
+    valor ===
+      "administrador" ||
+    valor ===
+      "administrador de sucursal"
   ) {
     return "admin_sucursal";
   }
 
-  if (valor === "super_admin") {
+  if (
+    valor === "super_admin"
+  ) {
     return "superadmin";
   }
 
@@ -54,14 +79,21 @@ const obtenerRolNormalizado = (rol, user) => {
 };
 
 const RedireccionInicial = () => {
-  const { rol, user } = useAuth();
-
-  const rolNormalizado = obtenerRolNormalizado(
+  const {
     rol,
-    user
-  );
+    user,
+  } = useAuth();
 
-  if (rolNormalizado === "taxista") {
+  const rolNormalizado =
+    obtenerRolNormalizado(
+      rol,
+      user
+    );
+
+  if (
+    rolNormalizado ===
+    "taxista"
+  ) {
     return (
       <Navigate
         to="/jornadas"
@@ -79,14 +111,21 @@ const RedireccionInicial = () => {
 };
 
 const RutaDashboard = () => {
-  const { rol, user } = useAuth();
-
-  const rolNormalizado = obtenerRolNormalizado(
+  const {
     rol,
-    user
-  );
+    user,
+  } = useAuth();
 
-  if (rolNormalizado === "taxista") {
+  const rolNormalizado =
+    obtenerRolNormalizado(
+      rol,
+      user
+    );
+
+  if (
+    rolNormalizado ===
+    "taxista"
+  ) {
     return (
       <Navigate
         to="/jornadas"
@@ -130,19 +169,25 @@ const AppRouter = () => {
         >
           <Route
             index
-            element={<RedireccionInicial />}
+            element={
+              <RedireccionInicial />
+            }
           />
 
           <Route
             path="dashboard"
-            element={<RutaDashboard />}
+            element={
+              <RutaDashboard />
+            }
           />
 
           <Route
             path="sucursales"
             element={
               <RoleRoute
-                allowedRoles={["superadmin"]}
+                allowedRoles={[
+                  "superadmin",
+                ]}
               >
                 <SucursalesPage />
               </RoleRoute>
@@ -192,6 +237,19 @@ const AppRouter = () => {
           />
 
           <Route
+            path="mi-vehiculo"
+            element={
+              <RoleRoute
+                allowedRoles={[
+                  "taxista",
+                ]}
+              >
+                <MiVehiculoTaxistaPage />
+              </RoleRoute>
+            }
+          />
+
+          <Route
             path="asignaciones"
             element={
               <RoleRoute
@@ -221,15 +279,17 @@ const AppRouter = () => {
           />
 
           <Route
-              path="ganancias"
-              element={
-                <RoleRoute
-                  allowedRoles={["taxista"]}
-                >
-                  <GananciasTaxistaPage />
-                </RoleRoute>
-              }
-            />
+            path="ganancias"
+            element={
+              <RoleRoute
+                allowedRoles={[
+                  "taxista",
+                ]}
+              >
+                <GananciasTaxistaPage />
+              </RoleRoute>
+            }
+          />
 
           <Route
             path="gastos"

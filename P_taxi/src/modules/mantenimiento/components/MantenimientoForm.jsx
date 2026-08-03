@@ -930,7 +930,7 @@ const MantenimientoForm = ({
           disabled={
             saving
           }
-          className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+          className="cursor-pointer rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
         >
           Cancelar
         </button>
@@ -944,7 +944,7 @@ const MantenimientoForm = ({
               errorConfiguracion
             )
           }
-          className="rounded-2xl bg-[#F5B800] px-5 py-3 text-sm font-black text-white shadow-md shadow-yellow-100 transition hover:bg-[#DFA600] disabled:opacity-60"
+          className="cursor-pointer rounded-2xl bg-[#F5B800] px-5 py-3 text-sm font-black text-white shadow-md shadow-yellow-100 transition hover:bg-[#DFA600] disabled:opacity-60"
         >
           {saving
             ? "Guardando..."

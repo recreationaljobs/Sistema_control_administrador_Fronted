@@ -284,7 +284,7 @@ const ConductoresPage = () => {
               type="button"
               onClick={openCreate}
               disabled={submitting}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:-translate-y-0.5 hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+              className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:-translate-y-0.5 hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Plus size={19} />
               Nuevo conductor
@@ -373,17 +373,17 @@ const ConductoresPage = () => {
                   event.target.value
                 )
               }
-              className="rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
+              className="cursor-pointer rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100"
             >
               <option value="TODOS">
                 Todos
               </option>
 
-              <option value="ACTIVOS">
+              <option value="ACTIVOS" className="cursor-pointer">
                 Activos
               </option>
 
-              <option value="INACTIVOS">
+              <option value="INACTIVOS" className="cursor-pointer">
                 Despedidos
               </option>
             </select>

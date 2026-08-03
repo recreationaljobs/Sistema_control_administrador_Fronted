@@ -121,7 +121,7 @@ const SucursalTable = ({
                     <button
                       type="button"
                       onClick={() => onEdit(sucursal)}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+                      className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition hover:bg-blue-100"
                       title="Editar"
                     >
                       <Edit3 size={18} />
@@ -130,7 +130,7 @@ const SucursalTable = ({
                     <button
                       type="button"
                       onClick={() => onToggleStatus(sucursal)}
-                      className={`flex h-10 w-10 items-center justify-center rounded-xl transition ${
+                      className={`cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl transition ${
                         sucursal.activa
                           ? "bg-orange-50 text-orange-600 hover:bg-orange-100"
                           : "bg-green-50 text-green-600 hover:bg-green-100"
@@ -143,7 +143,7 @@ const SucursalTable = ({
                     <button
                       type="button"
                       onClick={() => onDelete(sucursal)}
-                      className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
+                      className="cursor-pointer flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600 transition hover:bg-red-100"
                       title="Eliminar"
                     >
                       <Trash2 size={18} />

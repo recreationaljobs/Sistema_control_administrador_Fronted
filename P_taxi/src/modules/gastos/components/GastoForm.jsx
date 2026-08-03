@@ -166,7 +166,7 @@ const GastoForm = ({
             value={form.vehiculo}
             onChange={handleChange}
             disabled={saving || loadingCatalogos}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
+            className="cursor-pointer w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
           >
             <option value="">Selecciona un vehículo</option>
 
@@ -224,7 +224,7 @@ const GastoForm = ({
             value={form.tipo_gasto}
             onChange={handleChange}
             disabled={saving || loadingCatalogos}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
+            className="cursor-pointer w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
           >
             <option value="">Selecciona un tipo</option>
 
@@ -246,7 +246,7 @@ const GastoForm = ({
             value={form.estado}
             onChange={handleChange}
             disabled={saving || loadingCatalogos}
-            className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
+            className="cursor-pointer w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100 disabled:bg-slate-100 disabled:text-slate-500"
           >
             <option value="">Selecciona un estado</option>
 
@@ -292,7 +292,7 @@ const GastoForm = ({
           type="button"
           onClick={onCancel}
           disabled={saving}
-          className="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+          className="cursor-pointer rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
         >
           Cancelar
         </button>
@@ -300,7 +300,7 @@ const GastoForm = ({
         <button
           type="submit"
           disabled={saving || loadingCatalogos}
-          className="rounded-2xl bg-[#F5B800] px-5 py-3 text-sm font-black text-white shadow-md shadow-yellow-100 transition hover:bg-[#DFA600] disabled:opacity-60"
+          className="cursor-pointer rounded-2xl bg-[#F5B800] px-5 py-3 text-sm font-black text-white shadow-md shadow-yellow-100 transition hover:bg-[#DFA600] disabled:opacity-60"
         >
           {saving
             ? "Guardando..."

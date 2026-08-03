@@ -442,9 +442,7 @@ export const useDashboard = ({
 
     loading,
     error,
-
     cargarDashboard,
-
     anioSeleccionado,
     setAnioSeleccionado,
 
