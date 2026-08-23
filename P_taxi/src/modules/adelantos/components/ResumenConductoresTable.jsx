@@ -245,6 +245,7 @@ const ResumenConductoresTable = ({
                             ? "Saldo pendiente"
                             : "Cancelado"}
                         </span>
+                        
                       </div>
 
                       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold text-slate-500">
@@ -279,6 +280,8 @@ const ResumenConductoresTable = ({
                           </span>
                         )}
                       </div>
+
+
                     </div>
                   </div>
 
