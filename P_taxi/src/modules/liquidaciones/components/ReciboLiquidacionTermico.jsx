@@ -16,6 +16,10 @@ import {
   X,
 } from "lucide-react";
 
+import {
+  registrarMovimientoAuditoria,
+} from "../../auditoria/services/auditoriaService";
+
 const formatoMoneda = (valor) => {
   const numero = Number(valor || 0);
 
@@ -510,6 +514,27 @@ const ReciboLiquidacionTermico = ({
 
   const nombreSucursal =
     obtenerNombreSucursal(recibo);
+  
+  const referenciaAuditoria =
+  `Recibo ${codigoRecibo} · Conductor: ${nombreConductor}`;
+
+const registrarEventoRecibo = (evento) => {
+  void registrarMovimientoAuditoria({
+    evento,
+    referencia: referenciaAuditoria,
+  });
+};
+
+useEffect(() => {
+  if (!recibo?.id) {
+    return;
+  }
+
+  registrarEventoRecibo("recibo_abierto");
+
+  // Solo se registra al abrir un recibo distinto.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [recibo?.id]);
 
   const abrirDialogoImpresion = () => {
     const contenido =
@@ -554,6 +579,7 @@ const ReciboLiquidacionTermico = ({
 
     window.setTimeout(() => {
       ventanaImpresion.print();
+      registrarEventoRecibo("recibo_impreso");
     }, 350);
 
     ventanaImpresion.onafterprint = () => {
@@ -653,6 +679,7 @@ const ReciboLiquidacionTermico = ({
         await generarArchivoPdf();
 
       descargarArchivoPdf(archivoPdf);
+      registrarEventoRecibo("recibo_pdf_descargado");
 
       await Swal.fire({
         title: "PDF descargado",
@@ -705,6 +732,7 @@ const ReciboLiquidacionTermico = ({
 
       if (!puedeCompartir) {
         descargarArchivoPdf(archivoPdf);
+        registrarEventoRecibo("recibo_pdf_descargado");
 
         await Swal.fire({
           title: "PDF descargado",
@@ -718,6 +746,7 @@ const ReciboLiquidacionTermico = ({
       }
 
       await navigator.share(datosCompartir);
+      registrarEventoRecibo("recibo_compartido");
     } catch (error) {
       if (error?.name === "AbortError") {
         return;

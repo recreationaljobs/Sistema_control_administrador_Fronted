@@ -12,6 +12,9 @@ import {
   useMemo,
   useState,
 } from "react";
+import {
+  registrarMovimientoAuditoria,
+} from "../../auditoria/services/auditoriaService";
 
 const STORAGE_KEY =
   "taxicontrol_plantilla_liquidacion_whatsapp";
@@ -140,6 +143,15 @@ const WhatsAppLiquidacionModal = ({
     liquidacion?.conductor_telefono ||
       liquidacion?.conductor?.telefono
   );
+  const referenciaAuditoria =
+  `Liquidación #${
+    liquidacion?.id ||
+    liquidacion?.liquidacion_id ||
+    "-"
+  } · Conductor: ${
+    liquidacion?.conductor_nombre ||
+    "Sin nombre"
+  }`;
 
   useEffect(() => {
     const plantillaGuardada =
@@ -180,6 +192,10 @@ const WhatsAppLiquidacionModal = ({
       STORAGE_KEY,
       plantilla
     );
+    void registrarMovimientoAuditoria({
+      evento: "plantilla_whatsapp_guardada",
+      referencia: referenciaAuditoria,
+    });
 
     setMensajeLiquidacion(
       reemplazarVariables(
@@ -193,7 +209,10 @@ const WhatsAppLiquidacionModal = ({
     window.localStorage.removeItem(
       STORAGE_KEY
     );
-
+   void registrarMovimientoAuditoria({
+    evento: "plantilla_whatsapp_restaurada",
+    referencia: referenciaAuditoria,
+  });
     setPlantilla(plantillaInicial);
 
     setMensajeLiquidacion(
