@@ -817,31 +817,87 @@ password =
   };
 
   const eliminarUsuario = async (usuario) => {
-    const confirmar = window.confirm(
-      `¿Seguro que deseas eliminar el usuario "${usuario.username}"?`
+  if (!usuario?.id) {
+    await Swal.fire({
+      title: "Usuario no válido",
+      text: "No se pudo identificar el usuario que deseas eliminar.",
+      icon: "error",
+      confirmButtonText: "Entendido",
+      confirmButtonColor: "#dc2626",
+    });
+
+    return;
+  }
+
+  const nombre =
+    obtenerNombreUsuario(usuario);
+
+  const username =
+    usuario.username || "";
+
+  const confirmacion = await Swal.fire({
+    title: "¿Eliminar usuario?",
+    text: `Vas a eliminar permanentemente a ${nombre}. Esta acción no se puede deshacer.`,
+    icon: "warning",
+    input: "text",
+    inputLabel: `Escribe ${username} para confirmar`,
+    inputPlaceholder: username,
+    showCancelButton: true,
+    confirmButtonText: "Eliminar permanentemente",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#dc2626",
+    cancelButtonColor: "#64748b",
+    reverseButtons: true,
+
+    inputValidator: (valor) => {
+      if (valor?.trim() !== username) {
+        return `Debes escribir exactamente: ${username}`;
+      }
+
+      return undefined;
+    },
+  });
+
+  if (!confirmacion.isConfirmed) {
+    return;
+  }
+
+  try {
+    setSaving(true);
+    setError("");
+
+    await deleteUsuario(usuario.id);
+
+    await cargarUsuarios();
+
+    await Swal.fire({
+      title: "Usuario eliminado",
+      text: `La cuenta de ${nombre} fue eliminada correctamente.`,
+      icon: "success",
+      confirmButtonText: "Entendido",
+      confirmButtonColor: "#16a34a",
+    });
+  } catch (err) {
+    const mensaje = obtenerMensajeError(
+      err,
+      "No se pudo eliminar el usuario. Puede que tenga registros asociados."
     );
 
-    if (!confirmar) {
-      return;
-    }
+    setError(mensaje);
 
-    try {
-      setSaving(true);
-      setError("");
+    await Swal.fire({
+      title: "No se pudo eliminar",
+      text: mensaje,
+      icon: "error",
+      confirmButtonText: "Entendido",
+      confirmButtonColor: "#dc2626",
+    });
+  } finally {
+    setSaving(false);
+  }
+};
 
-      await deleteUsuario(usuario.id);
-      await cargarUsuarios();
-    } catch (err) {
-      setError(
-        obtenerMensajeError(
-          err,
-          "No se pudo eliminar el usuario. Puede que tenga registros asociados."
-        )
-      );
-    } finally {
-      setSaving(false);
-    }
-  };
+
 
   const usuariosFiltrados = useMemo(() => {
     const value = search.trim().toLowerCase();

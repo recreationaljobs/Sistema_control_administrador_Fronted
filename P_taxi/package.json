@@ -14,6 +14,8 @@
     "apexcharts": "^5.15.0",
     "axios": "^1.17.0",
     "firebase": "^12.16.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.17.0",
     "react": "^19.2.6",
     "react-apexcharts": "^2.1.0",

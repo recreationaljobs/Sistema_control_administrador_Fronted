@@ -184,13 +184,19 @@ export const useLiquidaciones = () => {
   try {
     setError("");
 
-    if (!liquidacion?.id) {
-      setError("No se encontró el ID de la liquidación.");
-      return;
-    }
+    const idLiquidacion =
+    liquidacion?.id ||
+    liquidacion?.liquidacion_id;
 
-    const data = await getReciboLiquidacion(liquidacion.id);
-    setRecibo(data);
+  if (!idLiquidacion) {
+    setError("No se encontró el ID de la liquidación.");
+    return;
+  }
+
+  const data = await getReciboLiquidacion(
+    idLiquidacion
+  );
+      setRecibo(data);
     setModalReciboOpen(true);
   } catch (err) {
     setError(
@@ -222,9 +228,53 @@ export const useLiquidaciones = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rol]);
 
+  const enviarLiquidacionWhatsApp = (
+  liquidacion
+) => {
+  const telefonoOriginal =
+    liquidacion?.conductor_telefono ||
+    liquidacion?.conductor?.telefono ||
+    "";
+
+  const telefono = String(telefonoOriginal)
+    .replace(/\D/g, "");
+
+  if (!telefono) {
+    setError(
+      "El conductor no tiene un teléfono válido registrado."
+    );
+    return;
+  }
+
+  const nombre =
+    liquidacion?.conductor_nombre ||
+    liquidacion?.conductor?.nombre ||
+    "conductor";
+
+  const mensaje = [
+    `Hola, ${nombre}.`,
+    "",
+    "Se registró tu liquidación:",
+    `Período: ${liquidacion.fecha_inicio || "-"} al ${liquidacion.fecha_fin || "-"}`,
+    `Pago de jornadas: C$ ${Number(liquidacion.total_jornadas || 0).toLocaleString("es-NI", { minimumFractionDigits: 2 })}`,
+    `Adelantos aplicados: C$ ${Number(liquidacion.abono_aplicado || 0).toLocaleString("es-NI", { minimumFractionDigits: 2 })}`,
+    `Total pagado: C$ ${Number(liquidacion.total_pago || 0).toLocaleString("es-NI", { minimumFractionDigits: 2 })}`,
+    "",
+    "Puedes solicitar tu recibo de liquidación a administración.",
+    "TaxiControl Pro",
+  ].join("\n");
+
+  window.open(
+    `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`,
+    "_blank",
+    "noopener,noreferrer"
+  );
+};
+
   return {
     liquidaciones,
     conductores,
+    enviarLiquidacionWhatsApp,
 
     loading,
     loadingCatalogos,

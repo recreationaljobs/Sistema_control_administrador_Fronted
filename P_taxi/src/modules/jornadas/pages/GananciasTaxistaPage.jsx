@@ -214,8 +214,8 @@ const GananciasTaxistaPage =
       loading,
       error,
       cargarJornadas,
+      conductorTaxista,
     } = useJornadas();
-
     const [
       fechaSeleccionada,
       setFechaSeleccionada,
@@ -227,6 +227,9 @@ const GananciasTaxistaPage =
       actualizando,
       setActualizando,
     ] = useState(false);
+
+   const esConductorAlquiler =
+  conductorTaxista?.tipo_cobro === "alquiler";
 
    const jornadasPendientes =
     useMemo(() => {
@@ -739,7 +742,9 @@ const GananciasTaxistaPage =
         <div className="mx-auto max-w-md space-y-4 pb-28">
           <header className="animacion-pagina px-1">
             <h1 className="text-2xl font-black text-slate-950">
-              Mis ganancias
+              {esConductorAlquiler
+                ? "Mis jornadas"
+                : "Mis ganancias"}
             </h1>
           </header>
 
@@ -749,6 +754,7 @@ const GananciasTaxistaPage =
             </div>
           ) : null}
 
+          {!esConductorAlquiler && (
           <section className="tarjeta-principal animacion-pagina rounded-[30px] border border-[#F3D26A] bg-gradient-to-br from-[#FFF5C4] via-white to-[#FFE58A] p-5 shadow-lg">
             <span className="particula-uno absolute left-5 top-5 h-3 w-3 rounded-full bg-[#F3C331]/50" />
 
@@ -793,6 +799,7 @@ const GananciasTaxistaPage =
               </div>
             </div>
           </section>
+          )}
 
           <section
             className="animacion-tarjeta rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm"

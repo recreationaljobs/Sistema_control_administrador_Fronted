@@ -1,5 +1,3 @@
-// src/modules/jornadas/hooks/useJornadas.js
-
 import {
   useEffect,
   useMemo,
@@ -23,14 +21,8 @@ import {
 } from "../services/jornadasService";
 
 const normalizarLista = (data) => {
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  if (Array.isArray(data?.results)) {
-    return data.results;
-  }
-
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.results)) return data.results;
   return [];
 };
 
@@ -38,7 +30,6 @@ const obtenerFechaLocal = () => {
   const fecha = new Date();
 
   const year = fecha.getFullYear();
-
   const month = String(
     fecha.getMonth() + 1
   ).padStart(2, "0");
@@ -50,35 +41,78 @@ const obtenerFechaLocal = () => {
   return `${year}-${month}-${day}`;
 };
 
-const obtenerCodigoRol = (auth) => {
+const normalizarFecha = (fecha) => {
+  if (!fecha) return "";
+  return String(fecha).slice(0, 10);
+};
+
+const obtenerId = (valor) => {
+  if (!valor) return null;
+
+  if (typeof valor === "object") {
+    return Number(valor.id);
+  }
+
+  return Number(valor);
+};
+
+const jornadaTieneKmFinal = (jornada) => {
   return (
-    auth?.rol ||
-    auth?.user?.rol ||
-    auth?.user?.rol_codigo ||
-    auth?.user?.rol?.codigo ||
-    ""
+    jornada?.kilometraje_final !== null &&
+    jornada?.kilometraje_final !== undefined &&
+    jornada?.kilometraje_final !== ""
   );
 };
 
+const obtenerCodigoRol = (auth) => {
+  let rol =
+    auth?.rol ||
+    auth?.user?.rol_codigo ||
+    auth?.user?.rol?.codigo ||
+    auth?.user?.rol ||
+    "";
+
+  if (typeof rol === "object") {
+    rol = rol.codigo || rol.nombre || "";
+  }
+
+  const codigo = String(rol)
+    .trim()
+    .toLowerCase();
+
+  if (codigo === "super_admin") {
+    return "superadmin";
+  }
+
+  if (
+    [
+      "admin",
+      "administrador",
+      "administrador de sucursal",
+    ].includes(codigo)
+  ) {
+    return "admin_sucursal";
+  }
+
+  return codigo;
+};
+
 const obtenerMensajeError = (
-  err,
+  error,
   mensajeDefault
 ) => {
-  const data =
-    err?.response?.data;
+  const data = error?.response?.data;
 
   console.error(
     "Error de jornada:",
-    data || err
+    JSON.stringify(data || err, null, 2)
   );
 
   if (data?.detail) {
     return data.detail;
   }
 
-  if (
-    data?.non_field_errors?.length
-  ) {
+  if (Array.isArray(data?.non_field_errors)) {
     return data.non_field_errors[0];
   }
 
@@ -90,135 +124,67 @@ const obtenerMensajeError = (
     typeof data === "object" &&
     data !== null
   ) {
-    const firstKey =
-      Object.keys(data)[0];
+    const clave = Object.keys(data)[0];
+    const valor = data?.[clave];
 
-    const firstValue =
-      data[firstKey];
-
-    if (
-      Array.isArray(firstValue)
-    ) {
-      return `${firstKey}: ${firstValue[0]}`;
+    if (Array.isArray(valor)) {
+      return `${clave}: ${valor[0]}`;
     }
 
-    if (
-      typeof firstValue === "string"
-    ) {
-      return `${firstKey}: ${firstValue}`;
+    if (typeof valor === "string") {
+      return `${clave}: ${valor}`;
     }
   }
 
   return mensajeDefault;
 };
 
-const jornadaTieneKmFinal = (
-  jornada
-) => {
-  return (
-    jornada?.kilometraje_final !==
-      null &&
-    jornada?.kilometraje_final !==
-      undefined &&
-    jornada?.kilometraje_final !==
-      ""
-  );
-};
-
-const obtenerId = (valor) => {
-  if (!valor) {
-    return null;
-  }
-
-  if (
-    typeof valor === "object"
-  ) {
-    return Number(valor.id);
-  }
-
-  return Number(valor);
-};
-
-const normalizarFecha = (
-  fecha
-) => {
-  if (!fecha) {
-    return "";
-  }
-
-  return String(fecha).slice(
-    0,
-    10
-  );
-};
-
 export const useJornadas = () => {
   const auth = useAuth();
 
-  const rol =
-    obtenerCodigoRol(auth);
+  const rol = obtenerCodigoRol(auth);
 
-  const [
-    jornadas,
-    setJornadas,
-  ] = useState([]);
+  const [jornadas, setJornadas] =
+    useState([]);
 
-  const [
-    conductores,
-    setConductores,
-  ] = useState([]);
+  const [conductores, setConductores] =
+    useState([]);
 
-  const [
-    vehiculos,
-    setVehiculos,
-  ] = useState([]);
+  const [vehiculos, setVehiculos] =
+    useState([]);
 
-  const [
-    asignaciones,
-    setAsignaciones,
-  ] = useState([]);
+  const [asignaciones, setAsignaciones] =
+    useState([]);
 
-  const [
-    loading,
-    setLoading,
-  ] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
   const [
     loadingCatalogos,
     setLoadingCatalogos,
   ] = useState(false);
 
-  const [
-    saving,
-    setSaving,
-  ] = useState(false);
+  const [saving, setSaving] =
+    useState(false);
 
-  const [
-    modalOpen,
-    setModalOpen,
-  ] = useState(false);
+  const [modalOpen, setModalOpen] =
+    useState(false);
 
   const [
     jornadaEditando,
     setJornadaEditando,
   ] = useState(null);
 
-  const [
-    search,
-    setSearch,
-  ] = useState("");
+  const [search, setSearch] =
+    useState("");
 
-  const [
-    error,
-    setError,
-  ] = useState("");
+  const [error, setError] =
+    useState("");
 
-  const hoy =
-    obtenerFechaLocal();
+  const hoy = obtenerFechaLocal();
 
   const esSuperAdmin =
-    rol === "superadmin" ||
-    rol === "super_admin";
+    rol === "superadmin";
 
   const esAdminSucursal =
     rol === "admin_sucursal";
@@ -226,233 +192,152 @@ export const useJornadas = () => {
   const esTaxista =
     rol === "taxista";
 
-  const cargarJornadas =
-    async () => {
-      try {
-        setLoading(true);
-        setError("");
+  const cargarJornadas = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-        const data =
-          await getJornadas();
+      const data = await getJornadas();
 
-        setJornadas(
-          normalizarLista(data)
-        );
-      } catch (err) {
-        setError(
-          obtenerMensajeError(
-            err,
-            "No se pudieron cargar las jornadas."
-          )
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-  const cargarCatalogos =
-    async () => {
-      try {
-        setLoadingCatalogos(
-          true
-        );
-
-        setError("");
-
-        const [
-          conductoresData,
-          vehiculosData,
-          asignacionesData,
-        ] = await Promise.all([
-          getConductores(),
-          getVehiculos(),
-          getAsignaciones(),
-        ]);
-
-        setConductores(
-          normalizarLista(
-            conductoresData
-          )
-        );
-
-        setVehiculos(
-          normalizarLista(
-            vehiculosData
-          )
-        );
-
-        setAsignaciones(
-          normalizarLista(
-            asignacionesData
-          )
-        );
-      } catch (err) {
-        setError(
-          obtenerMensajeError(
-            err,
-            "No se pudieron cargar conductores, vehículos y asignaciones."
-          )
-        );
-      } finally {
-        setLoadingCatalogos(
-          false
-        );
-      }
-    };
-
-  const conductorTaxista =
-    useMemo(() => {
-      if (!esTaxista) {
-        return null;
-      }
-
-      return (
-        conductores[0] ||
-        null
+      setJornadas(normalizarLista(data));
+    } catch (err) {
+      setError(
+        obtenerMensajeError(
+          err,
+          "No se pudieron cargar las jornadas."
+        )
       );
-    }, [
-      conductores,
-      esTaxista,
-    ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const asignacionActivaTaxista =
-    useMemo(() => {
-      if (!esTaxista) {
-        return null;
-      }
+  const cargarCatalogos = async () => {
+    try {
+      setLoadingCatalogos(true);
+      setError("");
 
-      return (
-        asignaciones.find(
-          (asignacion) => {
-            const conductorId =
-              obtenerId(
-                asignacion.conductor
-              );
+      const [
+        conductoresData,
+        vehiculosData,
+        asignacionesData,
+      ] = await Promise.all([
+        getConductores(),
+        getVehiculos(),
+        getAsignaciones(),
+      ]);
 
-            const conductorActualId =
-              obtenerId(
-                conductorTaxista?.id
-              );
-
-            return (
-              asignacion.activa !==
-                false &&
-              (
-                !conductorActualId ||
-                conductorId ===
-                  conductorActualId
-              )
-            );
-          }
-        ) || null
+      setConductores(
+        normalizarLista(conductoresData)
       );
-    }, [
-      asignaciones,
-      conductorTaxista,
-      esTaxista,
-    ]);
 
-  const vehiculoTaxista =
-    useMemo(() => {
-      if (!esTaxista) {
-        return null;
-      }
+      setVehiculos(
+        normalizarLista(vehiculosData)
+      );
 
-      const vehiculoAsignadoId =
-        obtenerId(
-          asignacionActivaTaxista
-            ?.vehiculo
-        );
+      setAsignaciones(
+        normalizarLista(asignacionesData)
+      );
+    } catch (err) {
+      setError(
+        obtenerMensajeError(
+          err,
+          "No se pudieron cargar conductores, vehículos y asignaciones."
+        )
+      );
+    } finally {
+      setLoadingCatalogos(false);
+    }
+  };
 
-      if (vehiculoAsignadoId) {
+  const conductorTaxista = useMemo(() => {
+    if (!esTaxista) return null;
+    return conductores[0] || null;
+  }, [conductores, esTaxista]);
+
+  const asignacionActivaTaxista = useMemo(() => {
+    if (!esTaxista) return null;
+
+    const conductorId = obtenerId(
+      conductorTaxista?.id
+    );
+
+    return (
+      asignaciones.find((asignacion) => {
         return (
-          vehiculos.find(
-            (vehiculo) => {
-              return (
-                obtenerId(
-                  vehiculo.id
-                ) ===
-                vehiculoAsignadoId
-              );
-            }
-          ) || {
-            id:
-              vehiculoAsignadoId,
-          }
+          asignacion.activa !== false &&
+          (
+            !conductorId ||
+            obtenerId(asignacion.conductor) ===
+              conductorId
+          )
         );
-      }
+      }) || null
+    );
+  }, [
+    asignaciones,
+    conductorTaxista,
+    esTaxista,
+  ]);
 
+  const vehiculoTaxista = useMemo(() => {
+    if (!esTaxista) return null;
+
+    const vehiculoId = obtenerId(
+      asignacionActivaTaxista?.vehiculo
+    );
+
+    if (vehiculoId) {
       return (
-        vehiculos[0] ||
-        null
+        vehiculos.find(
+          (vehiculo) =>
+            obtenerId(vehiculo.id) ===
+            vehiculoId
+        ) || { id: vehiculoId }
       );
-    }, [
-      vehiculos,
-      asignacionActivaTaxista,
-      esTaxista,
-    ]);
+    }
 
-  const jornadasHoy =
-    useMemo(() => {
-      return jornadas.filter(
-        (jornada) => {
-          return (
-            normalizarFecha(
-              jornada.fecha
-            ) === hoy
-          );
-        }
-      );
-    }, [
-      jornadas,
-      hoy,
-    ]);
+    return vehiculos[0] || null;
+  }, [
+    vehiculos,
+    asignacionActivaTaxista,
+    esTaxista,
+  ]);
 
-  const jornadaAbiertaHoy =
-    useMemo(() => {
-      return (
-        jornadasHoy.find(
-          (jornada) => {
-            return !jornadaTieneKmFinal(
-              jornada
-            );
-          }
-        ) || null
-      );
-    }, [
-      jornadasHoy,
-    ]);
+  const jornadasHoy = useMemo(() => {
+    return jornadas.filter(
+      (jornada) =>
+        normalizarFecha(jornada.fecha) === hoy
+    );
+  }, [jornadas, hoy]);
 
-  const jornadaCerradaHoy =
-    useMemo(() => {
-      return (
-        jornadasHoy.find(
-          (jornada) => {
-            return jornadaTieneKmFinal(
-              jornada
-            );
-          }
-        ) || null
-      );
-    }, [
-      jornadasHoy,
-    ]);
+  const jornadaAbiertaHoy = useMemo(() => {
+    return (
+      jornadasHoy.find(
+        (jornada) =>
+          !jornadaTieneKmFinal(jornada)
+      ) || null
+    );
+  }, [jornadasHoy]);
+
+  const jornadaCerradaHoy = useMemo(() => {
+    return (
+      jornadasHoy.find((jornada) =>
+        jornadaTieneKmFinal(jornada)
+      ) || null
+    );
+  }, [jornadasHoy]);
 
   const abrirModalCrear = () => {
     setError("");
 
-    if (
-      esTaxista &&
-      jornadaAbiertaHoy
-    ) {
+    if (esTaxista && jornadaAbiertaHoy) {
       setJornadaEditando({
         ...jornadaAbiertaHoy,
-        modoFormulario:
-          "cerrar",
+        modoFormulario: "cerrar",
       });
 
       setModalOpen(true);
-
       return;
     }
 
@@ -460,611 +345,321 @@ export const useJornadas = () => {
     setModalOpen(true);
   };
 
-  const abrirModalCerrar = (
-    jornada
-  ) => {
+  const abrirModalCerrar = (jornada) => {
     setError("");
 
     setJornadaEditando({
       ...jornada,
-      modoFormulario:
-        "cerrar",
+      modoFormulario: "cerrar",
     });
 
     setModalOpen(true);
   };
 
-  const abrirModalEditar = (
-    jornada
-  ) => {
+  const abrirModalEditar = (jornada) => {
     setError("");
 
     if (
       esTaxista &&
-      !jornadaTieneKmFinal(
-        jornada
-      )
+      !jornadaTieneKmFinal(jornada)
     ) {
-      setJornadaEditando({
-        ...jornada,
-        modoFormulario:
-          "cerrar",
-      });
-
-      setModalOpen(true);
-
+      abrirModalCerrar(jornada);
       return;
     }
 
-    if (esTaxista) {
-      return;
-    }
+    if (esTaxista) return;
 
     if (jornada?.liquidada) {
       setError(
         `Esta jornada ya fue incluida en la liquidación #${
-          jornada.liquidacion_id ||
-          ""
+          jornada.liquidacion_id || ""
         } y no puede modificarse.`
       );
-
       return;
     }
 
     setJornadaEditando({
       ...jornada,
-      modoFormulario:
-        "editar",
+      modoFormulario: "editar",
     });
 
     setModalOpen(true);
   };
-
-  const abrirModalIngreso =
-    abrirModalEditar;
 
   const cerrarModal = () => {
     setModalOpen(false);
     setJornadaEditando(null);
   };
 
-  const mostrarExitoInmediato = (
-    titulo,
-    mensaje
-  ) => {
+  const mostrarExito = (titulo, mensaje) => {
     void Swal.fire({
       title: titulo,
       text: mensaje,
       icon: "success",
-      confirmButtonText:
-        "Aceptar",
-      confirmButtonColor:
-        "#F5B800",
-      allowOutsideClick:
-        false,
-      allowEscapeKey:
-        false,
+      confirmButtonText: "Aceptar",
+      confirmButtonColor: "#F5B800",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
     });
   };
 
-  const recargarDatosEnSegundoPlano =
-    () => {
-      void Promise.allSettled([
-        cargarJornadas(),
-        cargarCatalogos(),
-      ]);
-    };
-
-  const buscarJornadaExistente = ({
-    fecha,
-    conductor,
-    vehiculo,
-  }) => {
-    return jornadas.find(
-      (jornada) => {
-        return (
-          normalizarFecha(
-            jornada.fecha
-          ) ===
-            normalizarFecha(
-              fecha
-            ) &&
-          obtenerId(
-            jornada.conductor
-          ) ===
-            obtenerId(
-              conductor
-            ) &&
-          obtenerId(
-            jornada.vehiculo
-          ) ===
-            obtenerId(
-              vehiculo
-            )
-        );
-      }
-    );
+  const recargarDatos = () => {
+    void Promise.allSettled([
+      cargarJornadas(),
+      cargarCatalogos(),
+    ]);
   };
 
-  const guardarJornada = async (
-    form
-  ) => {
+  const guardarJornada = async (form) => {
     try {
       setSaving(true);
       setError("");
 
       const modoFormulario =
-        jornadaEditando
-          ?.modoFormulario;
+        jornadaEditando?.modoFormulario;
 
-      if (
-        modoFormulario ===
-        "cerrar"
-      ) {
-        if (
-          form.kilometraje_final ===
-            "" ||
-          form.kilometraje_final ===
-            null ||
-          form.kilometraje_final ===
-            undefined
-        ) {
-          setError(
-            "Debes ingresar el kilometraje final."
-          );
-
-          return false;
-        }
-
-        const kilometrajeFinal =
-          Number(
-            form.kilometraje_final
-          );
-
-        const ingresoBruto =
-          Number(
-            form.ingreso_bruto ||
-              0
-          );
+      if (modoFormulario === "cerrar") {
+        const kilometrajeFinal = Number(
+          form.kilometraje_final
+        );
 
         if (
-          Number.isNaN(
-            kilometrajeFinal
-          ) ||
+          !Number.isFinite(kilometrajeFinal) ||
           kilometrajeFinal < 0
         ) {
           setError(
-            "El kilometraje final debe ser un número válido."
+            "Debes ingresar un kilometraje final válido."
           );
-
           return false;
         }
 
         if (
-          Number.isNaN(
-            ingresoBruto
-          ) ||
-          ingresoBruto < 0
+          kilometrajeFinal <
+          Number(
+            jornadaEditando.kilometraje_inicial
+          )
         ) {
           setError(
-            "El monto bruto no puede ser negativo."
+            "El kilometraje final no puede ser menor al inicial."
+          );
+          return false;
+        }
+
+        const datosCierre = {
+          kilometraje_final: kilometrajeFinal,
+          observaciones:
+            form.observaciones || "",
+        };
+
+               const tipoCobro =
+          form.tipo_cobro ||
+          jornadaEditando?.tipo_cobro ||
+          "porcentaje";
+
+        datosCierre.tipo_cobro = tipoCobro;
+
+        if (tipoCobro === "porcentaje") {
+          const ingresoBruto = Number(
+            form.ingreso_bruto || 0
           );
 
-          return false;
+          if (
+            !Number.isFinite(ingresoBruto) ||
+            ingresoBruto < 0
+          ) {
+            setError(
+              "El total producido del día debe ser válido."
+            );
+            return false;
+          }
+
+          datosCierre.ingreso_bruto =
+            ingresoBruto;
+        }
+
+        if (
+          tipoCobro === "alquiler" &&
+          !esTaxista
+        ) {
+          const montoAlquiler = Number(
+            form.monto_alquiler || 0
+          );
+
+          if (
+            !Number.isFinite(montoAlquiler) ||
+            montoAlquiler < 0
+          ) {
+            setError(
+              "El monto de alquiler debe ser válido."
+            );
+            return false;
+          }
+
+          datosCierre.monto_alquiler =
+            montoAlquiler;
         }
 
         await cerrarJornada(
           jornadaEditando.id,
-          {
-            kilometraje_final:
-              kilometrajeFinal,
-
-            ingreso_bruto:
-              ingresoBruto,
-
-            observaciones:
-              form.observaciones ||
-              "",
-          }
+          datosCierre
         );
 
         cerrarModal();
 
-        mostrarExitoInmediato(
-          "Km final agregado exitosamente",
-          "La jornada fue cerrada correctamente."
+        mostrarExito(
+          "Jornada cerrada",
+          "El kilometraje final fue registrado correctamente."
         );
 
-        recargarDatosEnSegundoPlano();
-
+        recargarDatos();
         return true;
       }
 
-      if (
-        modoFormulario ===
-        "editar"
-      ) {
-        if (
-          jornadaEditando
-            ?.liquidada
-        ) {
+      if (modoFormulario === "editar") {
+        if (jornadaEditando?.liquidada) {
           setError(
             "Esta jornada ya fue incluida en una liquidación y no puede modificarse."
           );
-
           return false;
         }
 
-        const fecha =
-          normalizarFecha(
-            form.fecha
-          );
+        const kilometrajeInicial = Number(
+          form.kilometraje_inicial
+        );
 
-        const kilometrajeInicial =
-          Number(
-            form.kilometraje_inicial
-          );
-
-        const kilometrajeFinal =
-          Number(
-            form.kilometraje_final
-          );
-
-        const tipoCobro =
-          form.tipo_cobro ||
-          "porcentaje";
-
-        const ingresoBruto =
-          Number(
-            form.ingreso_bruto ||
-              0
-          );
-
-        const montoAlquiler =
-          Number(
-            form.monto_alquiler ||
-              0
-          );
-
-        if (!fecha) {
-          setError(
-            "Debes ingresar la fecha de la jornada."
-          );
-
-          return false;
-        }
+        const kilometrajeFinal = Number(
+          form.kilometraje_final
+        );
 
         if (
-          Number.isNaN(
-            kilometrajeInicial
-          ) ||
+          !Number.isFinite(kilometrajeInicial) ||
           kilometrajeInicial < 0
         ) {
           setError(
             "El kilometraje inicial debe ser válido."
           );
-
           return false;
         }
 
         if (
-          Number.isNaN(
-            kilometrajeFinal
-          ) ||
-          kilometrajeFinal <
-            kilometrajeInicial
+          !Number.isFinite(kilometrajeFinal) ||
+          kilometrajeFinal < kilometrajeInicial
         ) {
           setError(
             "El kilometraje final debe ser mayor o igual que el inicial."
           );
-
           return false;
         }
 
-        if (
-          tipoCobro ===
-            "porcentaje" &&
-          (
-            Number.isNaN(
-              ingresoBruto
-            ) ||
-            ingresoBruto < 0
-          )
-        ) {
-          setError(
-            "El ingreso bruto debe ser un monto válido."
-          );
+        const tipoCobro =
+          form.tipo_cobro || "porcentaje";
 
-          return false;
-        }
-
-        if (
-          tipoCobro ===
-            "alquiler" &&
-          (
-            Number.isNaN(
-              montoAlquiler
-            ) ||
-            montoAlquiler < 0
-          )
-        ) {
-          setError(
-            "El monto de alquiler debe ser válido."
-          );
-
-          return false;
-        }
+        const datos = {
+          fecha:
+            normalizarFecha(form.fecha) || hoy,
+          kilometraje_inicial:
+            kilometrajeInicial,
+          kilometraje_final:
+            kilometrajeFinal,
+          tipo_cobro: tipoCobro,
+          ingreso_bruto:
+            tipoCobro === "porcentaje"
+              ? Number(form.ingreso_bruto || 0)
+              : 0,
+          monto_alquiler:
+            tipoCobro === "alquiler"
+              ? Number(form.monto_alquiler || 0)
+              : 0,
+          observaciones:
+            form.observaciones || "",
+        };
 
         await updateJornada(
           jornadaEditando.id,
-          {
-            fecha,
-
-            kilometraje_inicial:
-              kilometrajeInicial,
-
-            kilometraje_final:
-              kilometrajeFinal,
-
-            tipo_cobro:
-              tipoCobro,
-
-            ingreso_bruto:
-              tipoCobro ===
-              "porcentaje"
-                ? ingresoBruto
-                : 0,
-
-            monto_alquiler:
-              tipoCobro ===
-              "alquiler"
-                ? montoAlquiler
-                : 0,
-
-            observaciones:
-              form.observaciones ||
-              "",
-          }
+          datos
         );
 
         cerrarModal();
 
-        mostrarExitoInmediato(
-          "Jornada actualizada exitosamente",
+        mostrarExito(
+          "Jornada actualizada",
           "Los cambios se guardaron correctamente."
         );
 
-        recargarDatosEnSegundoPlano();
-
+        recargarDatos();
         return true;
       }
 
       if (!esTaxista) {
         setError(
-          "Administración no debe crear jornadas desde aquí. Debe seleccionar una jornada existente y registrar el ingreso."
+          "La administración debe editar una jornada existente para registrar datos económicos."
         );
-
         return false;
       }
-
-      const fecha =
-        normalizarFecha(
-          form.fecha
-        ) || hoy;
 
       const conductor =
-        form.conductor ||
         conductorTaxista?.id ||
-        asignacionActivaTaxista
-          ?.conductor ||
-        null;
+        asignacionActivaTaxista?.conductor;
 
       const vehiculo =
-        form.vehiculo ||
         vehiculoTaxista?.id ||
-        asignacionActivaTaxista
-          ?.vehiculo ||
-        null;
+        asignacionActivaTaxista?.vehiculo;
 
-      if (!conductor) {
+      const kilometrajeInicial = Number(
+        form.kilometraje_inicial
+      );
+
+      if (!conductor || !vehiculo) {
         setError(
-          "No se encontró el conductor asociado a tu usuario."
+          "No tienes un conductor o vehículo activo asignado."
         );
-
-        return false;
-      }
-
-      if (!vehiculo) {
-        setError(
-          "No tienes un vehículo activo asignado."
-        );
-
-        return false;
-      }
-
-      const jornadaExistente =
-        buscarJornadaExistente({
-          fecha,
-          conductor,
-          vehiculo,
-        });
-
-      if (jornadaExistente) {
-        if (
-          jornadaTieneKmFinal(
-            jornadaExistente
-          )
-        ) {
-          setError(
-            "Ya existe una jornada cerrada para este conductor y vehículo en esta fecha."
-          );
-
-          return false;
-        }
-
-        if (
-          form.kilometraje_final !==
-            "" &&
-          form.kilometraje_final !==
-            null &&
-          form.kilometraje_final !==
-            undefined
-        ) {
-          if (
-            form.ingreso_bruto ===
-              "" ||
-            form.ingreso_bruto ===
-              null ||
-            form.ingreso_bruto ===
-              undefined
-          ) {
-            setError(
-              "Debes ingresar el ingreso bruto generado durante la jornada."
-            );
-
-            return false;
-          }
-
-          const kilometrajeFinal =
-            Number(
-              form.kilometraje_final
-            );
-
-          const ingresoBruto =
-            Number(
-              form.ingreso_bruto
-            );
-
-          if (
-            Number.isNaN(
-              kilometrajeFinal
-            ) ||
-            kilometrajeFinal < 0
-          ) {
-            setError(
-              "El kilometraje final debe ser un número válido."
-            );
-
-            return false;
-          }
-
-          if (
-            Number.isNaN(
-              ingresoBruto
-            ) ||
-            ingresoBruto < 0
-          ) {
-            setError(
-              "El ingreso bruto debe ser un monto válido."
-            );
-
-            return false;
-          }
-
-          await cerrarJornada(
-            jornadaExistente.id,
-            {
-              kilometraje_final:
-                kilometrajeFinal,
-
-              ingreso_bruto:
-                ingresoBruto,
-
-              observaciones:
-                form.observaciones ||
-                "",
-            }
-          );
-
-          cerrarModal();
-
-          mostrarExitoInmediato(
-            "Km final agregado exitosamente",
-            "La jornada fue cerrada correctamente."
-          );
-
-          recargarDatosEnSegundoPlano();
-
-          return true;
-        }
-
-        setJornadaEditando({
-          ...jornadaExistente,
-          modoFormulario:
-            "cerrar",
-        });
-
-        setModalOpen(true);
-
         return false;
       }
 
       if (
-        form.kilometraje_inicial ===
-          "" ||
-        form.kilometraje_inicial ===
-          null ||
-        form.kilometraje_inicial ===
-          undefined
+        !Number.isFinite(kilometrajeInicial) ||
+        kilometrajeInicial < 0
       ) {
         setError(
-          "Debes ingresar el kilometraje inicial."
+          "Debes ingresar un kilometraje inicial válido."
         );
-
         return false;
       }
 
       await createJornada({
-        fecha,
-
-        conductor:
-          obtenerId(conductor),
-
-        vehiculo:
-          obtenerId(vehiculo),
-
+        fecha:
+          normalizarFecha(form.fecha) || hoy,
+        conductor: obtenerId(conductor),
+        vehiculo: obtenerId(vehiculo),
         kilometraje_inicial:
-          Number(
-            form.kilometraje_inicial
-          ),
-
+          kilometrajeInicial,
         observaciones:
-          form.observaciones ||
-          "",
+          form.observaciones || "",
       });
 
       cerrarModal();
 
-      mostrarExitoInmediato(
-        "Km inicial agregado exitosamente",
-        "La jornada fue iniciada correctamente."
+      mostrarExito(
+        "Jornada iniciada",
+        "El kilometraje inicial fue registrado correctamente."
       );
 
-      recargarDatosEnSegundoPlano();
-
+      recargarDatos();
       return true;
     } catch (err) {
-      const mensaje =
-        obtenerMensajeError(
-          err,
-          "No se pudo guardar la jornada."
-        );
+      const mensaje = obtenerMensajeError(
+        err,
+        "No se pudo guardar la jornada."
+      );
 
       setError(mensaje);
 
       await Swal.fire({
-        title:
-          "No se pudo guardar",
-
+        title: "No se pudo guardar",
         text: mensaje,
-
         icon: "error",
-
-        confirmButtonText:
-          "Aceptar",
-
-        confirmButtonColor:
-          "#dc2626",
+        confirmButtonText: "Aceptar",
+        confirmButtonColor: "#dc2626",
       });
 
       return false;
@@ -1073,195 +668,176 @@ export const useJornadas = () => {
     }
   };
 
-  const eliminarJornada = async (
-    jornada
-  ) => {
-    if (jornada?.liquidada) {
-      setError(
-        `Esta jornada pertenece a la liquidación #${
-          jornada.liquidacion_id ||
-          ""
-        } y no puede eliminarse.`
-      );
+  const eliminarJornada = async (jornada) => {
+  if (jornada?.liquidada) {
+    const mensaje =
+      `Esta jornada pertenece a la liquidación #${
+        jornada.liquidacion_id || ""
+      } y no puede eliminarse.`;
 
-      return false;
-    }
+    setError(mensaje);
 
-    const confirmar =
-      window.confirm(
-        `¿Seguro que deseas eliminar la jornada de ${
-          jornada.conductor_nombre ||
-          "este conductor"
-        }?`
-      );
+    await Swal.fire({
+      title: "Jornada protegida",
+      text: mensaje,
+      icon: "warning",
+      confirmButtonText: "Entendido",
+      confirmButtonColor: "#E7A900",
+    });
 
-    if (!confirmar) {
-      return false;
-    }
+    return false;
+  }
 
-    try {
-      setSaving(true);
-      setError("");
+  const nombreConductor =
+    jornada?.conductor_nombre ||
+    "este conductor";
 
-      await deleteJornada(
-        jornada.id
-      );
+  const resultado = await Swal.fire({
+    title: "¿Eliminar jornada?",
+    html: `
+      <p style="color:#475569;font-size:14px;line-height:1.5;">
+        Vas a eliminar la jornada de
+        <strong>${nombreConductor}</strong>.
+      </p>
+     
+    `,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#dc2626",
+    cancelButtonColor: "#64748b",
+    reverseButtons: true,
+    focusCancel: true,
+  });
 
-      await cargarJornadas();
+  if (!resultado.isConfirmed) {
+    return false;
+  }
 
-      return true;
-    } catch (err) {
-      setError(
-        obtenerMensajeError(
-          err,
-          "No se pudo eliminar la jornada."
-        )
-      );
+  try {
+    setSaving(true);
+    setError("");
 
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  };
+    await deleteJornada(jornada.id);
 
-  const jornadasFiltradas =
-    useMemo(() => {
-      const value =
-        search
-          .trim()
-          .toLowerCase();
+    await cargarJornadas();
 
-      if (!value) {
-        return jornadas;
-      }
+    await Swal.fire({
+      title: "Jornada eliminada",
+      text: "La jornada fue eliminada correctamente.",
+      icon: "success",
+      confirmButtonText: "Aceptar",
+      confirmButtonColor: "#059669",
+      timer: 1800,
+      timerProgressBar: true,
+    });
 
-      return jornadas.filter(
-        (jornada) => {
-          const conductor =
-            jornada
-              .conductor_nombre
-              ?.toLowerCase() ||
-            "";
-
-          const placa =
-            jornada
-              .vehiculo_placa
-              ?.toLowerCase() ||
-            "";
-
-          const numero =
-            jornada
-              .vehiculo_numero
-              ?.toLowerCase() ||
-            "";
-
-          const fecha =
-            normalizarFecha(
-              jornada.fecha
-            ).toLowerCase();
-
-          return (
-            conductor.includes(
-              value
-            ) ||
-            placa.includes(
-              value
-            ) ||
-            numero.includes(
-              value
-            ) ||
-            fecha.includes(
-              value
-            )
-          );
-        }
-      );
-    }, [
-      jornadas,
-      search,
-    ]);
-
-  const totalJornadas =
-    jornadasHoy.length;
-
-  const ingresoTotal =
-    jornadasHoy.reduce(
-      (
-        total,
-        jornada
-      ) => {
-        return (
-          total +
-          Number(
-            jornada.ingreso_bruto ||
-              0
-          )
-        );
-      },
-      0
+    return true;
+  } catch (err) {
+    const mensaje = obtenerMensajeError(
+      err,
+      "No se pudo eliminar la jornada."
     );
+
+    setError(mensaje);
+
+    await Swal.fire({
+      title: "No se pudo eliminar",
+      text: mensaje,
+      icon: "error",
+      confirmButtonText: "Aceptar",
+      confirmButtonColor: "#dc2626",
+    });
+
+    return false;
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+
+  const jornadasFiltradas = useMemo(() => {
+    const valor = search.trim().toLowerCase();
+
+    if (!valor) return jornadas;
+
+    return jornadas.filter((jornada) => {
+      const conductor =
+        jornada.conductor_nombre
+          ?.toLowerCase() || "";
+
+      const placa =
+        jornada.vehiculo_placa
+          ?.toLowerCase() || "";
+
+      const numero =
+        jornada.vehiculo_numero
+          ?.toLowerCase() || "";
+
+      const fecha = normalizarFecha(
+        jornada.fecha
+      ).toLowerCase();
+
+      return (
+        conductor.includes(valor) ||
+        placa.includes(valor) ||
+        numero.includes(valor) ||
+        fecha.includes(valor)
+      );
+    });
+  }, [jornadas, search]);
+
+  const totalJornadas = jornadasHoy.length;
+
+  const ingresoTotal = jornadasHoy.reduce(
+    (total, jornada) =>
+      total +
+      Number(jornada.ingreso_bruto || 0),
+    0
+  );
 
   const pagoConductoresTotal =
     jornadasHoy.reduce(
-      (
-        total,
-        jornada
-      ) => {
-        return (
-          total +
-          Number(
-            jornada.pago_conductor ||
-              0
-          )
-        );
-      },
+      (total, jornada) =>
+        total +
+        Number(
+          jornada.pago_conductor || 0
+        ),
       0
     );
 
-  const gananciaTotal =
-    jornadasHoy.reduce(
-      (
-        total,
-        jornada
-      ) => {
-        return (
-          total +
-          Number(
-            jornada.ganancia_real_dueno ??
-              jornada.ganancia_dueno ??
-              0
-          )
-        );
-      },
-      0
-    );
+  const gananciaTotal = jornadasHoy.reduce(
+    (total, jornada) =>
+      total +
+      Number(
+        jornada.ganancia_real_dueno ??
+          jornada.ganancia_dueno ??
+          0
+      ),
+    0
+  );
 
-  const kilometrosTotal =
-    jornadasHoy.reduce(
-      (
-        total,
-        jornada
-      ) => {
-        return (
-          total +
-          Number(
-            jornada.kilometros_recorridos ||
-              0
-          )
-        );
-      },
-      0
-    );
+  const kilometrosTotal = jornadasHoy.reduce(
+    (total, jornada) =>
+      total +
+      Number(
+        jornada.kilometros_recorridos || 0
+      ),
+    0
+  );
 
   useEffect(() => {
-    cargarJornadas();
-    cargarCatalogos();
+    void cargarJornadas();
+    void cargarCatalogos();
   }, []);
 
   return {
     jornadas,
     jornadasHoy,
     jornadasFiltradas,
+    conductorTaxista,
 
     conductores,
     vehiculos,
@@ -1300,7 +876,8 @@ export const useJornadas = () => {
     abrirModalCrear,
     abrirModalCerrar,
     abrirModalEditar,
-    abrirModalIngreso,
+    abrirModalIngreso:
+      abrirModalEditar,
 
     cerrarModal,
     guardarJornada,

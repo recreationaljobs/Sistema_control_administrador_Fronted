@@ -21,6 +21,8 @@ import MiVehiculoTaxistaPage from "../modules/vehiculos/pages/MiVehiculoTaxistaP
 
 import AsignacionesPage from "../modules/asignaciones/pages/AsignacionesPage";
 
+import AuditoriaPage from "../modules/auditoria/pages/AuditoriaPage.jsx";
+
 import GananciasTaxistaPage from "../modules/jornadas/pages/GananciasTaxistaPage";
 
 import JornadasPage from "../modules/jornadas/pages/JornadasPage";
@@ -357,6 +359,20 @@ const AppRouter = () => {
                 ]}
               >
                 <ReportesPage />
+              </RoleRoute>
+            }
+          />
+
+          <Route
+            path="auditoria"
+            element={
+              <RoleRoute
+                allowedRoles={[
+                  "superadmin",
+                  "admin_sucursal",
+                ]}
+              >
+                <AuditoriaPage />
               </RoleRoute>
             }
           />

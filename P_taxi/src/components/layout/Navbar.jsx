@@ -1,5 +1,3 @@
-// src/components/layout/Navbar.jsx
-
 import {
   useEffect,
   useMemo,
@@ -11,6 +9,7 @@ import {
   AlertTriangle,
   Bell,
   CalendarDays,
+  SquareTerminal,
   IdCard,
   Menu,
   Wrench,
@@ -232,6 +231,10 @@ const Navbar = ({
   const esTaxista =
     rolNormalizado === "taxista";
 
+  const puedeVerMovimientos =
+    rolNormalizado === "superadmin" ||
+    rolNormalizado === "admin_sucursal";
+
   const fechaActual = useMemo(
     () => obtenerFechaTexto(),
     []
@@ -252,6 +255,7 @@ const Navbar = ({
     useState(false);
 
   const panelRef = useRef(null);
+
   const timerAnimacionRef =
     useRef(null);
 
@@ -466,9 +470,7 @@ const Navbar = ({
         {!esTaxista && (
           <button
             type="button"
-            onClick={
-              onOpenMobileMenu
-            }
+            onClick={onOpenMobileMenu}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-700 shadow-sm lg:hidden"
             aria-label="Abrir menú"
           >
@@ -489,6 +491,25 @@ const Navbar = ({
 
       {!esTaxista && (
         <div className="flex shrink-0 items-center gap-3 md:gap-4">
+          {puedeVerMovimientos && (
+            <button
+              type="button"
+              onClick={() =>
+                navigate("/auditoria")
+              }
+              className="inline-flex h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-black text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md md:px-4"
+              title="Ver movimientos del sistema"
+            >
+              <SquareTerminal
+                  size={19}
+                  strokeWidth={2.2}
+                  className="text-blue-600"
+                />
+
+              
+            </button>
+          )}
+
           <div className="hidden h-12 items-center gap-4 rounded-xl border border-slate-200 bg-white px-5 text-sm font-semibold text-slate-700 shadow-sm md:flex">
             <span>{fechaActual}</span>
 
@@ -566,11 +587,10 @@ const Navbar = ({
                   ) : (
                     alertasVisibles.map(
                       (alerta, index) => {
-                        const id =
-                          idAlerta(
-                            alerta,
-                            index
-                          );
+                        const id = idAlerta(
+                          alerta,
+                          index
+                        );
 
                         const estilo =
                           SEVERIDAD[
@@ -596,13 +616,10 @@ const Navbar = ({
                                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
                                 style={{
                                   backgroundColor: `${estilo.color}22`,
-                                  color:
-                                    estilo.color,
+                                  color: estilo.color,
                                 }}
                               >
-                                <Icono
-                                  size={20}
-                                />
+                                <Icono size={20} />
                               </div>
 
                               <div className="min-w-0 flex-1">
@@ -610,24 +627,18 @@ const Navbar = ({
                                   <span
                                     className={`rounded-full px-2.5 py-0.5 text-[11px] font-black ${estilo.chip}`}
                                   >
-                                    {
-                                      estilo.label
-                                    }
+                                    {estilo.label}
                                   </span>
 
                                   <button
                                     type="button"
                                     onClick={() =>
-                                      descartar(
-                                        id
-                                      )
+                                      descartar(id)
                                     }
                                     className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
                                     aria-label="Descartar notificación"
                                   >
-                                    <X
-                                      size={15}
-                                    />
+                                    <X size={15} />
                                   </button>
                                 </div>
 

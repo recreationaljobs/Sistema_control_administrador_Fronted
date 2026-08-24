@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import {
   Banknote,
   FileText,
@@ -5,24 +7,20 @@ import {
   ReceiptText,
 } from "lucide-react";
 
-import {
-  useLiquidaciones,
-} from "../hooks/useLiquidaciones";
+import { useLiquidaciones } from "../hooks/useLiquidaciones";
 
 import LiquidacionModal from "../components/LiquidacionModal";
 import LiquidacionTable from "../components/LiquidacionTable";
 import ReciboLiquidacionTermico from "../components/ReciboLiquidacionTermico";
+import WhatsAppLiquidacionModal from "../components/WhatsAppLiquidacionModal";
 
 const formatoMoneda = (valor) => {
   const numero = Number(valor || 0);
 
-  return `C$ ${numero.toLocaleString(
-    "es-NI",
-    {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }
-  )}`;
+  return `C$ ${numero.toLocaleString("es-NI", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 };
 
 const LiquidacionesLoader = () => {
@@ -40,8 +38,7 @@ const LiquidacionesLoader = () => {
           className="absolute inset-[10px] animate-spin rounded-full border-[3px] border-transparent border-b-emerald-500 border-l-emerald-500"
           style={{
             animationDuration: "1.4s",
-            animationDirection:
-              "reverse",
+            animationDirection: "reverse",
           }}
         />
 
@@ -50,8 +47,7 @@ const LiquidacionesLoader = () => {
         <div
           className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-white text-[#D89C00] shadow-lg"
           style={{
-            boxShadow:
-              "0 8px 25px rgba(245,184,0,0.22)",
+            boxShadow: "0 8px 25px rgba(245,184,0,0.22)",
           }}
         >
           <Banknote size={29} />
@@ -102,10 +98,7 @@ const ResumenSuperior = ({
             {label}
           </p>
 
-          <p
-            translate="no"
-            className="notranslate mt-1 break-words text-lg font-black text-slate-950"
-          >
+          <p className="mt-1 break-words text-lg font-black text-slate-950">
             {value}
           </p>
         </div>
@@ -146,6 +139,11 @@ const LiquidacionesPage = () => {
     montoTotalPagado,
   } = useLiquidaciones();
 
+  const [
+    liquidacionWhatsApp,
+    setLiquidacionWhatsApp,
+  ] = useState(null);
+
   return (
     <div
       translate="no"
@@ -181,17 +179,11 @@ const LiquidacionesPage = () => {
             {esAdminOSuperAdmin && (
               <button
                 type="button"
-                onClick={
-                  abrirModalCrear
-                }
-                disabled={
-                  loading ||
-                  saving
-                }
+                onClick={abrirModalCrear}
+                disabled={loading || saving}
                 className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[#F5B800] px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:-translate-y-0.5 hover:bg-[#DFA600] hover:shadow-lg active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
               >
                 <Plus size={20} />
-
                 Nueva liquidación
               </button>
             )}
@@ -222,29 +214,19 @@ const LiquidacionesPage = () => {
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <ResumenSuperior
-          icono={
-            <ReceiptText size={22} />
-          }
+          icono={<ReceiptText size={22} />}
           label="Liquidaciones registradas"
-          value={
-            totalLiquidaciones
-          }
+          value={totalLiquidaciones}
         />
 
         <ResumenSuperior
-          icono={
-            <Banknote size={22} />
-          }
+          icono={<Banknote size={22} />}
           label="Total pagado"
-          value={formatoMoneda(
-            montoTotalPagado
-          )}
+          value={formatoMoneda(montoTotalPagado)}
         />
 
         <ResumenSuperior
-          icono={
-            <FileText size={22} />
-          }
+          icono={<FileText size={22} />}
           label="Control de pago"
           value="Sin jornadas duplicadas"
         />
@@ -267,13 +249,10 @@ const LiquidacionesPage = () => {
           <LiquidacionesLoader />
         ) : (
           <LiquidacionTable
-            liquidaciones={
-              liquidaciones
-            }
+            liquidaciones={liquidaciones}
             loading={false}
-            onViewRecibo={
-              verRecibo
-            }
+            onViewRecibo={verRecibo}
+            onWhatsApp={setLiquidacionWhatsApp}
           />
         )}
       </section>
@@ -281,34 +260,28 @@ const LiquidacionesPage = () => {
       <LiquidacionModal
         open={modalOpen}
         onClose={cerrarModal}
-        onPreview={
-          calcularPreview
-        }
-        onSave={
-          guardarLiquidacion
-        }
+        onPreview={calcularPreview}
+        onSave={guardarLiquidacion}
         saving={saving}
-        loadingPreview={
-          loadingPreview
-        }
-        loadingCatalogos={
-          loadingCatalogos
-        }
-        conductores={
-          conductores
-        }
+        loadingPreview={loadingPreview}
+        loadingCatalogos={loadingCatalogos}
+        conductores={conductores}
         preview={preview}
       />
 
-      {modalReciboOpen &&
-        recibo && (
-          <ReciboLiquidacionTermico
-            recibo={recibo}
-            onClose={
-              cerrarRecibo
-            }
-          />
-        )}
+      {modalReciboOpen && recibo && (
+        <ReciboLiquidacionTermico
+          recibo={recibo}
+          onClose={cerrarRecibo}
+        />
+      )}
+
+      {liquidacionWhatsApp && (
+        <WhatsAppLiquidacionModal
+          liquidacion={liquidacionWhatsApp}
+          onClose={() => setLiquidacionWhatsApp(null)}
+        />
+      )}
     </div>
   );
 };

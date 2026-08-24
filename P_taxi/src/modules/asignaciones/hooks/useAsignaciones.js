@@ -1,11 +1,12 @@
-// src/modules/asignaciones/hooks/useAsignaciones.js
-
 import {
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react";
+
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 
 import { useAuth } from "../../../hooks/useAuth";
 
@@ -39,19 +40,34 @@ const normalizarLista = (data) => {
 };
 
 const normalizarRol = (valor) => {
-  if (valor && typeof valor === "object") {
-    return String(
-      valor.codigo ||
-        valor.nombre ||
-        ""
-    )
-      .trim()
-      .toLowerCase();
+  let rol = valor;
+
+  if (rol && typeof rol === "object") {
+    rol =
+      rol.codigo ||
+      rol.nombre ||
+      "";
   }
 
-  return String(valor || "")
+  const codigo = String(rol || "")
     .trim()
     .toLowerCase();
+
+  if (codigo === "super_admin") {
+    return "superadmin";
+  }
+
+  if (
+    [
+      "admin",
+      "administrador",
+      "administrador de sucursal",
+    ].includes(codigo)
+  ) {
+    return "admin_sucursal";
+  }
+
+  return codigo;
 };
 
 const obtenerMensajeError = (
@@ -60,8 +76,20 @@ const obtenerMensajeError = (
 ) => {
   const data = error?.response?.data;
 
+  console.error(
+    "Error de asignación:",
+    data || error
+  );
+
   if (typeof data?.detail === "string") {
     return data.detail;
+  }
+
+  if (
+    Array.isArray(data?.non_field_errors) &&
+    data.non_field_errors.length
+  ) {
+    return data.non_field_errors[0];
   }
 
   if (
@@ -119,6 +147,18 @@ const obtenerFechaActual = () => {
     .split("T")[0];
 };
 
+const mostrarValidacion = async (
+  mensaje
+) => {
+  await Swal.fire({
+    title: "Revisa los datos",
+    text: mensaje,
+    icon: "warning",
+    confirmButtonText: "Entendido",
+    confirmButtonColor: "#E7A900",
+  });
+};
+
 export const useAsignaciones = () => {
   const { rol } = useAuth();
 
@@ -167,14 +207,11 @@ export const useAsignaciones = () => {
   const rolNormalizado =
     normalizarRol(rol);
 
-  const esSuperAdmin = [
-    "superadmin",
-    "super_admin",
-  ].includes(rolNormalizado);
+  const esSuperAdmin =
+    rolNormalizado === "superadmin";
 
   const esAdminSucursal =
-    rolNormalizado ===
-    "admin_sucursal";
+    rolNormalizado === "admin_sucursal";
 
   const esTaxista =
     rolNormalizado === "taxista";
@@ -236,7 +273,6 @@ export const useAsignaciones = () => {
             getConductoresDisponibles(
               asignacionId
             ),
-
             getVehiculosDisponibles(
               asignacionId
             ),
@@ -280,7 +316,6 @@ export const useAsignaciones = () => {
       setConductores([]);
       setVehiculos([]);
       setError("");
-
       setModalOpen(true);
 
       await cargarCatalogos();
@@ -300,7 +335,6 @@ export const useAsignaciones = () => {
         setConductores([]);
         setVehiculos([]);
         setError("");
-
         setModalOpen(true);
 
         await cargarCatalogos(
@@ -312,11 +346,15 @@ export const useAsignaciones = () => {
 
   const cerrarModal =
     useCallback(() => {
+      if (saving) {
+        return;
+      }
+
       setModalOpen(false);
       setAsignacionEditando(null);
       setConductores([]);
       setVehiculos([]);
-    }, []);
+    }, [saving]);
 
   const guardarAsignacion =
     useCallback(
@@ -325,28 +363,93 @@ export const useAsignaciones = () => {
           return false;
         }
 
+        const conductor = Number(
+          form.conductor
+        );
+
+        const vehiculo = Number(
+          form.vehiculo
+        );
+
+        const fechaInicio = String(
+          form.fecha_inicio || ""
+        ).trim();
+
+        const fechaFin = String(
+          form.fecha_fin || ""
+        ).trim();
+
+        const activa =
+          form.activa !== false;
+
+        if (
+          !Number.isInteger(conductor) ||
+          conductor <= 0
+        ) {
+          const mensaje =
+            "Debes seleccionar un conductor.";
+
+          setError(mensaje);
+          await mostrarValidacion(mensaje);
+          return false;
+        }
+
+        if (
+          !Number.isInteger(vehiculo) ||
+          vehiculo <= 0
+        ) {
+          const mensaje =
+            "Debes seleccionar un vehículo.";
+
+          setError(mensaje);
+          await mostrarValidacion(mensaje);
+          return false;
+        }
+
+        if (!fechaInicio) {
+          const mensaje =
+            "Debes indicar la fecha de inicio de la asignación.";
+
+          setError(mensaje);
+          await mostrarValidacion(mensaje);
+          return false;
+        }
+
+        if (
+          fechaFin &&
+          fechaFin < fechaInicio
+        ) {
+          const mensaje =
+            "La fecha final no puede ser anterior a la fecha de inicio.";
+
+          setError(mensaje);
+          await mostrarValidacion(mensaje);
+          return false;
+        }
+
+        if (
+          activa &&
+          fechaFin
+        ) {
+          const mensaje =
+            "Una asignación activa no debe tener fecha de finalización. Desactívala primero o deja la fecha final vacía.";
+
+          setError(mensaje);
+          await mostrarValidacion(mensaje);
+          return false;
+        }
+
+        const payload = {
+          conductor,
+          vehiculo,
+          fecha_inicio: fechaInicio,
+          fecha_fin: fechaFin || null,
+          activa,
+        };
+
         try {
           setSaving(true);
           setError("");
-
-          const payload = {
-            conductor: form.conductor
-              ? Number(form.conductor)
-              : null,
-
-            vehiculo: form.vehiculo
-              ? Number(form.vehiculo)
-              : null,
-
-            fecha_inicio:
-              form.fecha_inicio,
-
-            fecha_fin:
-              form.fecha_fin || null,
-
-            activa:
-              form.activa !== false,
-          };
 
           if (
             asignacionEditando?.id
@@ -367,6 +470,22 @@ export const useAsignaciones = () => {
 
           cerrarModal();
 
+          await Swal.fire({
+            title: asignacionEditando
+              ? "Asignación actualizada"
+              : "Asignación registrada",
+
+            text: asignacionEditando
+              ? "Los datos de la asignación fueron actualizados correctamente."
+              : "El conductor y el vehículo fueron asignados correctamente.",
+
+            icon: "success",
+            confirmButtonText: "Aceptar",
+            confirmButtonColor: "#059669",
+            timer: 1800,
+            timerProgressBar: true,
+          });
+
           return true;
         } catch (requestError) {
           const mensaje =
@@ -376,6 +495,14 @@ export const useAsignaciones = () => {
             );
 
           setError(mensaje);
+
+          await Swal.fire({
+            title: "No se pudo guardar",
+            text: mensaje,
+            icon: "error",
+            confirmButtonText: "Aceptar",
+            confirmButtonColor: "#dc2626",
+          });
 
           return false;
         } finally {
@@ -396,14 +523,47 @@ export const useAsignaciones = () => {
           return false;
         }
 
+        const estaActiva =
+          obtenerEstadoActivo(
+            asignacion
+          );
+
+        const accion = estaActiva
+          ? "finalizar"
+          : "reactivar";
+
+        const resultado = await Swal.fire({
+          title: estaActiva
+            ? "¿Finalizar asignación?"
+            : "¿Reactivar asignación?",
+
+          text: estaActiva
+            ? "El conductor dejará de estar asignado a este vehículo."
+            : "El conductor volverá a estar asignado a este vehículo.",
+
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: estaActiva
+            ? "Sí, finalizar"
+            : "Sí, reactivar",
+
+          cancelButtonText: "Cancelar",
+          confirmButtonColor: estaActiva
+            ? "#dc2626"
+            : "#059669",
+
+          cancelButtonColor: "#64748b",
+          reverseButtons: true,
+          focusCancel: true,
+        });
+
+        if (!resultado.isConfirmed) {
+          return false;
+        }
+
         try {
           setSaving(true);
           setError("");
-
-          const estaActiva =
-            obtenerEstadoActivo(
-              asignacion
-            );
 
           const activar =
             !estaActiva;
@@ -412,7 +572,6 @@ export const useAsignaciones = () => {
             asignacion.id,
             {
               activa: activar,
-
               fecha_fin: activar
                 ? null
                 : obtenerFechaActual(),
@@ -421,6 +580,22 @@ export const useAsignaciones = () => {
 
           await cargarAsignaciones({
             mostrarCarga: false,
+          });
+
+          await Swal.fire({
+            title: activar
+              ? "Asignación reactivada"
+              : "Asignación finalizada",
+
+            text: activar
+              ? "La asignación está activa nuevamente."
+              : "La asignación fue finalizada correctamente.",
+
+            icon: "success",
+            confirmButtonText: "Aceptar",
+            confirmButtonColor: "#059669",
+            timer: 1600,
+            timerProgressBar: true,
           });
 
           return true;
@@ -432,6 +607,14 @@ export const useAsignaciones = () => {
             );
 
           setError(mensaje);
+
+          await Swal.fire({
+            title: "No se pudo actualizar",
+            text: mensaje,
+            icon: "error",
+            confirmButtonText: "Aceptar",
+            confirmButtonColor: "#dc2626",
+          });
 
           return false;
         } finally {
@@ -445,25 +628,53 @@ export const useAsignaciones = () => {
     useCallback(
       async (asignacion) => {
         if (!asignacion?.id) {
+          const mensaje =
+            "No se encontró la asignación que deseas eliminar.";
+
+          setError(mensaje);
+          await mostrarValidacion(mensaje);
+          return false;
+        }
+
+        if (obtenerEstadoActivo(asignacion)) {
+          const mensaje =
+            "No puedes eliminar una asignación activa. Primero debes finalizarla.";
+
+          setError(mensaje);
+          await mostrarValidacion(mensaje);
           return false;
         }
 
         const nombreConductor =
           String(
-            asignacion
-              ?.conductor_nombre ||
-              asignacion
-                ?.conductor
+            asignacion?.conductor_nombre ||
+              asignacion?.conductor
                 ?.nombre_completo ||
               "este conductor"
           );
 
-        const confirmar =
-          window.confirm(
-            `¿Seguro que deseas eliminar la asignación de "${nombreConductor}"?`
-          );
+        const resultado = await Swal.fire({
+          title: "¿Eliminar asignación?",
+          html: `
+            <p style="color:#475569;font-size:14px;line-height:1.5;">
+              Eliminarás la asignación de
+              <strong>${nombreConductor}</strong>.
+            </p>
+            <p style="color:#dc2626;font-size:13px;margin-top:10px;">
+              Esta acción no se puede deshacer.
+            </p>
+          `,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Sí, eliminar",
+          cancelButtonText: "Cancelar",
+          confirmButtonColor: "#dc2626",
+          cancelButtonColor: "#64748b",
+          reverseButtons: true,
+          focusCancel: true,
+        });
 
-        if (!confirmar) {
+        if (!resultado.isConfirmed) {
           return false;
         }
 
@@ -479,6 +690,16 @@ export const useAsignaciones = () => {
             mostrarCarga: false,
           });
 
+          await Swal.fire({
+            title: "Asignación eliminada",
+            text: "La asignación fue eliminada correctamente.",
+            icon: "success",
+            confirmButtonText: "Aceptar",
+            confirmButtonColor: "#059669",
+            timer: 1800,
+            timerProgressBar: true,
+          });
+
           return true;
         } catch (requestError) {
           const mensaje =
@@ -489,6 +710,14 @@ export const useAsignaciones = () => {
 
           setError(mensaje);
 
+          await Swal.fire({
+            title: "No se pudo eliminar",
+            text: mensaje,
+            icon: "error",
+            confirmButtonText: "Aceptar",
+            confirmButtonColor: "#dc2626",
+          });
+
           return false;
         } finally {
           setSaving(false);
@@ -497,12 +726,6 @@ export const useAsignaciones = () => {
       [cargarAsignaciones]
     );
 
-  /*
-   * Lista segura de asignaciones.
-   *
-   * Aquí estaba el error porque se había
-   * copiado código de Usuarios.
-   */
   const listaAsignaciones =
     useMemo(
       () =>
@@ -514,10 +737,11 @@ export const useAsignaciones = () => {
 
   const asignacionesFiltradas =
     useMemo(() => {
-      const valorBusqueda =
-        String(search || "")
-          .trim()
-          .toLowerCase();
+      const valorBusqueda = String(
+        search || ""
+      )
+        .trim()
+        .toLowerCase();
 
       if (!valorBusqueda) {
         return listaAsignaciones;
@@ -526,52 +750,23 @@ export const useAsignaciones = () => {
       return listaAsignaciones.filter(
         (asignacion) => {
           const texto = [
-            asignacion
-              ?.conductor_nombre,
-
-            asignacion
-              ?.conductor_cedula,
-
-            asignacion
-              ?.vehiculo_placa,
-
-            asignacion
-              ?.vehiculo_numero,
-
-            asignacion
-              ?.vehiculo_descripcion,
-
-            asignacion
-              ?.sucursal_nombre,
-
-            asignacion
-              ?.conductor
+            asignacion?.conductor_nombre,
+            asignacion?.conductor_cedula,
+            asignacion?.vehiculo_placa,
+            asignacion?.vehiculo_numero,
+            asignacion?.vehiculo_descripcion,
+            asignacion?.sucursal_nombre,
+            asignacion?.conductor
               ?.nombre_completo,
-
-            asignacion
-              ?.conductor?.nombre,
-
-            asignacion
-              ?.conductor?.apellido,
-
-            asignacion
-              ?.vehiculo?.numero,
-
-            asignacion
-              ?.vehiculo
+            asignacion?.conductor?.nombre,
+            asignacion?.conductor?.apellido,
+            asignacion?.vehiculo?.numero,
+            asignacion?.vehiculo
               ?.numero_unidad,
-
-            asignacion
-              ?.vehiculo?.placa,
-
-            asignacion
-              ?.vehiculo?.marca,
-
-            asignacion
-              ?.vehiculo?.modelo,
-
-            asignacion
-              ?.sucursal?.nombre,
+            asignacion?.vehiculo?.placa,
+            asignacion?.vehiculo?.marca,
+            asignacion?.vehiculo?.modelo,
+            asignacion?.sucursal?.nombre,
           ]
             .filter(
               (valor) =>
@@ -606,13 +801,6 @@ export const useAsignaciones = () => {
     totalAsignaciones -
     asignacionesActivas;
 
-  /*
-   * Al abrir o recargar la página solo se
-   * solicita el listado de asignaciones.
-   *
-   * Los catálogos se solicitan cuando se
-   * abre el modal.
-   */
   useEffect(() => {
     void cargarAsignaciones();
   }, [cargarAsignaciones]);

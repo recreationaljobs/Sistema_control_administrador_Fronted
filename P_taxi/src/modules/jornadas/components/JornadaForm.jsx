@@ -30,7 +30,6 @@ const initialForm = {
   tipo_cobro: "porcentaje",
   ingreso_bruto: "",
   monto_alquiler: "",
-  porcentaje_pago_conductor: "30",
   observaciones: "",
 };
 
@@ -74,6 +73,10 @@ const JornadaForm = ({
 
   const mostrarLiquidacion =
     puedeEditarIngreso && modoEdicion;
+
+  const requiereDatosEconomicos =
+    !esTaxista &&
+    (modoCierre || mostrarLiquidacion);
 
   const mostrarBusquedaConductor =
     !esTaxista && !jornadaEditando;
@@ -218,6 +221,12 @@ const JornadaForm = ({
           ? "Conductor autenticado"
           : "No seleccionado");
 
+  const tipoCobroConductor =
+  conductorSeleccionado?.tipo_cobro ||
+  jornadaEditando?.tipo_cobro ||
+  form.tipo_cobro ||
+  "porcentaje";
+
   const vehiculoTexto =
     vehiculoSeleccionado
       ? `${vehiculoSeleccionado.numero} - ${vehiculoSeleccionado.placa}`
@@ -301,12 +310,6 @@ const JornadaForm = ({
                 jornadaEditando.monto_alquiler ??
                   ""
               ),
-
-        porcentaje_pago_conductor:
-          String(
-            jornadaEditando.porcentaje_pago_conductor ??
-              "30"
-          ),
 
         observaciones:
           jornadaEditando.observaciones ||
@@ -432,12 +435,6 @@ const JornadaForm = ({
               ? ""
               : prev.monto_alquiler,
 
-          porcentaje_pago_conductor:
-            value === "alquiler"
-              ? "0"
-              : prev
-                  .porcentaje_pago_conductor ||
-                "30",
         };
       }
 
@@ -500,14 +497,13 @@ const JornadaForm = ({
       return;
     }
 
-    const tipoCobro =
-      esTaxista
-        ? "porcentaje"
-        : form.tipo_cobro || "porcentaje";
+    const tipoCobro = tipoCobroConductor;
 
     if (
-      (modoCierre ||
-        mostrarLiquidacion) &&
+      (
+        requiereDatosEconomicos ||
+        (esTaxista && modoCierre)
+      ) &&
       tipoCobro === "porcentaje" &&
       String(
         form.ingreso_bruto ?? ""
@@ -521,8 +517,7 @@ const JornadaForm = ({
     }
 
     if (
-      (modoCierre ||
-        mostrarLiquidacion) &&
+      requiereDatosEconomicos &&
       tipoCobro === "alquiler" &&
       String(
         form.monto_alquiler ?? ""
@@ -554,14 +549,6 @@ const JornadaForm = ({
     const montoAlquiler = Number(
       form.monto_alquiler || 0
     );
-
-    const porcentajePago =
-      tipoCobro === "alquiler"
-        ? 0
-        : Number(
-            form.porcentaje_pago_conductor ||
-              30
-          );
 
     if (!mostrarLiquidacion || modoEdicion) {
       if (
@@ -609,14 +596,17 @@ const JornadaForm = ({
             ingresoBruto < 0
           ) {
             setFormError(
-              "El monto bruto no puede ser negativo."
+              "El total producido del día no puede ser negativo."
             );
 
             return;
           }
         }
 
-        if (tipoCobro === "alquiler") {
+        if (
+          !esTaxista &&
+          tipoCobro === "alquiler"
+        ) {
           if (
             Number.isNaN(montoAlquiler) ||
             montoAlquiler < 0
@@ -708,9 +698,6 @@ const JornadaForm = ({
             ? montoAlquiler
             : 0,
 
-        porcentaje_pago_conductor:
-          porcentajePago,
-
         observaciones:
           form.observaciones.trim(),
       });
@@ -756,9 +743,6 @@ const JornadaForm = ({
         tipoCobro === "alquiler"
           ? montoAlquiler
           : 0,
-
-      porcentaje_pago_conductor:
-        porcentajePago,
 
       observaciones:
         form.observaciones.trim(),
@@ -838,29 +822,36 @@ const JornadaForm = ({
             />
           </div>
 
-          <div className="w-full min-w-0">
-            <label
-              htmlFor="ingreso_bruto"
-              className="mb-2 block text-sm font-black text-slate-800"
-            >
-              Ingrese el monto bruto *
-            </label>
+          {tipoCobroConductor === "porcentaje" && (
+            <div className="w-full min-w-0 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
+              <label
+                htmlFor="ingreso_bruto"
+                className="mb-2 block text-sm font-black text-slate-800"
+              >
+                Total producido del día *
+              </label>
 
-            <input
-              id="ingreso_bruto"
-              type="number"
-              name="ingreso_bruto"
-              value={form.ingreso_bruto}
-              onChange={handleChange}
-              min="0"
-              step="0.01"
-              inputMode="decimal"
-              placeholder="Ejemplo: 1500.00"
-              required
-              aria-required="true"
-              className="block w-full min-w-0 max-w-full rounded-2xl border border-slate-300 bg-white px-4 py-4 text-base font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
-            />
-          </div>
+              <input
+                id="ingreso_bruto"
+                type="number"
+                name="ingreso_bruto"
+                value={form.ingreso_bruto}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                inputMode="decimal"
+                placeholder="Ejemplo: 1500"
+                required
+                aria-required="true"
+                className="block w-full min-w-0 max-w-full rounded-2xl border border-slate-300 bg-white px-4 py-4 text-base font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
+              />
+
+              <p className="mt-2 text-xs font-semibold text-slate-500">
+                Este valor se usa para calcular tu pago por porcentaje.
+              </p>
+            </div>
+          )}
+
         </>
       )}
 
@@ -1286,32 +1277,18 @@ const JornadaForm = ({
               </div>
 
               <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Modalidad
-                  </label>
-
-                  <select
-                    name="tipo_cobro"
-                    value={
-                      form.tipo_cobro
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
-                  >
-                    <option value="porcentaje">
-                      Porcentaje
-                    </option>
-
-                    <option value="alquiler">
-                      Alquiler
-                    </option>
-                  </select>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-xs font-bold text-slate-500">
+                    Modalidad configurada para el conductor
+                  </p>
+                  <p className="mt-1 text-sm font-black text-slate-900">
+                    {tipoCobroConductor === "alquiler"
+                      ? "Alquiler"
+                      : "Porcentaje"}
+                  </p>
                 </div>
 
-                {form.tipo_cobro ===
+                {tipoCobroConductor ===
                   "porcentaje" && (
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
@@ -1345,7 +1322,7 @@ const JornadaForm = ({
                   </div>
                 )}
 
-                {form.tipo_cobro ===
+                {tipoCobroConductor ===
                   "alquiler" && (
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
@@ -1396,35 +1373,37 @@ const JornadaForm = ({
 
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <label className="mb-2 block text-sm font-bold text-slate-700">
-                    Tipo de cobro
-                  </label>
+               
+                 {tipoCobroConductor === "alquiler" && (
+                  <div>
+                    <label className="mb-2 block text-sm font-bold text-slate-700">
+                      Monto de alquiler
+                    </label>
 
-                  <select
-                    name="tipo_cobro"
-                    value={
-                      form.tipo_cobro
-                    }
-                    onChange={
-                      handleChange
-                    }
-                    className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
-                  >
-                    <option value="porcentaje">
-                      Porcentaje
-                    </option>
+                    <input
+                      type="number"
+                      name="monto_alquiler"
+                      value={form.monto_alquiler}
+                      onChange={handleChange}
+                      min="0"
+                      step="0.01"
+                      placeholder="Ejemplo: 800.00"
+                      required
+                      className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-[#F5B800] focus:ring-4 focus:ring-yellow-100"
+                    />
 
-                    <option value="alquiler">
-                      Alquiler
-                    </option>
-                  </select>
+                    <p className="mt-2 text-xs font-semibold text-slate-500">
+                      Tarifa diaria establecida por administración.
+                    </p>
+                  </div>
+                )}
                 </div>
 
-                {form.tipo_cobro ===
+                {tipoCobroConductor ===
                   "porcentaje" && (
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
-                      Ingreso bruto
+                      Ingreso bruto del día
                     </label>
 
                     <input
@@ -1448,7 +1427,7 @@ const JornadaForm = ({
                   </div>
                 )}
 
-                {form.tipo_cobro ===
+                {/* {form.tipo_cobro ===
                   "alquiler" && (
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
@@ -1474,7 +1453,9 @@ const JornadaForm = ({
 
                   
                   </div>
-                )}
+                )} */}
+
+
               </div>
             </div>
           )}
@@ -1484,7 +1465,7 @@ const JornadaForm = ({
             <div className="md:col-span-2">
               <CalculoJornada
                 tipoCobro={
-                  form.tipo_cobro
+                  tipoCobroConductor
                 }
                 kilometrajeInicial={
                   form.kilometraje_inicial
@@ -1496,7 +1477,9 @@ const JornadaForm = ({
                   form.ingreso_bruto
                 }
                 porcentajePago={
-                  form.porcentaje_pago_conductor
+                  conductorSeleccionado?.porcentaje_pago ??
+                  jornadaEditando?.porcentaje_pago_conductor ??
+                  0
                 }
                 montoAlquiler={
                   form.monto_alquiler

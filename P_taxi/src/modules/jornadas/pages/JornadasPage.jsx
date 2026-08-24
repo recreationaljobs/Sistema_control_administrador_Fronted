@@ -236,6 +236,9 @@ const TarjetaJornadaConductor = ({
       jornada
     );
 
+  const esAlquiler =
+    jornada?.tipo_cobro === "alquiler";
+
   const vehiculoTexto =
     obtenerVehiculoTexto(jornada);
 
@@ -281,11 +284,13 @@ const TarjetaJornadaConductor = ({
             </div>
           </div>
 
-          <span
-            className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-black ${estado.clases}`}
-          >
-            {estado.texto}
-          </span>
+          {!esAlquiler && (
+            <span
+              className={`shrink-0 rounded-full border px-3 py-1 text-[10px] font-black ${estado.clases}`}
+            >
+              {estado.texto}
+            </span>
+          )}
         </div>
 
         <div className="mt-4 rounded-3xl bg-slate-50 p-3">
@@ -336,6 +341,7 @@ const TarjetaJornadaConductor = ({
           </div>
         </div>
 
+        {!esAlquiler && (
         <div className="mt-4 rounded-[22px] bg-gradient-to-br from-[#DCEBFF] to-[#CFE2FF] p-4">
           <p className="text-xs font-black uppercase tracking-wide text-[#1D4ED8]">
             Acumulado del día
@@ -348,6 +354,7 @@ const TarjetaJornadaConductor = ({
             {formatoDinero(ganancia)}
           </h4>
         </div>
+        )}
       </div>
     </article>
   );
@@ -436,6 +443,10 @@ const JornadasPage = () => {
 
     abrirModalCrear();
   };
+
+
+
+  
 
   return (
     <div

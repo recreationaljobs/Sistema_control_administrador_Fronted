@@ -2,10 +2,17 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
+import Swal from "sweetalert2";
+
 import {
+  Download,
   Printer,
+  Share2,
   X,
 } from "lucide-react";
 
@@ -49,9 +56,7 @@ const formatoKilometros = (valor) => {
     return "0";
   }
 
-  return numero.toLocaleString(
-    "es-NI"
-  );
+  return numero.toLocaleString("es-NI");
 };
 
 const obtenerNombreConductor = (
@@ -98,7 +103,7 @@ const obtenerNombreSucursal = (
   return (
     recibo?.sucursal?.nombre ||
     recibo?.sucursal_nombre ||
-    "Administración General Lenin Morales"
+    "Administración General"
   );
 };
 
@@ -130,6 +135,7 @@ const obtenerNombreVehiculo = (
   return (
     jornada?.vehiculo_descripcion ||
     jornada?.vehiculo_placa ||
+    jornada?.vehiculo_numero ||
     "-"
   );
 };
@@ -139,34 +145,19 @@ const ESTILOS_RECIBO_TERMICO = `
     box-sizing: border-box;
   }
 
-  html,
-  body {
-    margin: 0;
-    padding: 0;
-    background: #ffffff;
-    color: #000000;
-    font-family:
-      Arial,
-      Helvetica,
-      sans-serif;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
   .recibo-termico {
-    width: min(100%, 340px);
+    width: 340px;
     margin: 0 auto;
-    padding: 20px 16px 28px;
+    padding: 18px 15px 24px;
     background: #ffffff;
     color: #000000;
+    font-family: Arial, Helvetica, sans-serif;
     font-size: 10px;
     line-height: 1.35;
   }
 
   .recibo-vista-previa {
-    box-shadow:
-      0 20px 50px
-      rgba(15, 23, 42, 0.20);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.20);
   }
 
   .recibo-encabezado {
@@ -183,29 +174,28 @@ const ESTILOS_RECIBO_TERMICO = `
 
   .recibo-palabra {
     margin: 0;
-    font-size: 34px;
+    font-size: 30px;
     font-weight: 900;
-    line-height: 0.95;
+    line-height: 0.9;
     letter-spacing: -1px;
   }
 
   .recibo-marca {
-    margin-top: 4px;
-    font-size: 13px;
+    margin-top: 5px;
+    font-size: 12px;
     font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
+    letter-spacing: 0.5px;
   }
 
   .recibo-numero {
-    flex-shrink: 0;
-    min-width: 92px;
-    padding: 6px 7px;
+    min-width: 94px;
+    padding: 6px;
     border: 1.5px solid #000000;
     text-align: center;
   }
 
-  .recibo-numero-label {
+  .recibo-numero-label,
+  .recibo-etiqueta {
     display: block;
     font-size: 7px;
     font-weight: 900;
@@ -220,42 +210,33 @@ const ESTILOS_RECIBO_TERMICO = `
   }
 
   .recibo-empresa {
-    margin-top: 7px;
+    margin-top: 8px;
     font-size: 8px;
     font-weight: 600;
-    line-height: 1.4;
-  }
-
-  .recibo-empresa strong {
-    font-weight: 900;
+    line-height: 1.45;
   }
 
   .recibo-titulo-documento {
     margin: 10px 0 0;
     text-align: center;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
   }
 
   .recibo-separador {
-    width: 100%;
     margin: 8px 0;
     border-top: 1px dashed #000000;
   }
 
   .recibo-separador-solido {
-    width: 100%;
-    margin: 8px 0;
+    margin: 9px 0;
     border-top: 1.5px solid #000000;
   }
 
   .recibo-datos {
     display: grid;
-    grid-template-columns:
-      minmax(0, 1fr)
-      minmax(0, 1fr);
+    grid-template-columns: 1fr 1fr;
     gap: 7px 9px;
   }
 
@@ -264,11 +245,7 @@ const ESTILOS_RECIBO_TERMICO = `
   }
 
   .recibo-etiqueta {
-    display: block;
     margin-bottom: 2px;
-    font-size: 7px;
-    font-weight: 900;
-    text-transform: uppercase;
   }
 
   .recibo-valor {
@@ -339,81 +316,39 @@ const ESTILOS_RECIBO_TERMICO = `
   }
 
   .recibo-resumen {
-    margin-top: 8px;
+    margin-top: 9px;
   }
 
   .recibo-resumen-fila {
     display: flex;
-    align-items: flex-start;
     justify-content: space-between;
     gap: 10px;
     padding: 2px 0;
     font-size: 8.5px;
   }
 
-  .recibo-resumen-fila span {
-    min-width: 0;
-  }
-
   .recibo-resumen-fila strong {
     flex-shrink: 0;
-    text-align: right;
-    font-weight: 900;
   }
 
   .recibo-total {
     display: flex;
-    align-items: center;
     justify-content: space-between;
     gap: 10px;
-    margin-top: 7px;
-    padding: 7px 3px;
-    border-top: 2px solid #000000;
-    border-bottom: 2px solid #000000;
-    font-size: 14px;
+    margin-top: 8px;
+    padding: 8px 2px;
+    border-top: 1.5px solid #000000;
+    border-bottom: 1.5px solid #000000;
+    font-size: 13px;
     font-weight: 900;
   }
 
   .recibo-observacion {
-    margin-top: 8px;
-    padding: 6px;
-    border: 1px solid #000000;
-    font-size: 7.5px;
-    line-height: 1.45;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-  }
-
-  .recibo-constancia {
-    margin-top: 8px;
-    font-size: 7.5px;
-    line-height: 1.45;
-    text-align: justify;
-  }
-
-  .recibo-firmas {
-    display: grid;
-    grid-template-columns:
-      minmax(0, 1fr)
-      minmax(0, 1fr);
-    gap: 12px;
-    margin-top: 24px;
-  }
-
-  .recibo-firma {
-    text-align: center;
-  }
-
-  .recibo-linea-firma {
-    width: 100%;
-    border-top: 1px solid #000000;
-  }
-
-  .recibo-firma-texto {
-    margin-top: 4px;
-    font-size: 6.5px;
-    font-weight: 900;
-    text-transform: uppercase;
+    margin-top: 10px;
+    padding: 7px;
+    border: 1px dashed #000000;
+    font-size: 8px;
+    line-height: 1.4;
   }
 
   .recibo-gracias {
@@ -425,7 +360,7 @@ const ESTILOS_RECIBO_TERMICO = `
   }
 
   .recibo-pie {
-    margin-top: 4px;
+    margin: 4px 0 0;
     text-align: center;
     font-size: 6.8px;
     line-height: 1.35;
@@ -434,9 +369,7 @@ const ESTILOS_RECIBO_TERMICO = `
   .recibo-codigo {
     margin-top: 7px;
     text-align: center;
-    font-family:
-      "Courier New",
-      monospace;
+    font-family: "Courier New", monospace;
     font-size: 7px;
     font-weight: 900;
     letter-spacing: 1px;
@@ -458,83 +391,14 @@ const ESTILOS_RECIBO_TERMICO = `
     }
 
     .recibo-termico {
-    width: min(100%, 470px);
-    margin: 0 auto;
-    padding: 30px 26px 42px;
-    background: #ffffff;
-    color: #000000;
-    font-size: 13px;
-    line-height: 1.42;
+      width: 80mm !important;
+      margin: 0 !important;
+      padding: 7mm 5mm 10mm !important;
+      box-shadow: none !important;
     }
 
     .recibo-vista-previa {
       box-shadow: none !important;
-    }
-
-    .recibo-palabra {
-      font-size: 25px !important;
-    }
-
-    .recibo-marca {
-      font-size: 10px !important;
-    }
-
-    .recibo-numero {
-      min-width: 24mm !important;
-      padding: 4px 5px !important;
-    }
-
-    .recibo-numero-label {
-      font-size: 6.5px !important;
-    }
-
-    .recibo-numero-valor {
-      font-size: 10px !important;
-    }
-
-    .recibo-empresa {
-      font-size: 7.5px !important;
-    }
-
-    .recibo-titulo-documento {
-      font-size: 12px !important;
-    }
-
-    .recibo-etiqueta {
-      font-size: 6.5px !important;
-    }
-
-    .recibo-valor {
-      font-size: 8px !important;
-    }
-
-    .recibo-tabla th {
-      font-size: 6px !important;
-    }
-
-    .recibo-tabla td {
-      font-size: 7px !important;
-    }
-
-    .recibo-resumen-fila {
-      font-size: 8px !important;
-    }
-
-    .recibo-total {
-      font-size: 12px !important;
-    }
-
-    .recibo-observacion,
-    .recibo-constancia {
-      font-size: 7px !important;
-    }
-
-    .recibo-gracias {
-      font-size: 14px !important;
-    }
-
-    .recibo-pie {
-      font-size: 6.5px !important;
     }
   }
 `;
@@ -545,16 +409,18 @@ const ReciboLiquidacionTermico = ({
 }) => {
   const reciboRef = useRef(null);
 
+  const [
+    generandoPdf,
+    setGenerandoPdf,
+  ] = useState(false);
+
   useEffect(() => {
     const overflowAnterior =
       document.body.style.overflow;
 
-    document.body.style.overflow =
-      "hidden";
+    document.body.style.overflow = "hidden";
 
-    const manejarTecla = (
-      event
-    ) => {
+    const manejarTecla = (event) => {
       if (event.key === "Escape") {
         onClose();
       }
@@ -577,71 +443,51 @@ const ReciboLiquidacionTermico = ({
   }, [onClose]);
 
   const jornadas = useMemo(() => {
-    return Array.isArray(
-      recibo?.jornadas
-    )
+    return Array.isArray(recibo?.jornadas)
       ? recibo.jornadas
       : [];
   }, [recibo]);
 
-  const totalIngresoBruto =
-    useMemo(() => {
-      const totalBackend = Number(
-        recibo?.total_ingreso_bruto
-      );
+  const totalIngresoBruto = useMemo(() => {
+    const totalBackend = Number(
+      recibo?.total_ingreso_bruto
+    );
 
-      if (
-        Number.isFinite(totalBackend) &&
-        totalBackend > 0
-      ) {
-        return totalBackend;
-      }
+    if (
+      Number.isFinite(totalBackend) &&
+      totalBackend > 0
+    ) {
+      return totalBackend;
+    }
 
-      return jornadas.reduce(
-        (total, jornada) => {
-          return (
-            total +
-            Number(
-              jornada?.ingreso_bruto ||
-                0
-            )
-          );
-        },
-        0
-      );
-    }, [
-      recibo,
-      jornadas,
-    ]);
+    return jornadas.reduce(
+      (total, jornada) =>
+        total +
+        Number(
+          jornada?.ingreso_bruto || 0
+        ),
+      0
+    );
+  }, [recibo, jornadas]);
 
-  const totalPagoJornadas =
-    useMemo(() => {
-      const totalBackend = Number(
-        recibo?.total_jornadas
-      );
+  const totalPagoJornadas = useMemo(() => {
+    const totalBackend = Number(
+      recibo?.total_jornadas
+    );
 
-      if (
-        Number.isFinite(totalBackend)
-      ) {
-        return totalBackend;
-      }
+    if (Number.isFinite(totalBackend)) {
+      return totalBackend;
+    }
 
-      return jornadas.reduce(
-        (total, jornada) => {
-          return (
-            total +
-            Number(
-              jornada?.pago_conductor ||
-                0
-            )
-          );
-        },
-        0
-      );
-    }, [
-      recibo,
-      jornadas,
-    ]);
+    return jornadas.reduce(
+      (total, jornada) =>
+        total +
+        Number(
+          jornada?.pago_conductor || 0
+        ),
+      0
+    );
+  }, [recibo, jornadas]);
 
   const numeroRecibo = String(
     recibo?.id || 0
@@ -657,42 +503,27 @@ const ReciboLiquidacionTermico = ({
     recibo?.fecha_fin;
 
   const nombreConductor =
-    obtenerNombreConductor(
-      recibo
-    );
+    obtenerNombreConductor(recibo);
 
   const cedulaConductor =
-    obtenerCedulaConductor(
-      recibo
-    );
+    obtenerCedulaConductor(recibo);
 
   const nombreSucursal =
-    obtenerNombreSucursal(
-      recibo
-    );
+    obtenerNombreSucursal(recibo);
 
-  const imprimirRecibo = () => {
+  const abrirDialogoImpresion = () => {
     const contenido =
-      reciboRef.current
-        ?.outerHTML;
+      reciboRef.current?.outerHTML;
 
     if (!contenido) {
       return;
     }
 
-    const ventanaImpresion =
-      window.open(
-        "",
-        "_blank",
-        [
-          "width=430",
-          "height=820",
-          "left=150",
-          "top=20",
-          "resizable=yes",
-          "scrollbars=yes",
-        ].join(",")
-      );
+    const ventanaImpresion = window.open(
+      "",
+      "_blank",
+      "width=430,height=820,resizable=yes,scrollbars=yes"
+    );
 
     if (!ventanaImpresion) {
       return;
@@ -710,9 +541,7 @@ const ReciboLiquidacionTermico = ({
             content="width=device-width, initial-scale=1.0"
           />
           <title>Recibo ${codigoRecibo}</title>
-          <style>
-            ${ESTILOS_RECIBO_TERMICO}
-          </style>
+          <style>${ESTILOS_RECIBO_TERMICO}</style>
         </head>
         <body>
           ${contenido}
@@ -727,10 +556,188 @@ const ReciboLiquidacionTermico = ({
       ventanaImpresion.print();
     }, 350);
 
-    ventanaImpresion.onafterprint =
-      () => {
-        ventanaImpresion.close();
+    ventanaImpresion.onafterprint = () => {
+      ventanaImpresion.close();
+    };
+  };
+
+  const generarArchivoPdf = async () => {
+    const elementoRecibo =
+      reciboRef.current;
+
+    if (!elementoRecibo) {
+      throw new Error(
+        "No se pudo preparar el recibo."
+      );
+    }
+
+    const canvas = await html2canvas(
+      elementoRecibo,
+      {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      }
+    );
+
+    const anchoUtilMm = 76;
+
+    const altoImagenMm =
+      (canvas.height * anchoUtilMm) /
+      canvas.width;
+
+    const altoPaginaMm = Math.max(
+      120,
+      altoImagenMm + 4
+    );
+
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: [80, altoPaginaMm],
+      compress: true,
+    });
+
+    const imagenPdf = canvas.toDataURL(
+      "image/jpeg",
+      0.96
+    );
+
+    pdf.addImage(
+      imagenPdf,
+      "JPEG",
+      2,
+      2,
+      anchoUtilMm,
+      altoImagenMm,
+      undefined,
+      "FAST"
+    );
+
+    const blob = pdf.output("blob");
+
+    return new File(
+      [blob],
+      `Liquidacion-${codigoRecibo}.pdf`,
+      {
+        type: "application/pdf",
+      }
+    );
+  };
+
+  const descargarArchivoPdf = (archivo) => {
+    const urlArchivo =
+      URL.createObjectURL(archivo);
+
+    const enlace =
+      document.createElement("a");
+
+    enlace.href = urlArchivo;
+    enlace.download = archivo.name;
+
+    document.body.appendChild(enlace);
+    enlace.click();
+    enlace.remove();
+
+    window.setTimeout(() => {
+      URL.revokeObjectURL(urlArchivo);
+    }, 1000);
+  };
+
+  const guardarComoPdf = async () => {
+    try {
+      setGenerandoPdf(true);
+
+      const archivoPdf =
+        await generarArchivoPdf();
+
+      descargarArchivoPdf(archivoPdf);
+
+      await Swal.fire({
+        title: "PDF descargado",
+        text: "El recibo fue guardado correctamente en tu dispositivo.",
+        icon: "success",
+        confirmButtonText: "Aceptar",
+        confirmButtonColor: "#2563eb",
+        timer: 1800,
+        timerProgressBar: true,
+      });
+    } catch (error) {
+      console.error(
+        "Error al descargar PDF:",
+        error
+      );
+
+      await Swal.fire({
+        title: "No se pudo generar el PDF",
+        text: "Inténtalo nuevamente.",
+        icon: "error",
+        confirmButtonText: "Aceptar",
+        confirmButtonColor: "#dc2626",
+      });
+    } finally {
+      setGenerandoPdf(false);
+    }
+  };
+
+  const compartirPdf = async () => {
+    try {
+      setGenerandoPdf(true);
+
+      const archivoPdf =
+        await generarArchivoPdf();
+
+      const datosCompartir = {
+        title: `Liquidación ${codigoRecibo}`,
+        text: `Recibo de liquidación para ${nombreConductor}.`,
+        files: [archivoPdf],
       };
+
+      const puedeCompartir =
+        typeof navigator.share ===
+          "function" &&
+        (
+          typeof navigator.canShare !==
+            "function" ||
+          navigator.canShare(datosCompartir)
+        );
+
+      if (!puedeCompartir) {
+        descargarArchivoPdf(archivoPdf);
+
+        await Swal.fire({
+          title: "PDF descargado",
+          text: "Este navegador no permite compartir archivos directamente. Puedes adjuntar el PDF descargado por WhatsApp.",
+          icon: "info",
+          confirmButtonText: "Entendido",
+          confirmButtonColor: "#2563eb",
+        });
+
+        return;
+      }
+
+      await navigator.share(datosCompartir);
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        return;
+      }
+
+      console.error(
+        "Error al compartir PDF:",
+        error
+      );
+
+      await Swal.fire({
+        title: "No se pudo compartir",
+        text: "Inténtalo nuevamente o descarga el PDF para adjuntarlo manualmente.",
+        icon: "error",
+        confirmButtonText: "Aceptar",
+        confirmButtonColor: "#dc2626",
+      });
+    } finally {
+      setGenerandoPdf(false);
+    }
   };
 
   return (
@@ -770,7 +777,8 @@ const ReciboLiquidacionTermico = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+              disabled={generandoPdf}
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Cerrar"
             >
               <X size={19} />
@@ -827,10 +835,9 @@ const ReciboLiquidacionTermico = ({
                   <span className="recibo-etiqueta">
                     Fecha de emisión
                   </span>
+
                   <span className="recibo-valor">
-                    {formatoFecha(
-                      fechaEmision
-                    )}
+                    {formatoFecha(fechaEmision)}
                   </span>
                 </div>
 
@@ -838,6 +845,7 @@ const ReciboLiquidacionTermico = ({
                   <span className="recibo-etiqueta">
                     Jornadas pagadas
                   </span>
+
                   <span className="recibo-valor">
                     {jornadas.length}
                   </span>
@@ -847,6 +855,7 @@ const ReciboLiquidacionTermico = ({
                   <span className="recibo-etiqueta">
                     Conductor
                   </span>
+
                   <span className="recibo-valor">
                     {nombreConductor}
                   </span>
@@ -856,6 +865,7 @@ const ReciboLiquidacionTermico = ({
                   <span className="recibo-etiqueta">
                     Cédula
                   </span>
+
                   <span className="recibo-valor">
                     {cedulaConductor}
                   </span>
@@ -865,6 +875,7 @@ const ReciboLiquidacionTermico = ({
                   <span className="recibo-etiqueta">
                     Período desde
                   </span>
+
                   <span className="recibo-valor">
                     {formatoFecha(
                       recibo?.fecha_inicio
@@ -876,6 +887,7 @@ const ReciboLiquidacionTermico = ({
                   <span className="recibo-etiqueta">
                     Período hasta
                   </span>
+
                   <span className="recibo-valor">
                     {formatoFecha(
                       recibo?.fecha_fin
@@ -959,6 +971,7 @@ const ReciboLiquidacionTermico = ({
                   <span>
                     Ingreso bruto generado
                   </span>
+
                   <strong>
                     {formatoMoneda(
                       totalIngresoBruto
@@ -970,6 +983,7 @@ const ReciboLiquidacionTermico = ({
                   <span>
                     Pago por jornadas
                   </span>
+
                   <strong>
                     {formatoMoneda(
                       totalPagoJornadas
@@ -981,6 +995,7 @@ const ReciboLiquidacionTermico = ({
                   <span>
                     Saldo de adelantos
                   </span>
+
                   <strong>
                     {formatoMoneda(
                       recibo?.total_adelantos_pendientes
@@ -992,6 +1007,7 @@ const ReciboLiquidacionTermico = ({
                   <span>
                     Abono aplicado
                   </span>
+
                   <strong>
                     {formatoMoneda(
                       recibo?.abono_aplicado
@@ -1003,6 +1019,7 @@ const ReciboLiquidacionTermico = ({
                   <span>
                     Ajuste manual
                   </span>
+
                   <strong>
                     {formatoMoneda(
                       recibo?.ajuste_manual
@@ -1014,6 +1031,7 @@ const ReciboLiquidacionTermico = ({
                   <span>
                     TOTAL A PAGAR
                   </span>
+
                   <strong>
                     {formatoMoneda(
                       recibo?.total_pago
@@ -1021,14 +1039,6 @@ const ReciboLiquidacionTermico = ({
                   </strong>
                 </div>
               </section>
-                <br />
-
-              <div className="recibo-separador" />
-            
-
-              {/* <section className="recibo-constancia">
-                Por medio del presente se hace constar que el conductor recibió el pago correspondiente a las jornadas detalladas en este comprobante.
-              </section> */}
 
               {recibo?.notas && (
                 <section className="recibo-observacion">
@@ -1039,21 +1049,7 @@ const ReciboLiquidacionTermico = ({
                 </section>
               )}
 
-              {/* <section className="recibo-firmas">
-                <div className="recibo-firma">
-                  <div className="recibo-linea-firma" />
-                  <div className="recibo-firma-texto">
-                    Firma del conductor
-                  </div>
-                </div>
-
-                <div className="recibo-firma">
-                  <div className="recibo-linea-firma" />
-                  <div className="recibo-firma-texto">
-                    Administración
-                  </div>
-                </div>
-              </section> */}
+              <div className="recibo-separador" />
 
               <p className="recibo-gracias">
                 ¡Gracias!
@@ -1075,19 +1071,47 @@ const ReciboLiquidacionTermico = ({
             </div>
           </main>
 
-          <footer className="flex shrink-0 gap-3 border-t border-slate-200 bg-white p-4">
+          <footer className="grid shrink-0 grid-cols-1 gap-3 border-t border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
             <button
               type="button"
               onClick={onClose}
-              className="cursor-pointer h-11 flex-1 cursor-pointer rounded-xl border border-slate-300 bg-white text-sm font-black text-slate-700 transition hover:bg-slate-50"
+              disabled={generandoPdf}
+              className="h-11 cursor-pointer rounded-xl border border-slate-300 bg-white text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cerrar
             </button>
 
             <button
               type="button"
-              onClick={imprimirRecibo}
-              className="cursor-pointer flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-[#F5B800] text-sm font-black text-slate-950 transition hover:bg-[#DFA600]"
+              onClick={guardarComoPdf}
+              disabled={generandoPdf}
+              className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 text-sm font-black text-blue-700 transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Download size={17} />
+
+              {generandoPdf
+                ? "Generando..."
+                : "Descargar PDF"}
+            </button>
+
+            <button
+              type="button"
+              onClick={compartirPdf}
+              disabled={generandoPdf}
+              className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 text-sm font-black text-emerald-700 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Share2 size={17} />
+
+              {generandoPdf
+                ? "Generando..."
+                : "Compartir PDF"}
+            </button>
+
+            <button
+              type="button"
+              onClick={abrirDialogoImpresion}
+              disabled={generandoPdf}
+              className="flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#F5B800] text-sm font-black text-slate-950 transition hover:bg-[#DFA600] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Printer size={17} />
               Imprimir

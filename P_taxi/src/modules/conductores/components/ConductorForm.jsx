@@ -2,7 +2,7 @@ import {
   BadgePercent,
   CalendarDays,
   CreditCard,
-  Home,
+  HandCoins,
   IdCard,
   LoaderCircle,
   MapPin,
@@ -26,6 +26,7 @@ const initialForm = {
   numero_licencia: "",
   fecha_inicio_licencia: "",
   fecha_vencimiento_licencia: "",
+  tipo_cobro: "porcentaje",
   porcentaje_pago: "30.00",
 };
 
@@ -48,6 +49,57 @@ const normalizarValor = (valor) => {
   return String(valor);
 };
 
+const InputField = ({
+  id,
+  name,
+  label,
+  type = "text",
+  value,
+  onChange,
+  disabled,
+  placeholder,
+  icon: Icon,
+  min,
+  max,
+  step,
+  autoComplete,
+}) => {
+  return (
+    <div>
+      <label
+        htmlFor={id}
+        className="mb-2 block text-sm font-bold text-slate-700"
+      >
+        {label}
+      </label>
+
+      <div className="relative">
+        {Icon && (
+          <Icon
+            size={18}
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+          />
+        )}
+
+        <input
+          id={id}
+          type={type}
+          name={name}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          min={min}
+          max={max}
+          step={step}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+        />
+      </div>
+    </div>
+  );
+};
+
 const ConductorForm = ({
   initialData = null,
   onSubmit,
@@ -68,36 +120,30 @@ const ConductorForm = ({
   useEffect(() => {
     if (initialData) {
       setForm({
-        nombre:
-          normalizarValor(
-            initialData.nombre
-          ),
+        nombre: normalizarValor(
+          initialData.nombre
+        ),
 
-        apellido:
-          normalizarValor(
-            initialData.apellido
-          ),
+        apellido: normalizarValor(
+          initialData.apellido
+        ),
 
-        telefono:
-          normalizarValor(
-            initialData.telefono
-          ),
+        telefono: normalizarValor(
+          initialData.telefono
+        ),
 
-        cedula:
-          normalizarValor(
-            initialData.cedula
-          ),
+        cedula: normalizarValor(
+          initialData.cedula
+        ),
 
-        direccion:
-          normalizarValor(
-            initialData.direccion
-          ),
+        direccion: normalizarValor(
+          initialData.direccion
+        ),
 
-        numero_licencia:
-          normalizarValor(
-            initialData.numero_licencia ||
-              initialData.licencia
-          ),
+        numero_licencia: normalizarValor(
+          initialData.numero_licencia ||
+            initialData.licencia
+        ),
 
         fecha_inicio_licencia:
           normalizarFecha(
@@ -110,11 +156,15 @@ const ConductorForm = ({
               initialData.vencimiento_licencia
           ),
 
-        porcentaje_pago:
-          normalizarValor(
-            initialData.porcentaje_pago ??
-              "30.00"
-          ),
+        tipo_cobro:
+          initialData.tipo_cobro === "alquiler"
+            ? "alquiler"
+            : "porcentaje",
+
+        porcentaje_pago: normalizarValor(
+          initialData.porcentaje_pago ??
+            "30.00"
+        ),
       });
     } else {
       setForm(initialForm);
@@ -129,10 +179,25 @@ const ConductorForm = ({
       value,
     } = event.target;
 
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => {
+      if (name === "tipo_cobro") {
+        return {
+          ...prev,
+          tipo_cobro: value,
+          porcentaje_pago:
+            value === "alquiler"
+              ? "0.00"
+              : prev.porcentaje_pago === "0.00"
+              ? "30.00"
+              : prev.porcentaje_pago,
+        };
+      }
+
+      return {
+        ...prev,
+        [name]: value,
+      };
+    });
 
     if (formError) {
       setFormError("");
@@ -144,7 +209,6 @@ const ConductorForm = ({
       setFormError(
         "El nombre del conductor es obligatorio."
       );
-
       return false;
     }
 
@@ -152,7 +216,6 @@ const ConductorForm = ({
       setFormError(
         "El apellido del conductor es obligatorio."
       );
-
       return false;
     }
 
@@ -160,7 +223,6 @@ const ConductorForm = ({
       setFormError(
         "La cédula del conductor es obligatoria."
       );
-
       return false;
     }
 
@@ -168,7 +230,6 @@ const ConductorForm = ({
       setFormError(
         "El teléfono del conductor es obligatorio."
       );
-
       return false;
     }
 
@@ -176,7 +237,6 @@ const ConductorForm = ({
       setFormError(
         "La dirección del conductor es obligatoria."
       );
-
       return false;
     }
 
@@ -184,7 +244,6 @@ const ConductorForm = ({
       setFormError(
         "El número de licencia es obligatorio."
       );
-
       return false;
     }
 
@@ -192,7 +251,6 @@ const ConductorForm = ({
       setFormError(
         "La fecha de inicio de la licencia es obligatoria."
       );
-
       return false;
     }
 
@@ -200,7 +258,6 @@ const ConductorForm = ({
       setFormError(
         "La fecha de vencimiento de la licencia es obligatoria."
       );
-
       return false;
     }
 
@@ -209,34 +266,32 @@ const ConductorForm = ({
       form.fecha_inicio_licencia
     ) {
       setFormError(
-        "La fecha de vencimiento no puede ser anterior a la fecha de inicio de la licencia."
+        "La fecha de vencimiento no puede ser anterior a la fecha de inicio."
       );
-
       return false;
     }
 
-    const porcentaje = Number(
-      form.porcentaje_pago
-    );
-
-    if (
-      !Number.isFinite(porcentaje) ||
-      porcentaje < 1 ||
-      porcentaje > 100
-    ) {
-      setFormError(
-        "El porcentaje de pago debe estar entre 1 y 100."
+    if (form.tipo_cobro === "porcentaje") {
+      const porcentaje = Number(
+        form.porcentaje_pago
       );
 
-      return false;
+      if (
+        !Number.isFinite(porcentaje) ||
+        porcentaje < 1 ||
+        porcentaje > 100
+      ) {
+        setFormError(
+          "El porcentaje de pago debe estar entre 1 y 100."
+        );
+        return false;
+      }
     }
 
     return true;
   };
 
-  const handleSubmit = async (
-    event
-  ) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (submitting) {
@@ -247,53 +302,44 @@ const ConductorForm = ({
       return;
     }
 
-    if (
-      typeof onSubmit !== "function"
-    ) {
+    if (typeof onSubmit !== "function") {
       setFormError(
         "No se encontró la función para guardar el conductor."
       );
-
       return;
     }
 
+    const esAlquiler =
+      form.tipo_cobro === "alquiler";
+
     const payload = {
-      nombre:
-        form.nombre.trim(),
-
-      apellido:
-        form.apellido.trim(),
-
-      telefono:
-        form.telefono.trim(),
-
-      cedula:
-        form.cedula.trim(),
-
-      direccion:
-        form.direccion.trim(),
-
+      nombre: form.nombre.trim(),
+      apellido: form.apellido.trim(),
+      telefono: form.telefono.trim(),
+      cedula: form.cedula.trim(),
+      direccion: form.direccion.trim(),
       numero_licencia:
-        form.numero_licencia
-          .trim(),
-
+        form.numero_licencia.trim(),
       fecha_inicio_licencia:
         form.fecha_inicio_licencia,
-
       fecha_vencimiento_licencia:
         form.fecha_vencimiento_licencia,
 
-      porcentaje_pago:
-        Number(
-          form.porcentaje_pago
-        ).toFixed(2),
+      tipo_cobro: form.tipo_cobro,
+
+      porcentaje_pago: esAlquiler
+        ? "0.00"
+        : Number(
+            form.porcentaje_pago
+          ).toFixed(2),
     };
 
     await onSubmit(payload);
   };
 
-  const deshabilitado =
-    submitting;
+  const deshabilitado = submitting;
+  const esAlquiler =
+    form.tipo_cobro === "alquiler";
 
   return (
     <form
@@ -303,8 +349,7 @@ const ConductorForm = ({
       translate="no"
       aria-busy={submitting}
     >
-      {(formError ||
-        submitError) && (
+      {(formError || submitError) && (
         <div
           role="alert"
           className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3"
@@ -314,19 +359,15 @@ const ConductorForm = ({
           </p>
 
           <p className="mt-1 text-sm font-medium text-red-600">
-            {formError ||
-              submitError}
+            {formError || submitError}
           </p>
         </div>
       )}
 
-      <div className="mb-6">
+      <section>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-yellow-100 text-yellow-700">
-            <UserRound
-              size={21}
-              aria-hidden="true"
-            />
+            <UserRound size={21} />
           </div>
 
           <div>
@@ -341,116 +382,53 @@ const ConductorForm = ({
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="conductor-nombre"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
-              Nombre
-            </label>
+          <InputField
+            id="conductor-nombre"
+            name="nombre"
+            label="Nombre"
+            value={form.nombre}
+            onChange={handleChange}
+            disabled={deshabilitado}
+            placeholder="Nombre del conductor"
+            autoComplete="given-name"
+            icon={UserRound}
+          />
 
-            <div className="relative">
-              <UserRound
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
+          <InputField
+            id="conductor-apellido"
+            name="apellido"
+            label="Apellido"
+            value={form.apellido}
+            onChange={handleChange}
+            disabled={deshabilitado}
+            placeholder="Apellido del conductor"
+            autoComplete="family-name"
+            icon={UserRound}
+          />
 
-              <input
-                id="conductor-nombre"
-                type="text"
-                name="nombre"
-                value={form.nombre}
-                onChange={handleChange}
-                disabled={deshabilitado}
-                placeholder="Nombre del conductor"
-                autoComplete="given-name"
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-              />
-            </div>
-          </div>
+          <InputField
+            id="conductor-cedula"
+            name="cedula"
+            label="Cédula"
+            value={form.cedula}
+            onChange={handleChange}
+            disabled={deshabilitado}
+            placeholder="Número de cédula"
+            icon={IdCard}
+          />
 
-          <div>
-            <label
-              htmlFor="conductor-apellido"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
-              Apellido
-            </label>
-
-            <div className="relative">
-              <UserRound
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-
-              <input
-                id="conductor-apellido"
-                type="text"
-                name="apellido"
-                value={form.apellido}
-                onChange={handleChange}
-                disabled={deshabilitado}
-                placeholder="Apellido del conductor"
-                autoComplete="family-name"
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="conductor-cedula"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
-              Cédula
-            </label>
-
-            <div className="relative">
-              <IdCard
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-
-              <input
-                id="conductor-cedula"
-                type="text"
-                name="cedula"
-                value={form.cedula}
-                onChange={handleChange}
-                disabled={deshabilitado}
-                placeholder="Número de cédula"
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="conductor-telefono"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
-              Teléfono
-            </label>
-
-            <div className="relative">
-              <Phone
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-
-              <input
-                id="conductor-telefono"
-                type="tel"
-                name="telefono"
-                value={form.telefono}
-                onChange={handleChange}
-                disabled={deshabilitado}
-                placeholder="Número de teléfono"
-                autoComplete="tel"
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-              />
-            </div>
-          </div>
+          <InputField
+            id="conductor-telefono"
+            name="telefono"
+            label="Teléfono"
+            type="tel"
+            value={form.telefono}
+            onChange={handleChange}
+            disabled={deshabilitado}
+            placeholder="Número de teléfono"
+            autoComplete="tel"
+            icon={Phone}
+          />
 
           <div className="md:col-span-2">
             <label
@@ -479,15 +457,12 @@ const ConductorForm = ({
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="border-t border-slate-200 pt-6">
+      <section className="mt-6 border-t border-slate-200 pt-6">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100 text-blue-700">
-            <CreditCard
-              size={21}
-              aria-hidden="true"
-            />
+            <CreditCard size={21} />
           </div>
 
           <div>
@@ -503,173 +478,204 @@ const ConductorForm = ({
 
         <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label
-              htmlFor="conductor-licencia"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
-              Número de licencia
-            </label>
-
-            <div className="relative">
-              <IdCard
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-
-              <input
-                id="conductor-licencia"
-                type="text"
-                name="numero_licencia"
-                value={
-                  form.numero_licencia
-                }
-                onChange={handleChange}
-                disabled={deshabilitado}
-                placeholder="Número de licencia"
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-              />
-            </div>
+            <InputField
+              id="conductor-licencia"
+              name="numero_licencia"
+              label="Número de licencia"
+              value={form.numero_licencia}
+              onChange={handleChange}
+              disabled={deshabilitado}
+              placeholder="Número de licencia"
+              icon={IdCard}
+            />
           </div>
 
-          <div>
-            <label
-              htmlFor="conductor-fecha-inicio-licencia"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
-              Fecha de inicio
-            </label>
+          <InputField
+            id="conductor-fecha-inicio-licencia"
+            name="fecha_inicio_licencia"
+            label="Fecha de inicio"
+            type="date"
+            value={form.fecha_inicio_licencia}
+            onChange={handleChange}
+            disabled={deshabilitado}
+            icon={CalendarDays}
+          />
 
-            <div className="relative">
-              <CalendarDays
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-
-              <input
-                id="conductor-fecha-inicio-licencia"
-                type="date"
-                name="fecha_inicio_licencia"
-                value={
-                  form.fecha_inicio_licencia
-                }
-                onChange={handleChange}
-                disabled={deshabilitado}
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="conductor-fecha-vencimiento-licencia"
-              className="mb-2 block text-sm font-bold text-slate-700"
-            >
-              Fecha de vencimiento
-            </label>
-
-            <div className="relative">
-              <CalendarDays
-                size={18}
-                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-              />
-
-              <input
-                id="conductor-fecha-vencimiento-licencia"
-                type="date"
-                name="fecha_vencimiento_licencia"
-                value={
-                  form.fecha_vencimiento_licencia
-                }
-                min={
-                  form.fecha_inicio_licencia ||
-                  undefined
-                }
-                onChange={handleChange}
-                disabled={deshabilitado}
-                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
-              />
-            </div>
-          </div>
+          <InputField
+            id="conductor-fecha-vencimiento-licencia"
+            name="fecha_vencimiento_licencia"
+            label="Fecha de vencimiento"
+            type="date"
+            value={form.fecha_vencimiento_licencia}
+            onChange={handleChange}
+            disabled={deshabilitado}
+            min={
+              form.fecha_inicio_licencia ||
+              undefined
+            }
+            icon={CalendarDays}
+          />
         </div>
-      </div>
+      </section>
 
-      <div className="mt-6 border-t border-slate-200 pt-6">
+      <section className="mt-6 border-t border-slate-200 pt-6">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-            <BadgePercent
-              size={21}
-              aria-hidden="true"
-            />
+            <HandCoins size={21} />
           </div>
 
           <div>
             <h3 className="text-base font-black text-slate-950">
-              Pago del conductor
+              Modalidad de pago
             </h3>
 
             <p className="mt-0.5 text-xs font-medium text-slate-500">
-              Porcentaje aplicado a sus jornadas.
+              El monto de alquiler se registra posteriormente en la jornada.
             </p>
           </div>
         </div>
 
-        <div className="mt-5">
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label
-            htmlFor="conductor-porcentaje"
-            className="mb-2 block text-sm font-bold text-slate-700"
+            className={`cursor-pointer rounded-2xl border p-4 transition ${
+              form.tipo_cobro === "porcentaje"
+                ? "border-yellow-400 bg-yellow-50 ring-4 ring-yellow-100"
+                : "border-slate-200 bg-white hover:border-slate-300"
+            }`}
           >
-            Porcentaje de pago
-          </label>
-
-          <div className="relative max-w-md">
-            <BadgePercent
-              size={18}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-            />
-
             <input
-              id="conductor-porcentaje"
-              type="number"
-              name="porcentaje_pago"
-              value={
-                form.porcentaje_pago
+              type="radio"
+              name="tipo_cobro"
+              value="porcentaje"
+              checked={
+                form.tipo_cobro === "porcentaje"
               }
               onChange={handleChange}
               disabled={deshabilitado}
-              min="1"
-              max="100"
-              step="0.01"
-              placeholder="Ejemplo: 30"
-              className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-14 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="sr-only"
             />
 
-            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-500">
-              %
-            </span>
-          </div>
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-yellow-100 text-yellow-700">
+                <BadgePercent size={21} />
+              </div>
 
-          <p className="mt-2 text-xs font-medium text-slate-500">
-            Debe ser un valor entre 1 y 100.
-          </p>
+              <div>
+                <p className="font-black text-slate-900">
+                  Porcentaje
+                </p>
+
+                <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">
+                  Se calcula el pago del conductor según el ingreso del día.
+                </p>
+              </div>
+            </div>
+          </label>
+
+          <label
+            className={`cursor-pointer rounded-2xl border p-4 transition ${
+              esAlquiler
+                ? "border-blue-400 bg-blue-50 ring-4 ring-blue-100"
+                : "border-slate-200 bg-white hover:border-slate-300"
+            }`}
+          >
+            <input
+              type="radio"
+              name="tipo_cobro"
+              value="alquiler"
+              checked={esAlquiler}
+              onChange={handleChange}
+              disabled={deshabilitado}
+              className="sr-only"
+            />
+
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                <HandCoins size={21} />
+              </div>
+
+              <div>
+                <p className="font-black text-slate-900">
+                  Alquiler
+                </p>
+
+                <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">
+                  El dueño establece el monto diario desde la jornada.
+                </p>
+              </div>
+            </div>
+          </label>
         </div>
-      </div>
+
+        {!esAlquiler && (
+          <div className="mt-5">
+            <label
+              htmlFor="conductor-porcentaje"
+              className="mb-2 block text-sm font-bold text-slate-700"
+            >
+              Porcentaje de pago
+            </label>
+
+            <div className="relative max-w-md">
+              <BadgePercent
+                size={18}
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+
+              <input
+                id="conductor-porcentaje"
+                type="number"
+                name="porcentaje_pago"
+                value={form.porcentaje_pago}
+                onChange={handleChange}
+                disabled={deshabilitado}
+                min="1"
+                max="100"
+                step="0.01"
+                placeholder="Ejemplo: 30"
+                className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-14 text-sm font-semibold text-slate-800 outline-none transition hover:border-slate-400 focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+              />
+
+              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-500">
+                %
+              </span>
+            </div>
+
+            <p className="mt-2 text-xs font-medium text-slate-500">
+              Debe ser un valor entre 1 y 100.
+            </p>
+          </div>
+        )}
+
+        {esAlquiler && (
+          <div className="mt-5 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3">
+            <p className="text-sm font-black text-blue-800">
+              Tarifa de alquiler
+            </p>
+
+            <p className="mt-1 text-xs font-medium leading-relaxed text-blue-700">
+              No se configura aquí. El administrador la ingresará al editar o
+              registrar los datos económicos de cada jornada.
+            </p>
+          </div>
+        )}
+      </section>
 
       <div className="mt-7 flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">
         <button
           type="button"
           onClick={onCancel}
           disabled={deshabilitado}
-          className="cursor-pointer inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-black text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <X size={18} />
-
           Cancelar
         </button>
 
         <button
           type="submit"
           disabled={deshabilitado}
-          className="cursor-pointer inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex min-w-[180px] cursor-pointer items-center justify-center gap-2 rounded-2xl bg-yellow-400 px-5 py-3 text-sm font-black text-slate-950 shadow-md shadow-yellow-100 transition hover:bg-yellow-500 focus:outline-none focus:ring-4 focus:ring-yellow-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? (
             <>
