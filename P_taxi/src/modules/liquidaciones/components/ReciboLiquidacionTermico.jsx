@@ -493,6 +493,21 @@ const ReciboLiquidacionTermico = ({
     );
   }, [recibo, jornadas]);
 
+  const saldoPendienteAdelantos = useMemo(() => {
+    const saldoInicial = Number(
+      recibo?.total_adelantos_pendientes || 0
+    );
+
+    const abonoAplicado = Number(
+      recibo?.abono_aplicado || 0
+    );
+
+    return Math.max(
+      saldoInicial - abonoAplicado,
+      0
+    );
+  }, [recibo]);
+
   const numeroRecibo = String(
     recibo?.id || 0
   ).padStart(5, "0");
@@ -1046,12 +1061,12 @@ useEffect(() => {
 
                 <div className="recibo-resumen-fila">
                   <span>
-                    Ajuste manual
+                    Saldo pendiente
                   </span>
 
                   <strong>
                     {formatoMoneda(
-                      recibo?.ajuste_manual
+                      saldoPendienteAdelantos
                     )}
                   </strong>
                 </div>

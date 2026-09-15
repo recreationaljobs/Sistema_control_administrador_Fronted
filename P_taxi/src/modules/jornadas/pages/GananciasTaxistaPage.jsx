@@ -9,11 +9,13 @@ import {
   CarTaxiFront,
   ChevronDown,
   Gauge,
+  HandCoins,
   RefreshCcw,
   Wallet,
 } from "lucide-react";
 
 import { useJornadas } from "../hooks/useJornadas";
+import api from "../../../api/axios";
 
 const obtenerFechaLocal = () => {
   const fecha = new Date();
@@ -228,8 +230,63 @@ const GananciasTaxistaPage =
       setActualizando,
     ] = useState(false);
 
+    const [
+      saldoAdelantos,
+      setSaldoAdelantos,
+    ] = useState(0);
+
+    const [
+      cargandoAdelantos,
+      setCargandoAdelantos,
+    ] = useState(true);
+
    const esConductorAlquiler =
   conductorTaxista?.tipo_cobro === "alquiler";
+
+    const cargarSaldoAdelantos = async () => {
+  try {
+    setCargandoAdelantos(true);
+
+    const respuesta = await api.get(
+      "adelantos/resumen-conductores/"
+    );
+
+    /*
+      El backend ya filtra por el taxista autenticado.
+      Por eso la primera fila siempre es su resumen.
+    */
+    const resumen =
+      respuesta.data?.results?.[0];
+
+    setSaldoAdelantos(
+      Number(
+        resumen?.saldo_pendiente ?? 0
+      )
+    );
+  } catch (error) {
+    console.error(
+      "No se pudo cargar el saldo de adelantos.",
+      error
+    );
+
+    setSaldoAdelantos(0);
+  } finally {
+    setCargandoAdelantos(false);
+  }
+};
+
+
+
+
+
+
+
+
+    useEffect(() => {
+      void cargarSaldoAdelantos();
+      // La carga se actualiza cuando el hook identifica al taxista.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [conductorTaxista?.id]);
 
    const jornadasPendientes =
     useMemo(() => {
@@ -359,7 +416,10 @@ const GananciasTaxistaPage =
         try {
           setActualizando(true);
 
-          await cargarJornadas();
+          await Promise.all([
+            cargarJornadas(),
+            cargarSaldoAdelantos(),
+          ]);
         } finally {
           setActualizando(false);
         }
@@ -800,6 +860,29 @@ const GananciasTaxistaPage =
             </div>
           </section>
           )}
+
+          <section
+            className="animacion-tarjeta rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm"
+            style={{ animationDelay: "60ms" }}
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-wide text-slate-400">
+                  Saldo pendiente
+                </p>
+
+                <p className="mt-1 text-2xl font-black text-slate-950">
+                  {cargandoAdelantos
+                    ? "Cargando..."
+                    : formatoDinero(saldoAdelantos)}
+                </p>
+              </div>
+
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+                <HandCoins size={27} strokeWidth={2.3} />
+              </div>
+            </div>
+          </section>
 
           <section
             className="animacion-tarjeta rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm"
